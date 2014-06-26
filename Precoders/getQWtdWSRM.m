@@ -2,7 +2,7 @@
 function [SimParams,SimStructs] = getQWtdWSRM(SimParams,SimStructs)
 
 epsilonT = 1e-5;
-maxIterations = 50;
+maxIterations = 100;
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;
@@ -528,6 +528,7 @@ switch selectionMethod
             end
         end
         
+		
     case 'JointWSRMAlloc'
         
         maxRank = SimParams.maxRank;

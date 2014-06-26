@@ -16,15 +16,15 @@ end
 
 switch queueType
     case 'Uniform'
-        randArrival = rand(1,SimParams.nUsers) * maxPktArrival;
+        randArrival = randi([maxPktArrival-floor(maxPktArrival/2),maxPktArrival],1,SimParams.nUsers);
     case 'Constant'
         randArrival = ones(1,SimParams.nUsers) * maxPktArrival;
     case 'Fixed'
         randArrival = SimParams.FixedPacketArrivals;
     case 'ConstFixed'
-        randArrival = ones(1,SimParams.nUsers) * maxPktArrival;
-    case 'SteadyFlow'
         randArrival = SimParams.FixedPacketArrivals;
+    case 'SteadyFlow'
+        randArrival = ones(1,SimParams.nUsers) * maxPktArrival;
 end
 
 SimParams.avgPktValues = randArrival;

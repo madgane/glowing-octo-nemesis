@@ -140,12 +140,11 @@ if strcmp(pathLossModel,'3GPP')
                 end
                  for iBand = 1:SimParams.nBands
                     SimStructs.JakesChStruct{iUser,iBase,iBand} = comm.MIMOChannel;
+					SimStructs.JakesChStruct{iUser,iBase,iBand}.SpatialCorrelation = false;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.SampleRate = SimParams.SFSymbols / SimParams.sampTime;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.MaximumDopplerShift = currentDoppler;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.NumTransmitAntennas = SimParams.nTxAntenna;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.NumReceiveAntennas = SimParams.nRxAntenna;
-                    SimStructs.JakesChStruct{iUser,iBase,iBand}.TransmitCorrelationMatrix = eye(SimParams.nTxAntenna);
-                    SimStructs.JakesChStruct{iUser,iBase,iBand}.ReceiveCorrelationMatrix = eye(SimParams.nRxAntenna);
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.NormalizePathGains = 1;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.PathGainsOutputPort = 1;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.AveragePathGains = 0;
@@ -165,12 +164,11 @@ else
             for iBase = 1:SimParams.nBases
                 for iBand = 1:SimParams.nBands
                     SimStructs.JakesChStruct{iUser,iBase,iBand} = comm.MIMOChannel;
+					SimStructs.JakesChStruct{iUser,iBase,iBand}.SpatialCorrelation = false;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.SampleRate = SimParams.SFSymbols / SimParams.sampTime;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.MaximumDopplerShift = currentDoppler;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.NumTransmitAntennas = SimParams.nTxAntenna;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.NumReceiveAntennas = SimParams.nRxAntenna;
-                    SimStructs.JakesChStruct{iUser,iBase,iBand}.TransmitCorrelationMatrix = eye(SimParams.nTxAntenna);
-                    SimStructs.JakesChStruct{iUser,iBase,iBand}.ReceiveCorrelationMatrix = eye(SimParams.nRxAntenna);
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.NormalizePathGains = 1;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.PathGainsOutputPort = 1;
                     SimStructs.JakesChStruct{iUser,iBase,iBand}.AveragePathGains = 0;
