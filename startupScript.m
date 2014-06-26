@@ -23,7 +23,7 @@ SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
 SimParams.pathLossModel = 'Perturbed_6';
-SimParams.DopplerType = 'Uniform_100';
+SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 0;
@@ -31,8 +31,8 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
-SimParams.weightedSumRateMethod = 'GenMSEAlloc';
+SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
+SimParams.weightedSumRateMethod = 'PrimalMSEMethod';
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
