@@ -1,7 +1,7 @@
 
 currentPath = path;
 
-if isempty(strfind(currentPath,'finna-be-bugfixes'))
+if isempty(strfind(currentPath,'glowing-octo-nemesis'))
     addpath(genpath(pwd));
 end
 
@@ -13,7 +13,7 @@ if isempty(strfind(currentPath,'cvx'))
     else
         cd ..\solvers\cvx;
         cvx_setup;
-        cd ..\..\finna-be-bugfixes;
+        cd ..\..\glowing-octo-nemesis;
     end
 end
 

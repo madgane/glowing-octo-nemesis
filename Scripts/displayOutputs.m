@@ -80,6 +80,9 @@ switch SimParams.plotMode
     case 'CPlot'
         
         profile on;
+        if ~isfield(SimParams,'distDecompSteps')
+            SimParams.distDecompSteps = 1;
+        end
         
         displaySystemDetails;
         displayChannel(SimParams,SimStructs);
@@ -91,11 +94,11 @@ switch SimParams.plotMode
         totalDeviation = sum(totalDeviation);
         totalThroughput = sum(totalThroughput);
         
-        plotFigure(struct('Y',totalDeviation,'N',1));
+        plotFigure(struct('Y',totalDeviation(1:SimParams.distDecompSteps:end),'N',1));
         xlabel('Iteration count');
         ylabel('Queue deviation in bits / channel use');
         
-        plotFigure(struct('Y',totalThroughput,'N',2));
+        plotFigure(struct('Y',totalThroughput(1:SimParams.distDecompSteps:end),'N',2));
         xlabel('Iteration count');
         ylabel('Sum rate in bits / channel use');   
         

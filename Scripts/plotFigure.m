@@ -3,8 +3,9 @@ function plotFigure(figStruct)
 
 figColor = 'b';
 figMarker = 'p';
-figLineType = '--';
+figLineType = '-.';
 figLineWidth = 1;
+figMarkerSize = 4;
     
 if ~isfield(figStruct,'N')
     figStruct.N = 1;
@@ -25,18 +26,18 @@ switch figStruct.P
     case 'plot'
         
         plot(figStruct.X,figStruct.Y,'Color',figColor,'LineWidth',figLineWidth,...
-            'LineStyle',figLineType,'MarkerFaceColor',figColor,'Marker',figMarker,'MarkerSize',4);
+            'LineStyle',figLineType,'MarkerFaceColor',figColor,'Marker',figMarker,'MarkerSize',figMarkerSize);
         
     case 'semilogy'
         
         semilogy(figStruct.X,figStruct.Y,'Color',figColor,'LineWidth',figLineWidth,...
-            'LineStyle',figLineType,'MarkerFaceColor',figColor,'Marker',figMarker,'MarkerSize',4);
+            'LineStyle',figLineType,'MarkerFaceColor',figColor,'Marker',figMarker,'MarkerSize',figMarkerSize);
         
     case 'cdfplot'
         
         [yValues, xValues] = cdfcalc(figStruct.Y);        
         stairs(xValues,yValues(2:end),'Color',figColor,'LineWidth',figLineWidth,...
-            'LineStyle',figLineType,'MarkerFaceColor',figColor,'Marker',figMarker,'MarkerSize',4);
+            'LineStyle',figLineType,'MarkerFaceColor',figColor,'Marker',figMarker,'MarkerSize',figMarkerSize);
 
 end
         

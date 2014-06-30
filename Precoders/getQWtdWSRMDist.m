@@ -10,7 +10,8 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-mIterationsSCA = 100;mIterationsSG = 1;sumDeviationH = -50;
+mIterationsSCA = 75;mIterationsSG = 10;sumDeviationH = -50;
+SimParams.distDecompSteps = mIterationsSG;
 
 % Debug Buffers initialization
 
@@ -44,7 +45,7 @@ for iBase = 1:nBases
     end
 end
 
-epsilonT = 0.5e-3;
+epsilonT = 1e-5;
 underscore_location = strfind(SimParams.weightedSumRateMethod,'_');
 if isempty(underscore_location)
     qExponent = 1;
@@ -58,7 +59,7 @@ switch selectionMethod
     
     case 'PrimalMethod'
         
-        alpha = 0.5e-3;
+        alpha = 0.5e-4;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellD = cell(nBases,1);cellBH = cell(nBases,1);
@@ -286,14 +287,14 @@ switch selectionMethod
         
     case 'ADMMMethod'
         
-        alpha = 5;
+        alpha = 2;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellX = cell(nBases,1);cellBH = cell(nBases,1);
         
         xIteration = 0;
         scaContinue = 1;
-        currentDual = ones(nLayers,nUsers,nBases,nBands);
+        currentDual = zeros(nLayers,nUsers,nBases,nBands);
         [p_o,q_o,b_o,W] = randomizeInitialSCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases
@@ -465,16 +466,13 @@ switch selectionMethod
                         status = strcat(status,'-',cvx_status);
                     end
                     
-                    if strfind(cvx_status,'Solved')
-                        
+                    if strfind(cvx_status,'Solved')                        
                         cellM{iBase,1} = M;
                         cellBH{iBase,1} = b;
-                        cellX{iBase,1} = x;
-                        
-                    else
-                        
-                        cellM{iBase,1} = zeros(size(M));
-                        
+                        cellX{iBase,1} = x;                        
+                    else                 
+                        display('Not solved !');
+                        cellM{iBase,1} = zeros(size(M));                        
                     end
                 end
                 
@@ -500,8 +498,6 @@ switch selectionMethod
                 if strcmp(SimParams.DebugMode,'true')
                     status = strcat(status,'-',sprintf('%d',yIteration),'-',sprintf('%d',xIteration));
                     display(status);
-                    %display(currentDual);
-                    %display([squeeze(cellX{1}) squeeze(cellX{2})]);
                 end
                 if norm(vec(currentDual - currentDualH),2) <= epsilonT
                     masterContinue = 0;

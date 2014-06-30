@@ -30,9 +30,6 @@ if nargin == 2
         case 'PFBDScheduling'
             [SimParams,SimStructs] = getPFBDScheduling(SimParams,SimStructs);
             
-        case 'GeneticScheduling'
-            [SimParams,SimStructs] = getGeneticScheduling_4(SimParams,SimStructs);
-            
         case 'ExScheduling'
             [SimParams,SimStructs] = getExhaustiveScheduling(SimParams,SimStructs);
             
