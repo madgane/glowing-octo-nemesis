@@ -10,7 +10,7 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-mIterationsSCA = 75;mIterationsSG = 10;sumDeviationH = -50;
+mIterationsSCA = 50;mIterationsSG = 10;sumDeviationH = -50;
 SimParams.distDecompSteps = mIterationsSG;
 
 % Debug Buffers initialization
@@ -59,7 +59,7 @@ switch selectionMethod
     
     case 'PrimalMethod'
         
-        alpha = 0.5e-4;
+        alpha = 1e-4;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellD = cell(nBases,1);cellBH = cell(nBases,1);
@@ -287,7 +287,7 @@ switch selectionMethod
         
     case 'ADMMMethod'
         
-        alpha = 2;
+        alpha = 0.5;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellX = cell(nBases,1);cellBH = cell(nBases,1);
@@ -541,7 +541,7 @@ switch selectionMethod
         
     case 'PrimalMSEMethod'
         
-        alpha = 1e-4;
+        alpha = 0.25e-4;
         nLayers = SimParams.maxRank;
         cellD = cell(nBases,1);cellM = cell(nBases,1);cellTH = cell(nBases,1);
         
@@ -988,9 +988,10 @@ switch selectionMethod
         
         xIndex = 0;
         reIterate = 1;
-        maxIterations = 500;
+        maxIterations = 100;
         currentIteration = 0;
         cvx_hist = -500 * ones(2,1);
+		SimParams.distDecompSteps = 1;
         
         M = cell(nUsers,nBands);
         R = cell(maxRank,nUsers,nBands);
@@ -1150,10 +1151,22 @@ switch selectionMethod
             cvx_optval = 0;
             for iUser = 1:nUsers
                 cvx_optval = cvx_optval + abs(QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))));
-            end
+			end
             
-            mseError_o = mseError;
-            [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,M,W);
+			mseError_o = mseError;
+			cellP = cell(nBases,1);            
+			for iBase = 1:nBases
+				cellP{iBase,1} = zeros(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1),nBands);
+				for iBand = 1:nBands
+					for iUser = 1:usersPerCell(iBase,1)
+						for iLayer = 1:maxRank
+							cellP{iBase,1}(:,iLayer,iUser,iBand) = M{cellUserIndices{iBase,1}(iUser,1),iBand}(:,iLayer);
+						end
+					end
+				end
+			end
+						
+            [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellP,W);
             
             if min(abs(cvx_optval - cvx_hist)) <= epsilonT
                 reIterate = 0;
