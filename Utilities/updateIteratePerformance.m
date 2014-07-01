@@ -77,5 +77,6 @@ for iUser = 1:nUsers
 end
 
 display(sum(cell2mat(SimParams.Debug.tempResource{2,SimParams.iDrop})));
+saveGlobals(SimParams,SimStructs,'runPrintFile');
 
 end

@@ -22,8 +22,8 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'Perturbed_3';
-SimParams.DopplerType = 'Uniform_100';
+SimParams.pathLossModel = 'CellEdge';
+SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 0;
@@ -43,7 +43,7 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 3;
+SimParams.nBands = 5;
 SimParams.nBases = 2;
 SimParams.nUsers = 6;
 
