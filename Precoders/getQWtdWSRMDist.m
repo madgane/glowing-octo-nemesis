@@ -10,7 +10,7 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-mIterationsSCA = 100;mIterationsSG = 20;sumDeviationH = -50;
+mIterationsSCA = 250;mIterationsSG = 25;sumDeviationH = -50;
 SimParams.distDecompSteps = mIterationsSG;
 
 % Debug Buffers initialization
@@ -59,7 +59,7 @@ switch selectionMethod
     
     case 'PrimalMethod'
         
-        alpha = 0.1e-3;
+        alpha = 0.5e-4;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellD = cell(nBases,1);cellBH = cell(nBases,1);
@@ -287,7 +287,7 @@ switch selectionMethod
         
     case 'ADMMMethod'
         
-        alpha = 1;
+        alpha = 0.1;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellX = cell(nBases,1);cellBH = cell(nBases,1);

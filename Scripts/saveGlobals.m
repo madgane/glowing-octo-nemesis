@@ -7,7 +7,7 @@ if isunix
 		system(sprintf('rm %s',strFileName));
 	end
 else
-	strFileName = sprintf('Results\%s.mat',varargin{1,nargin});
+	strFileName = sprintf('Results\\%s.mat',varargin{1,nargin});
 	if exist(strFileName,'file')
 		system(sprintf('del %s',strFileName));
 	end
