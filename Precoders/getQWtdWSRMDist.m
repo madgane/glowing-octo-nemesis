@@ -294,7 +294,7 @@ switch selectionMethod
         
         xIteration = 0;
         scaContinue = 1;
-        currentDual = zeros(nLayers,nUsers,nBases,nBands);
+		currentDual = zeros(nLayers,nUsers,nBases,nBands);
         [p_o,q_o,b_o,W] = randomizeInitialSCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases
@@ -307,8 +307,8 @@ switch selectionMethod
         while scaContinue
             
             yIteration = 0;
-            masterContinue = 1;
-            
+            masterContinue = 1;            
+			
             if xIteration == 0
                 for iBase = 1:nBases
                     cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
@@ -998,14 +998,14 @@ switch selectionMethod
         betaLKN = zeros(maxRank,nUsers,nBands);
         lambdaLKN = zeros(maxRank,nUsers,nBands);
         [mseError_o,W] = randomizeInitialMSESCApoint(SimParams,SimStructs);
-        t = -log2(mseError_o);
+        t = zeros(maxRank,nUsers,nBands);
         
         while reIterate
         
             for iBand = 1:nBands
                 for iUser = 1:nUsers
                     for iRank = 1:maxRank
-                        lambdaLKN(iRank,iUser,iBand) = qExponent * (QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
+                        lambdaLKN(iRank,iUser,iBand) = qExponent * abs(QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
                         betaLKN(iRank,iUser,iBand) = lambdaLKN(iRank,iUser,iBand) / (mseError_o(iRank,iUser,iBand));
                     end
                 end

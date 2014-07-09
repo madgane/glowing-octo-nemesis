@@ -22,7 +22,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
@@ -32,7 +32,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
-SimParams.weightedSumRateMethod = 'ADMMMethod';
+SimParams.weightedSumRateMethod = 'ADMMMethod_2';
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -45,7 +45,7 @@ SimParams.fbFraction = 0.00;
 
 SimParams.nBands = 4;
 SimParams.nBases = 2;
-SimParams.nUsers = 6;
+SimParams.nUsers = 12;
 
 SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
@@ -54,7 +54,7 @@ SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 SimParams.gracePeriod = 0;
 SimParams.arrivalDist = 'Constant';
 
-SimParams.maxArrival = 12;
+SimParams.maxArrival = 8;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
