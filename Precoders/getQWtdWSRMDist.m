@@ -71,33 +71,15 @@ switch selectionMethod
         
         for iBase = 1:nBases
             currentIF(:,:,iBase,:) = b_o;
+            cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
+            cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
+            cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
         end
         
         while scaContinue
             
             yIteration = 0;
             masterContinue = 1;
-            if xIteration == 0
-                for iBase = 1:nBases
-                    cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
-                    cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
-                    cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
-                end
-            else
-                for iBase = 1:nBases
-                    cellB{iBase,1} = cellBH{iBase,1};
-                    for iBand = 1:nBands
-                        for iUser = 1:usersPerCell(iBase,1)
-                            cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for iLayer = 1:nLayers
-                                cellP{iBase,1}(iLayer,iUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
-                                cellQ{iBase,1}(iLayer,iUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
-                            end
-                        end
-                    end
-                end
-            end
-            
             xIteration = xIteration + 1;
             if xIteration >= mIterationsSCA
                 scaContinue = 0;
@@ -258,6 +240,19 @@ switch selectionMethod
                 sumDeviationH = sumDeviation(1,end);
             end
             
+            for iBase = 1:nBases
+                cellB{iBase,1} = cellBH{iBase,1};
+                for iBand = 1:nBands
+                    for iUser = 1:usersPerCell(iBase,1)
+                        cUser = cellUserIndices{iBase,1}(iUser,1);
+                        for iLayer = 1:nLayers
+                            cellP{iBase,1}(iLayer,iUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
+                            cellQ{iBase,1}(iLayer,iUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
+                        end
+                    end
+                end
+            end
+            
             for iBand = 1:nBands
                 for iUser = 1:nUsers
                     baseNode = SimStructs.userStruct{iUser,1}.baseNode;
@@ -299,6 +294,9 @@ switch selectionMethod
         
         for iBase = 1:nBases
             cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
+            cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
+            cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
+            cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
             for jBase = 1:nBases
                 cellX{iBase,1}(:,:,jBase,:) = b_o;
             end
@@ -308,27 +306,6 @@ switch selectionMethod
             
             yIteration = 0;
             masterContinue = 1;
-            
-            if xIteration == 0
-                for iBase = 1:nBases
-                    cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
-                    cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
-                    cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
-                end
-            else
-                for iBase = 1:nBases
-                    cellB{iBase,1} = cellBH{iBase,1};
-                    for iBand = 1:nBands
-                        for iUser = 1:usersPerCell(iBase,1)
-                            cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for iLayer = 1:nLayers
-                                cellP{iBase,1}(iLayer,iUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
-                                cellQ{iBase,1}(iLayer,iUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
-                            end
-                        end
-                    end
-                end
-            end
             
             xIteration = xIteration + 1;
             if xIteration >= mIterationsSCA
@@ -512,6 +489,19 @@ switch selectionMethod
                 sumDeviationH = sumDeviation(1,end);
             end
             
+            for iBase = 1:nBases
+                cellB{iBase,1} = cellBH{iBase,1};
+                for iBand = 1:nBands
+                    for iUser = 1:usersPerCell(iBase,1)
+                        cUser = cellUserIndices{iBase,1}(iUser,1);
+                        for iLayer = 1:nLayers
+                            cellP{iBase,1}(iLayer,iUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
+                            cellQ{iBase,1}(iLayer,iUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM{iBase,1}(:,iLayer,iUser,iBand));
+                        end
+                    end
+                end
+            end
+
             for iBand = 1:nBands
                 for iUser = 1:nUsers
                     baseNode = SimStructs.userStruct{iUser,1}.baseNode;
