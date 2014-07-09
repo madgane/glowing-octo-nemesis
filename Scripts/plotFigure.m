@@ -3,7 +3,7 @@ function plotFigure(figStruct)
 
 figColor = 'r';
 figMarker = 'd';
-figLineType = '--';
+figLineType = '-.';
 figLineWidth = 1;
 figMarkerSize = 2;
     
