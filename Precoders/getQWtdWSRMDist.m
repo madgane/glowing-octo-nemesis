@@ -10,7 +10,7 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-mIterationsSCA = 250;mIterationsSG = 25;sumDeviationH = -50;
+mIterationsSCA = 250;mIterationsSG = 10;sumDeviationH = -50;
 SimParams.distDecompSteps = mIterationsSG;
 
 % Debug Buffers initialization
@@ -70,7 +70,7 @@ switch selectionMethod
         [p_o,q_o,b_o,W] = randomizeInitialSCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases
-            currentIF(:,:,iBase,:) = b_o;
+            currentIF(:,:,iBase,:) = b_o / nBases;
             cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
             cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
             cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);

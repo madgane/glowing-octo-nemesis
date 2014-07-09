@@ -176,20 +176,7 @@ switch selectionMethod
             
             if strfind(cvx_status,'Solved')
                 
-                b_o = b;
-                for iBand = 1:nBands
-                    for iBase = 1:nBases
-                        for iUser = 1:usersPerCell(iBase,1)
-                            cUser = cellUserIndices{iBase,1}(iUser,1);
-                            currentH = cH{iBase,iBand}(:,:,cUser);
-                            for iLayer = 1:maxRank
-                                p_o(iLayer,cUser,iBand) = real(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));
-                                q_o(iLayer,cUser,iBand) = imag(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));
-                            end
-                        end
-                    end
-                end
-                
+                b_o = b;p_o = p;q_o = q;                
                 for iBand = 1:nBands
                     for iBase = 1:nBases
                         for iUser = 1:usersPerCell(iBase,1)

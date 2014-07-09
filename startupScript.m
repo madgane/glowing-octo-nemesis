@@ -22,7 +22,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'CellEdge';
+SimParams.pathLossModel = 'Perturbed_6';
 SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
@@ -43,18 +43,18 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 1;
+SimParams.nBands = 5;
 SimParams.nBases = 2;
-SimParams.nUsers = 12;
+SimParams.nUsers = 8;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 2;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
 SimParams.arrivalDist = 'Constant';
 
-SimParams.maxArrival = 8;
+SimParams.maxArrival = 12;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
