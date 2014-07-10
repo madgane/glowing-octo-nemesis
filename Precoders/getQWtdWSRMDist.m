@@ -282,7 +282,7 @@ switch selectionMethod
         
     case 'ADMMMethod'
         
-        alpha = 0.1;
+        alpha = 0.05;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellX = cell(nBases,1);cellBH = cell(nBases,1);
@@ -531,7 +531,7 @@ switch selectionMethod
         
     case 'PrimalMSEMethod'
         
-        alpha = 0.25e-4;
+        alpha = 0.5e-4;
         nLayers = SimParams.maxRank;
         cellD = cell(nBases,1);cellM = cell(nBases,1);cellTH = cell(nBases,1);
         
@@ -985,22 +985,12 @@ switch selectionMethod
         
         M = cell(nUsers,nBands);
         R = cell(maxRank,nUsers,nBands);
-        betaLKN = zeros(maxRank,nUsers,nBands);
+        betaLKN = ones(maxRank,nUsers,nBands);
         lambdaLKN = zeros(maxRank,nUsers,nBands);
         [mseError_o,W] = randomizeInitialMSESCApoint(SimParams,SimStructs);
-        t = zeros(maxRank,nUsers,nBands);
-        
+		
         while reIterate
-        
-            for iBand = 1:nBands
-                for iUser = 1:nUsers
-                    for iRank = 1:maxRank
-                        lambdaLKN(iRank,iUser,iBand) = qExponent * abs(QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
-                        betaLKN(iRank,iUser,iBand) = lambdaLKN(iRank,iUser,iBand) / (mseError_o(iRank,iUser,iBand));
-                    end
-                end
-            end
-            
+             
             for iBand = 1:nBands
                 for iUser = 1:nUsers
                     xNode = SimStructs.userStruct{iUser,1}.baseNode;
@@ -1136,8 +1126,18 @@ switch selectionMethod
                         t(iRank,iUser,iBand) = -log2(mseError_o(iRank,iUser,iBand)) - (mseError(iRank,iUser,iBand) - mseError_o(iRank,iUser,iBand)) / (mseError_o(iRank,iUser,iBand) * log(2));
                     end
                 end
-            end
+			end
             
+			for iBand = 1:nBands
+				for iUser = 1:nUsers
+					for iRank = 1:maxRank
+						lambdaLKN(iRank,iUser,iBand) = qExponent * (QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
+						betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 0.01 * (lambdaLKN(iRank,iUser,iBand) / (mseError(iRank,iUser,iBand)) - betaLKN(iRank,iUser,iBand));
+					end
+				end
+			end
+
+			
             cvx_optval = 0;
             for iUser = 1:nUsers
                 cvx_optval = cvx_optval + abs(QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))));
