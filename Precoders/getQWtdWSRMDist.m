@@ -978,28 +978,18 @@ switch selectionMethod
         
         xIndex = 0;
         reIterate = 1;
-        maxIterations = 100;
+        maxIterations = 250;
         currentIteration = 0;
         cvx_hist = -500 * ones(2,1);
 		SimParams.distDecompSteps = 1;
         
         M = cell(nUsers,nBands);
         R = cell(maxRank,nUsers,nBands);
-        betaLKN = zeros(maxRank,nUsers,nBands);
+        betaLKN = ones(maxRank,nUsers,nBands);
         lambdaLKN = zeros(maxRank,nUsers,nBands);
         [mseError_o,W] = randomizeInitialMSESCApoint(SimParams,SimStructs);
-        t = zeros(maxRank,nUsers,nBands);
         
         while reIterate
-        
-            for iBand = 1:nBands
-                for iUser = 1:nUsers
-                    for iRank = 1:maxRank
-                        lambdaLKN(iRank,iUser,iBand) = qExponent * abs(QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
-                        betaLKN(iRank,iUser,iBand) = lambdaLKN(iRank,iUser,iBand) / (mseError_o(iRank,iUser,iBand));
-                    end
-                end
-            end
             
             for iBand = 1:nBands
                 for iUser = 1:nUsers
@@ -1134,6 +1124,16 @@ switch selectionMethod
                 for iUser = 1:nUsers
                     for iRank = 1:maxRank
                         t(iRank,iUser,iBand) = -log2(mseError_o(iRank,iUser,iBand)) - (mseError(iRank,iUser,iBand) - mseError_o(iRank,iUser,iBand)) / (mseError_o(iRank,iUser,iBand) * log(2));
+                    end
+                end
+            end
+
+            for iBand = 1:nBands
+                for iUser = 1:nUsers
+                    for iRank = 1:maxRank
+                        lambdaLKN(iRank,iUser,iBand) = qExponent * (QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
+                        tempUpdate = lambdaLKN(iRank,iUser,iBand) / (mseError(iRank,iUser,iBand));
+                        betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 1e-2 * (tempUpdate - betaLKN(iRank,iUser,iBand));
                     end
                 end
             end
