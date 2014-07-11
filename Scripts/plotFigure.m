@@ -2,10 +2,10 @@
 function plotFigure(figStruct)
 
 figColor = 'r';
-figMarker = 'd';
+figMarker = '+';
 figLineType = '-.';
 figLineWidth = 1;
-figMarkerSize = 2;
+figMarkerSize = 4;
     
 if ~isfield(figStruct,'N')
     figStruct.N = 1;
