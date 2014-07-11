@@ -10,8 +10,8 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-mIterationsSCA = 250;mIterationsSG = 10;sumDeviationH = -50;
-SimParams.distDecompSteps = mIterationsSG;
+alpha = 2;
+mIterationsSCA = 25;mIterationsSG = 5;sumDeviationH = -50;
 
 % Debug Buffers initialization
 
@@ -29,6 +29,7 @@ end
 
 nUsers = sum(usersPerCell);
 QueuedPkts = zeros(nUsers,1);
+SimParams.distDecompSteps = mIterationsSG;
 
 for iBase = 1:nBases
     for iUser = 1:usersPerCell(iBase,1)
@@ -59,7 +60,6 @@ switch selectionMethod
     
     case 'PrimalMethod'
         
-        alpha = 0.5e-4;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellD = cell(nBases,1);cellBH = cell(nBases,1);
@@ -282,24 +282,23 @@ switch selectionMethod
         
     case 'ADMMMethod'
         
-        alpha = 0.05;
         nLayers = SimParams.maxRank;
         cellP = cell(nBases,1);cellQ = cell(nBases,1);cellB = cell(nBases,1);
         cellM = cell(nBases,1);cellX = cell(nBases,1);cellBH = cell(nBases,1);
         
         xIteration = 0;
         scaContinue = 1;
-		currentDual = zeros(nLayers,nUsers,nBases,nBands);
+        currentDual = cell(nBases,1);
+        cellXGlobal = zeros(nLayers,nUsers,nBases,nBands);		
         [p_o,q_o,b_o,W] = randomizeInitialSCApoint(SimParams,SimStructs);
         
-        for iBase = 1:nBases
-            cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
+        for iBase = 1:nBases  
+            cellXGlobal(:,:,iBase,:) = b_o;
             cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
             cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
             cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
-            for jBase = 1:nBases
-                cellX{iBase,1}(:,:,jBase,:) = b_o;
-            end
+            cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
+            currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
         end
         
         while scaContinue
@@ -347,22 +346,21 @@ switch selectionMethod
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             for jBase = 1:nBases
                                 if jBase ~= iBase
-                                    tempFirst = tempFirst + sum(currentDual(:,cUser,jBase,iBand) .* x(:,cUser,jBase,iBand));
-                                    tempADMM = tempADMM + vec(x(:,cUser,jBase,iBand) - cellX{jBase,1}(:,cUser,jBase,iBand)).^2;
+                                    tempFirst = tempFirst + sum(currentDual{iBase,1}(:,cUser,jBase,iBand) .* x(:,cUser,jBase,iBand));
+                                    tempADMM = tempADMM + vec(x(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand)).^2;
                                 end
                             end
                         end
                         
                         for iUser = 1:length(cellNeighbourIndices{iBase,1})
                             cUser = cellNeighbourIndices{iBase,1}(iUser,1);
-                            baseNode = SimStructs.userStruct{cUser,1}.baseNode;
-                            tempSecond = tempSecond + sum(currentDual(:,cUser,iBase,iBand) .* x(:,cUser,iBase,iBand));
-                            tempADMM = tempADMM + vec(x(:,cUser,iBase,iBand) - cellX{baseNode,1}(:,cUser,iBase,iBand)).^2;
+                            tempSecond = tempSecond + sum(currentDual{iBase,1}(:,cUser,iBase,iBand) .* x(:,cUser,iBase,iBand));
+                            tempADMM = tempADMM + vec(x(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand)).^2;
                         end
                         
                     end
                     
-                    epiObjective >= norm(userObjective,qExponent) + tempFirst - tempSecond + tempADMM * (alpha / 2);
+                    epiObjective >= norm(userObjective,qExponent) + tempFirst + tempSecond + tempADMM * (alpha / 2);
                     
                     for iBand = 1:nBands
                         
@@ -453,21 +451,34 @@ switch selectionMethod
                     end
                 end
                 
-                currentDualH = currentDual;
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellM,W);
                 
                 for iBand = 1:nBands
                     for iBase = 1:nBases
                         for iUser = 1:usersPerCell(iBase,1)
                             cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for iLayer = 1:nLayers
-                                for jBase = 1:nBases
-                                    if jBase ~= iBase
-                                        currentDual(iLayer,cUser,jBase,iBand) = currentDualH(iLayer,cUser,jBase,iBand) + alpha * ...
-                                            (cellX{iBase,1}(iLayer,cUser,jBase,iBand) - cellX{jBase,1}(iLayer,cUser,jBase,iBand));
-                                    end
+                            for jBase = 1:nBases
+                                if jBase ~= iBase
+                                    cellXGlobal(:,cUser,jBase,iBand) = (cellX{iBase,1}(:,cUser,jBase,iBand) + cellX{jBase,1}(:,cUser,jBase,iBand)) / 2;
                                 end
                             end
+                        end
+                    end
+                end
+                                
+                for iBand = 1:nBands
+                    for iBase = 1:nBases
+                        for iUser = 1:usersPerCell(iBase,1)
+                            cUser = cellUserIndices{iBase,1}(iUser,1);
+                            for jBase = 1:nBases
+                                if jBase ~= iBase
+                                    currentDual{iBase,1}(:,cUser,jBase,iBand) = currentDual{iBase,1}(:,cUser,jBase,iBand) + alpha * (cellX{iBase,1}(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand));
+                                end
+                            end
+                        end
+                        for iUser = 1:length(cellNeighbourIndices{iBase,1})
+                            cUser = cellNeighbourIndices{iBase,1}(iUser,1);
+                            currentDual{iBase,1}(:,cUser,iBase,iBand) = currentDual{iBase,1}(:,cUser,iBase,iBand) + alpha * (cellX{iBase,1}(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand));
                         end
                     end
                 end
@@ -476,10 +487,6 @@ switch selectionMethod
                     status = strcat(status,'-',sprintf('%d',yIteration),'-',sprintf('%d',xIteration));
                     display(status);
                 end
-                if norm(vec(currentDual - currentDualH),2) <= epsilonT
-                    masterContinue = 0;
-                end
-                
             end
             
             sumDeviation = sum(cell2mat(SimParams.Debug.tempResource{3,SimParams.iDrop}));
@@ -531,7 +538,6 @@ switch selectionMethod
         
     case 'PrimalMSEMethod'
         
-        alpha = 0.5e-4;
         nLayers = SimParams.maxRank;
         cellD = cell(nBases,1);cellM = cell(nBases,1);cellTH = cell(nBases,1);
         
@@ -737,16 +743,19 @@ switch selectionMethod
         
     case 'ADMMMSEMethod'
         
-        alpha = 5;
         nLayers = SimParams.maxRank;
         cellM = cell(nBases,1);cellX = cell(nBases,1);cellBH = cell(nBases,1);
         
         xIteration = 0;
         scaContinue = 1;
-        currentDual = zeros(nLayers,nUsers,nBases,nBands);
+        currentDual = cell(nBases,1);
+        cellXGlobal = zeros(nLayers,nUsers,nBases,nBands);		
         [initialMSE,W,currentF] = randomizeInitialMSESCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases
+            cellXGlobal(:,:,iBase,:) = currentF;
+            cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
+            currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
             cellBH{iBase,1} = initialMSE(:,cellUserIndices{iBase,1},:);
         end
         
@@ -754,14 +763,6 @@ switch selectionMethod
             
             yIteration = 0;
             masterContinue = 1;
-            
-            for iBase = 1:nBases
-                cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
-                for jBase = 1:nBases
-                    cellX{iBase,1}(:,:,jBase,:) = currentF;
-                end
-            end
-            
             xIteration = xIteration + 1;
             if xIteration >= mIterationsSCA
                 scaContinue = 0;
@@ -804,22 +805,21 @@ switch selectionMethod
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             for jBase = 1:nBases
                                 if jBase ~= iBase
-                                    tempFirst = tempFirst + sum(currentDual(:,cUser,jBase,iBand) .* x(:,cUser,jBase,iBand));
-                                    tempADMM = tempADMM + vec(x(:,cUser,jBase,iBand) - cellX{jBase,1}(:,cUser,jBase,iBand)).^2;
+                                    tempFirst = tempFirst + sum(currentDual{iBase,1}(:,cUser,jBase,iBand) .* x(:,cUser,jBase,iBand));
+                                    tempADMM = tempADMM + vec(x(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand)).^2;
                                 end
                             end
                         end
                         
                         for iUser = 1:length(cellNeighbourIndices{iBase,1})
                             cUser = cellNeighbourIndices{iBase,1}(iUser,1);
-                            baseNode = SimStructs.userStruct{cUser,1}.baseNode;
-                            tempSecond = tempSecond + sum(currentDual(:,cUser,iBase,iBand) .* x(:,cUser,iBase,iBand));
-                            tempADMM = tempADMM + vec(x(:,cUser,iBase,iBand) - cellX{baseNode,1}(:,cUser,iBase,iBand)).^2;
+                            tempSecond = tempSecond + sum(currentDual{iBase,1}(:,cUser,iBase,iBand) .* x(:,cUser,iBase,iBand));
+                            tempADMM = tempADMM + vec(x(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand)).^2;
                         end
                         
                     end
                     
-                    epiObjective >= norm(userObjective,qExponent) + tempFirst - tempSecond + tempADMM * (alpha / 2);
+                    epiObjective >= norm(userObjective,qExponent) + tempFirst + tempSecond + tempADMM * (alpha / 2);
                     
                     for iBand = 1:nBands
                         
@@ -894,34 +894,43 @@ switch selectionMethod
                         status = strcat(status,'-',cvx_status);
                     end
                     
-                    if strfind(cvx_status,'Solved')
-                        
+                    if strfind(cvx_status,'Solved')                        
                         cellM{iBase,1} = M;
                         cellX{iBase,1} = x;
-                        cellBH{iBase,1} = mseError;
-                        
-                    else
-                        
-                        cellM{iBase,1} = zeros(size(M));
-                        
+                        cellBH{iBase,1} = mseError;                        
+                    else                        
+                        cellM{iBase,1} = zeros(size(M));                        
                     end
                 end
                 
-                currentDualH = currentDual;
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellM,W);
                 
                 for iBand = 1:nBands
                     for iBase = 1:nBases
                         for iUser = 1:usersPerCell(iBase,1)
                             cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for iLayer = 1:nLayers
-                                for jBase = 1:nBases
-                                    if jBase ~= iBase
-                                        currentDual(iLayer,cUser,jBase,iBand) = currentDualH(iLayer,cUser,jBase,iBand) + alpha * ...
-                                            (cellX{iBase,1}(iLayer,cUser,jBase,iBand) - cellX{jBase,1}(iLayer,cUser,jBase,iBand));
-                                    end
+                            for jBase = 1:nBases
+                                if jBase ~= iBase
+                                    cellXGlobal(:,cUser,jBase,iBand) = (cellX{iBase,1}(:,cUser,jBase,iBand) + cellX{jBase,1}(:,cUser,jBase,iBand)) / 2;
                                 end
                             end
+                        end
+                    end
+                end
+                                
+                for iBand = 1:nBands
+                    for iBase = 1:nBases
+                        for iUser = 1:usersPerCell(iBase,1)
+                            cUser = cellUserIndices{iBase,1}(iUser,1);
+                            for jBase = 1:nBases
+                                if jBase ~= iBase
+                                    currentDual{iBase,1}(:,cUser,jBase,iBand) = currentDual{iBase,1}(:,cUser,jBase,iBand) + alpha * (cellX{iBase,1}(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand));
+                                end
+                            end
+                        end
+                        for iUser = 1:length(cellNeighbourIndices{iBase,1})
+                            cUser = cellNeighbourIndices{iBase,1}(iUser,1);
+                            currentDual{iBase,1}(:,cUser,iBase,iBand) = currentDual{iBase,1}(:,cUser,iBase,iBand) + alpha * (cellX{iBase,1}(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand));
                         end
                     end
                 end
@@ -931,11 +940,7 @@ switch selectionMethod
                     display(status);
                     %display(currentDual);
                     %display([squeeze(cellX{1}) squeeze(cellX{2})]);
-                end
-                if norm(vec(currentDual - currentDualH),2) <= epsilonT
-                    masterContinue = 0;
-                end
-                
+                end                
             end
             
             sumDeviation = sum(cell2mat(SimParams.Debug.tempResource{3,SimParams.iDrop}));
@@ -1132,7 +1137,7 @@ switch selectionMethod
 				for iUser = 1:nUsers
 					for iRank = 1:maxRank
 						lambdaLKN(iRank,iUser,iBand) = qExponent * (QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
-						betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 1e-3 * (lambdaLKN(iRank,iUser,iBand) / (mseError(iRank,iUser,iBand)) - betaLKN(iRank,iUser,iBand));
+						betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 0.05 * (lambdaLKN(iRank,iUser,iBand) / (mseError(iRank,iUser,iBand)) - betaLKN(iRank,iUser,iBand));
 					end
 				end
 			end
