@@ -10,8 +10,8 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-alpha = 2;
-mIterationsSCA = 25;mIterationsSG = 5;sumDeviationH = -50;
+alpha = 5;
+mIterationsSCA = 100;mIterationsSG = 10;sumDeviationH = -50;
 
 % Debug Buffers initialization
 
@@ -257,7 +257,7 @@ switch selectionMethod
                 for iUser = 1:nUsers
                     baseNode = SimStructs.userStruct{iUser,1}.baseNode;
                     for iLayer = 1:nLayers
-                        R = W{iUser,iBand}(:,iLayer) * W{iUser,iBand}(:,iLayer)' * SimParams.N;
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
                         for iBase = 1:nBases
                             for jUser = 1:usersPerCell(iBase,1)
                                 H = cH{iBase,iBand}(:,:,iUser);
@@ -293,7 +293,7 @@ switch selectionMethod
         [p_o,q_o,b_o,W] = randomizeInitialSCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases  
-            cellXGlobal(:,:,iBase,:) = b_o;
+            cellXGlobal(:,:,iBase,:) = zeros(nLayers,nUsers,nBands);
             cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
             cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
             cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
@@ -513,7 +513,7 @@ switch selectionMethod
                 for iUser = 1:nUsers
                     baseNode = SimStructs.userStruct{iUser,1}.baseNode;
                     for iLayer = 1:nLayers
-                        R = W{iUser,iBand}(:,iLayer) * W{iUser,iBand}(:,iLayer)' * SimParams.N;
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
                         for iBase = 1:nBases
                             for jUser = 1:usersPerCell(iBase,1)
                                 H = cH{iBase,iBand}(:,:,iUser);
@@ -548,7 +548,7 @@ switch selectionMethod
         
         for iBase = 1:nBases
             cellTH{iBase,1} = initialMSE(:,cellUserIndices{iBase,1},:);
-            currentIF(:,:,iBase,:) = currentF;
+            currentIF(:,:,iBase,:) = currentF / nBases;
         end
         
         while scaContinue
@@ -718,7 +718,7 @@ switch selectionMethod
                 for iUser = 1:nUsers
                     baseNode = SimStructs.userStruct{iUser,1}.baseNode;
                     for iLayer = 1:nLayers
-                        R = W{iUser,iBand}(:,iLayer) * W{iUser,iBand}(:,iLayer)' * SimParams.N;
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
                         for iBase = 1:nBases
                             for jUser = 1:usersPerCell(iBase,1)
                                 H = cH{iBase,iBand}(:,:,iUser);
@@ -750,10 +750,10 @@ switch selectionMethod
         scaContinue = 1;
         currentDual = cell(nBases,1);
         cellXGlobal = zeros(nLayers,nUsers,nBases,nBands);		
-        [initialMSE,W,currentF] = randomizeInitialMSESCApoint(SimParams,SimStructs);
+        [initialMSE,W,~] = randomizeInitialMSESCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases
-            cellXGlobal(:,:,iBase,:) = currentF;
+            cellXGlobal(:,:,iBase,:) = zeros(nLayers,nUsers,nBands);
             cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
             currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
             cellBH{iBase,1} = initialMSE(:,cellUserIndices{iBase,1},:);
@@ -954,7 +954,7 @@ switch selectionMethod
                 for iUser = 1:nUsers
                     baseNode = SimStructs.userStruct{iUser,1}.baseNode;
                     for iLayer = 1:nLayers
-                        R = W{iUser,iBand}(:,iLayer) * W{iUser,iBand}(:,iLayer)' * SimParams.N;
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
                         for iBase = 1:nBases
                             for jUser = 1:usersPerCell(iBase,1)
                                 H = cH{iBase,iBand}(:,:,iUser);
