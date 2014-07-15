@@ -10,7 +10,7 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-alpha = 5;
+alpha = 0.5e-3;
 mIterationsSCA = 100;mIterationsSG = 10;sumDeviationH = -50;
 
 % Debug Buffers initialization
@@ -981,7 +981,7 @@ switch selectionMethod
         
         maxRank = SimParams.maxRank;
         
-        xIndex = 0;
+        xIndex = 1;
         reIterate = 1;
         maxIterations = 250;
         currentIteration = 0;
@@ -1040,10 +1040,8 @@ switch selectionMethod
                             end
                         end
                     end
-                end
-                
-            else
-                
+                end                
+            else                
                 for iBase = 1:nBases
                     muMax = 100000;
                     muMin = 0;
@@ -1069,11 +1067,9 @@ switch selectionMethod
                         
                         if abs(muMin - muMax) <= 1e-4
                             iterateAgain = 0;
-                        end
-                        
+                        end                        
                     end
-                end
-                
+                end                
             end
             
             for iBand = 1:nBands
@@ -1137,7 +1133,7 @@ switch selectionMethod
 				for iUser = 1:nUsers
 					for iRank = 1:maxRank
 						lambdaLKN(iRank,iUser,iBand) = qExponent * (QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
-						betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 0.05 * (lambdaLKN(iRank,iUser,iBand) / (mseError(iRank,iUser,iBand)) - betaLKN(iRank,iUser,iBand));
+						betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 0.05 * ((lambdaLKN(iRank,iUser,iBand) / mseError(iRank,iUser,iBand)) - betaLKN(iRank,iUser,iBand));
 					end
 				end
 			end
@@ -1161,6 +1157,13 @@ switch selectionMethod
 			end
 						
             [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellP,W);
+            
+            totalDeviation = cell2mat(SimParams.Debug.tempResource{3,1});
+            totalDeviation = sum(totalDeviation);
+            
+            if totalDeviation(end) < epsilonT
+                reIterate = 0;
+            end
             
             if min(abs(cvx_optval - cvx_hist)) <= epsilonT
                 reIterate = 0;

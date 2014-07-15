@@ -95,11 +95,11 @@ switch SimParams.plotMode
         totalThroughput = sum(totalThroughput);
         
         plotFigure(struct('Y',totalDeviation(1:SimParams.distDecompSteps:end),'N',1));
-        xlabel('Iteration count');
+        xlabel('SCA Update Points');
         ylabel('Queue deviation in bits / channel use');
         
         plotFigure(struct('Y',totalThroughput(1:SimParams.distDecompSteps:end),'N',2));
-        xlabel('Iteration count');
+        xlabel('SCA Update Points');
         ylabel('Sum rate in bits / channel use');   
         
         profile off;

@@ -9,7 +9,7 @@ if isempty(strfind(currentPath,'cvx'))
     if isunix
         cd ~/codes/solvers/cvx_linux;
         cvx_setup;
-        cd ~/codes/finna-be-bugfixes;
+        cd ~/codes/glowing-octo-nemesis;
     else
         cd ..\solvers\cvx;
         cvx_setup;

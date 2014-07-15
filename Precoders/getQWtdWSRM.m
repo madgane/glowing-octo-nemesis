@@ -176,7 +176,7 @@ switch selectionMethod
             
             if strfind(cvx_status,'Solved')
                 
-                b_o = b;p_o = p;q_o = q;                
+                b_o = b;p_o = p;q_o = q;        
                 for iBand = 1:nBands
                     for iBase = 1:nBases
                         for iUser = 1:usersPerCell(iBase,1)
@@ -196,7 +196,7 @@ switch selectionMethod
                         end
                     end
                 end
-                
+                                
                 if min(abs(cvx_optval - cvx_hist)) <= epsilonT
                     reIterate = 0;
                 else
