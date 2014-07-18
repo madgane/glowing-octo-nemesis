@@ -10,8 +10,8 @@ usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);
 
-alpha = 0.5e-3;
-mIterationsSCA = 100;mIterationsSG = 10;sumDeviationH = -50;
+alpha = 0.25;
+mIterationsSCA = 150;mIterationsSG = 1;sumDeviationH = -50;
 
 % Debug Buffers initialization
 
@@ -983,7 +983,7 @@ switch selectionMethod
         
         xIndex = 1;
         reIterate = 1;
-        maxIterations = 250;
+        maxIterations = 100;
         currentIteration = 0;
         cvx_hist = -500 * ones(2,1);
 		SimParams.distDecompSteps = 1;
@@ -1133,7 +1133,7 @@ switch selectionMethod
 				for iUser = 1:nUsers
 					for iRank = 1:maxRank
 						lambdaLKN(iRank,iUser,iBand) = qExponent * (QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:))))^(qExponent - 1) / log(2);
-						betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 0.05 * ((lambdaLKN(iRank,iUser,iBand) / mseError(iRank,iUser,iBand)) - betaLKN(iRank,iUser,iBand));
+						betaLKN(iRank,iUser,iBand) = betaLKN(iRank,iUser,iBand) + 0.75 * ((lambdaLKN(iRank,iUser,iBand) / mseError(iRank,iUser,iBand)) - betaLKN(iRank,iUser,iBand));
 					end
 				end
 			end
@@ -1190,7 +1190,238 @@ switch selectionMethod
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = P;
             end
         end
+                        
+    case 'ScuttariMethod'
+
+        prevQ = 1e50;
+        prevRate = 1e50;
+        xIteration = 0;
+        scaContinue = 1;
+        cellMH = cell(nBases,1);
+        nLayers = SimParams.maxRank;
+        cellExchanges = cell(nBases,3);
+        [cellP,cellQ,cellB,W,cellM] = randomizeInitialSCApoint(SimParams,SimStructs);
+        
+        while scaContinue
+            
+            for iBase = 1:nBases
                 
+                kUsers = usersPerCell(iBase,1);
+                
+                cvx_begin
+                
+                dual variables dualD{nLayers,nUsers,nBands}
+                expressions p(nLayers,nUsers,nBands) q(nLayers,nUsers,nBands)
+                variable M(SimParams.nTxAntenna,nLayers,nUsers,nBands) complex
+                variables t(nLayers,nUsers,nBands) b(nLayers,nUsers,nBands) g(nLayers,nUsers,nBands)
+                variables userObjective(nUsers,1) epiObjective
+                
+                minimize(epiObjective)
+                
+                subject to
+                
+                for cUser = 1:nUsers
+                    abs(QueuedPkts(cUser,1) - sum(vec(t(:,cUser,:)))) <= userObjective(cUser,1);
+                end
+                
+                epiObjective >= norm(userObjective,qExponent);
+                
+                for iBand = 1:nBands                    
+                    for iUser = 1:kUsers                        
+                        cUser = cellUserIndices{iBase,1}(iUser,1);
+                        H = cH{iBase,iBand}(:,:,cUser);
+                        
+                        for iLayer = 1:nLayers
+                            intVector = sqrt(SimParams.N) * W{cUser,iBand}(:,iLayer)';
+                            for jUser = 1:nUsers
+                                baseNode = SimStructs.userStruct{jUser,1}.baseNode;
+                                iH = cH{baseNode,iBand}(:,:,cUser);
+                                if jUser ~= cUser
+                                    if baseNode ~= iBase
+                                        intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * cellM(:,:,jUser,iBand)];
+                                    else
+                                        intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * M(:,:,jUser,iBand)];
+                                    end
+                                else
+                                    for jLayer = 1:nLayers
+                                        intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * M(:,iLayer ~= (1:nLayers),jUser,iBand)];
+                                    end
+                                end
+                            end
+                            
+                            norm(intVector,2) <= sqrt(b(iLayer,cUser,iBand));
+                            log(1 + g(iLayer,cUser,iBand)) >= t(iLayer,cUser,iBand) * log(2);
+                            p(iLayer,cUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * H * M(:,iLayer,cUser,iBand));
+                            q(iLayer,cUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * H * M(:,iLayer,cUser,iBand));
+                            (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)) + ...
+                                (2 / cellB(iLayer,cUser,iBand)) * (cellP(iLayer,cUser,iBand) * (p(iLayer,cUser,iBand) - cellP(iLayer,cUser,iBand))) + ...
+                                (2 / cellB(iLayer,cUser,iBand)) * (cellQ(iLayer,cUser,iBand) * (q(iLayer,cUser,iBand) - cellQ(iLayer,cUser,iBand))) - ...
+                                (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)^2) * ...
+                                (b(iLayer,cUser,iBand) - cellB(iLayer,cUser,iBand)) >= g(iLayer,cUser,iBand);
+                        end
+                    end
+                    
+                    for iUser = 1:length(cellNeighbourIndices{iBase,1})
+                        
+                        cUser = cellNeighbourIndices{iBase,1}(iUser,1);
+                        gBaseNode = SimStructs.userStruct{cUser,1}.baseNode;
+                        nH = cH{gBaseNode,iBand}(:,:,cUser);
+                        
+                        for iLayer = 1:nLayers
+                            intVector = sqrt(SimParams.N) * W{cUser,iBand}(:,iLayer)';
+                            for jUser = 1:nUsers
+                                baseNode = SimStructs.userStruct{jUser,1}.baseNode;
+                                iH = cH{baseNode,iBand}(:,:,cUser);
+                                if jUser ~= cUser
+                                    if baseNode ~= iBase
+                                        intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * cellM(:,:,jUser,iBand)];
+                                    else
+                                        intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * M(:,:,jUser,iBand)];
+                                    end
+                                else
+                                    for jLayer = 1:nLayers
+                                        intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * cellM(:,iLayer ~= (1:nLayers),jUser,iBand)];
+                                    end
+                                end
+                            end
+                            
+                            norm(intVector,2) <= sqrt(b(iLayer,cUser,iBand));
+                            log(1 + g(iLayer,cUser,iBand)) >= t(iLayer,cUser,iBand) * log(2);
+                            p(iLayer,cUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * nH * cellM(:,iLayer,cUser,iBand));
+                            q(iLayer,cUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * nH * cellM(:,iLayer,cUser,iBand));
+                            (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)) + ...
+                                (2 / cellB(iLayer,cUser,iBand)) * (cellP(iLayer,cUser,iBand) * (p(iLayer,cUser,iBand) - cellP(iLayer,cUser,iBand))) + ...
+                                (2 / cellB(iLayer,cUser,iBand)) * (cellQ(iLayer,cUser,iBand) * (q(iLayer,cUser,iBand) - cellQ(iLayer,cUser,iBand))) - ...
+                                (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)^2) * ...
+                                (b(iLayer,cUser,iBand) - cellB(iLayer,cUser,iBand)) >= g(iLayer,cUser,iBand);
+                        end
+                    end
+                end
+                
+                if strcmp(globalMode,'false')
+                    for iBand = 1:nBands
+                        norm(vec(M(:,:,cellUserIndices{iBase,1},iBand)),2) <= sqrt(SimStructs.baseStruct{iBase,1}.sPower(1,iBand));
+                    end
+                else
+                    norm(vec(M),2) <= sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower(1,:)));
+                end
+                
+                cvx_end
+                
+                if iBase == 1
+                    status = cvx_status;
+                else
+                    status = strcat(status,'-',cvx_status);
+                end
+                
+                if strfind(cvx_status,'Solved')
+                    cellMH{iBase,1} = M;
+                    cellExchanges{iBase,1} = p;
+                    cellExchanges{iBase,2} = q;
+                    cellExchanges{iBase,3} = b;
+                else
+                    display('Failed');
+                    cellMH{iBase,1} = zeros(size(M));
+                end
+                
+            end
+                
+            cellMM = cell(nBases,1);
+            for iBase = 1:nBases
+                cellMM{iBase,1} = cellMH{iBase,1}(:,:,cellUserIndices{iBase,1},:);
+            end
+                        
+            [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellMM,W);
+            
+            for iBase = 1:nBases
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    cellM(:,:,cUser,:) = cellM(:,:,cUser,:) + alpha * (cellMH{iBase,1}(:,:,cUser,:) - cellM(:,:,cUser,:));
+                end
+            end
+            
+            for iBand = 1:nBands
+                for iUser = 1:nUsers
+                    baseNode = SimStructs.userStruct{iUser,1}.baseNode;
+                    for iLayer = 1:nLayers
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        for iBase = 1:nBases
+                            for jUser = 1:usersPerCell(iBase,1)
+                                jcUser = cellUserIndices{iBase,1}(jUser,1);
+                                H = cH{iBase,iBand}(:,:,iUser);
+                                M = cellM(:,:,jcUser,iBand);
+                                R = R + H * (M * M') * H';
+                            end
+                        end
+                        H = cH{baseNode,iBand}(:,:,iUser);
+                        W{iUser,iBand}(:,iLayer) = R \ (H * cellM(:,iLayer,iUser,iBand));
+                    end
+                end
+            end
+            
+%             for iBase = 1:nBases
+%                 for iBand = 1:nBands                    
+%                     for iUser = 1:usersPerCell(iBase,1)
+%                         cUser = cellUserIndices{iBase,1}(iUser,1);
+%                         for iLayer = 1:nLayers
+%                             cellP(iLayer,cUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM(:,iLayer,cUser,iBand));
+%                             cellQ(iLayer,cUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * cellM(:,iLayer,cUser,iBand));
+%                         end
+%                     end
+%                 end
+%             end
+            
+%             for iBand = 1:nBands
+%                 for iUser = 1:nUsers
+%                     for iLayer = 1:nLayers                        
+%                         tempVector = W{iUser,iBand}(:,iLayer)' * sqrt(SimParams.N);
+%                         for jUser = 1:nUsers
+%                             nBaseNode = SimStructs.userStruct{jUser,1}.baseNode;
+%                             if jUser ~= iUser
+%                                 tempVector = [tempVector W{iUser,iBand}(:,iLayer)' * cH{nBaseNode,iBand}(:,:,iUser) * cellM(:,:,jUser,iBand)];
+%                             else
+%                                 tempVector = [tempVector W{iUser,iBand}(:,iLayer)' * cH{nBaseNode,iBand}(:,:,iUser) * cellM(:,iLayer~=(1:nLayers),jUser,iBand)];
+%                             end
+%                         end
+%                         cellB(iLayer,iUser,iBand) = norm(tempVector,2)^2;
+%                     end
+%                 end
+%             end
+            
+            for iBase = 1:nBases
+                cellP(:,cellUserIndices{iBase,1},:) = cellExchanges{iBase,1}(:,cellUserIndices{iBase,1},:);
+                cellQ(:,cellUserIndices{iBase,1},:) = cellExchanges{iBase,2}(:,cellUserIndices{iBase,1},:);
+                cellB(:,cellUserIndices{iBase,1},:) = cellExchanges{iBase,3}(:,cellUserIndices{iBase,1},:);
+            end
+            
+            if xIteration < mIterationsSCA
+                xIteration = xIteration + 1;
+            else
+                scaContinue = 0;
+            end           
+            
+            cRate = sum(cell2mat(SimParams.Debug.tempResource{2,SimParams.iDrop}));
+            if abs(prevRate - cRate(1,end)) < epsilonT
+                scaContinue = 0;
+            else
+                prevRate = cRate(1,end);
+            end            
+            
+            cQueues = sum(cell2mat(SimParams.Debug.tempResource{3,SimParams.iDrop}));
+            if abs(prevQ - cQueues(1,end)) < epsilonT
+                scaContinue = 0;
+            else
+                prevQ = cQueues(1,end);
+            end            
+            
+        end
+        
+        for iBand = 1:nBands
+            for iBase = 1:nBases
+                SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM(:,:,cellUserIndices{iBase,1},iBand);
+            end
+        end
+        
 end
 
 for iUser = 1:nUsers

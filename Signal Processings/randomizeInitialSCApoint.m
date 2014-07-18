@@ -130,20 +130,16 @@ if randomizeInitialPoint
     switch nargin
         case 2
             varargout{1} = p;varargout{2} = q;varargout{3} = b;
-            if nargout == 4
-                varargout{4} = W;
-            end
+            varargout{4} = W;varargout{5} = M;
         case 3
             varargout{1} = p(:,:,currentBand);varargout{2} = q(:,:,currentBand);varargout{3} = b(:,:,currentBand);
-            if nargout == 4
-                xW = cell(nUsers,1);
-                for iUser = 1:nUsers
-                    xW{iUser,1} = W{iUser,currentBand};
-                end
-                varargout{4} = xW;
+            xW = cell(nUsers,1);
+            for iUser = 1:nUsers
+                xW{iUser,1} = W{iUser,currentBand};
             end
+            varargout{4} = xW;
     end
-    
+        
 else
     
     switch nargin
@@ -151,22 +147,20 @@ else
             varargout{1} = SimParams.Debug.DataExchange{1,1};
             varargout{2} = SimParams.Debug.DataExchange{2,1};
             varargout{3} = SimParams.Debug.DataExchange{3,1};
-            if nargout == 4
-                varargout{4} = SimParams.Debug.DataExchange{4,1};
-            end
+            varargout{4} = SimParams.Debug.DataExchange{4,1};
         case 3
             varargout{1} = SimParams.Debug.DataExchange{1,1}(:,:,currentBand);
             varargout{2} = SimParams.Debug.DataExchange{2,1}(:,:,currentBand);
             varargout{3} = SimParams.Debug.DataExchange{3,1}(:,:,currentBand);
-            if nargout == 4
-                xW = cell(nUsers,1);
-                for iUser = 1:nUsers
-                    xW{iUser,1} = SimParams.Debug.DataExchange{4,1}{iUser,currentBand};
-                end
-                varargout{4} = xW;
+            xW = cell(nUsers,1);
+            for iUser = 1:nUsers
+                xW{iUser,1} = SimParams.Debug.DataExchange{4,1}{iUser,currentBand};
             end
+            varargout{4} = xW;
     end
     
 end
+
+
 
 end
