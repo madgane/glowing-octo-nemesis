@@ -1191,7 +1191,7 @@ switch selectionMethod
             end
         end
                         
-    case 'ScuttariMethod'
+    case 'ScutariMethod'
 
         prevQ = 1e50;
         prevRate = 1e50;
@@ -1272,6 +1272,11 @@ switch selectionMethod
                             for jUser = 1:nUsers
                                 baseNode = SimStructs.userStruct{jUser,1}.baseNode;
                                 iH = cH{baseNode,iBand}(:,:,cUser);
+                                
+                                if baseNode ~= iBase
+                                    continue;
+                                end
+                                
                                 if jUser ~= cUser
                                     if baseNode ~= iBase
                                         intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * cellM(:,:,jUser,iBand)];
