@@ -52,6 +52,9 @@ if nargin == 2
         case 'Best_PerAntPwrConst_Method'
             [SimParams,SimStructs] = getPerAntennaPwrConstraintMethod(SimParams,SimStructs);
             
+        case 'Best_MultiCastBF_Method'
+            [SimParams,SimStructs] = getMultiCastPrecoders(SimParams,SimStructs);
+            
         otherwise
             display('Unknown Precoder Design !');
             

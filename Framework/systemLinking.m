@@ -50,6 +50,22 @@ for iBase = 1:SimParams.nBases
     SimStructs.baseStruct{iBase,1}.sPower = circshift(SimParams.sPower',(iBase - 1))';
 end
 
+if SimParams.multiCasting
+    for iBase = 1:SimParams.nBases
+        sIndex = 1;
+        linkedUsers = SimStructs.baseStruct{iBase,1}.linkedUsers;
+        cUsers = linkedUsers(randperm(length(linkedUsers)));
+        SimStructs.baseStruct{iBase,1}.mcGroup = cell(length(SimParams.mcGroups{iBase,1}),1);
+        for iGroup = 1:length(SimParams.mcGroups{iBase,1})
+            eIndex = sum(SimParams.mcGroups{iBase,1}(1,1:iGroup));
+            if iGroup ~= 1
+                sIndex = sum(SimParams.mcGroups{iBase,1}(1,1:iGroup - 1)) + 1;
+            end
+            SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1} = cUsers(sIndex:eIndex);
+        end
+    end
+end
+
 end
 
 

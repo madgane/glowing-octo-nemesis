@@ -1,11 +1,11 @@
 
 function plotFigure(figStruct)
 
-figColor = 'b';
-figMarker = '.';
-figLineType = '-';
+figColor = 'm';
+figMarker = 'v';
+figLineType = '-.';
 figLineWidth = 1;
-figMarkerSize = 4;
+figMarkerSize = 3;
     
 if ~isfield(figStruct,'N')
     figStruct.N = 1;

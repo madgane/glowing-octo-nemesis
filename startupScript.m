@@ -10,6 +10,7 @@ SimParams.outFile = 'defaultFile';
 SimParams.saveChannelInfo = 'false';
 SimParams.channelSaveFolder = 'Results';
 
+SimParams.cvxDisabled = 'true';
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
 SimParams.plotMode = 'CPlot';
@@ -22,7 +23,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
@@ -31,8 +32,8 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
-SimParams.weightedSumRateMethod = 'GenAlloc';
+SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
+SimParams.weightedSumRateMethod = 'SDPMethod';
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -43,18 +44,18 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 5;
-SimParams.nBases = 3;
-SimParams.nUsers = 12;
+SimParams.nBands = 1;
+SimParams.nBases = 1;
+SimParams.nUsers = 16;
 
-SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 2;
+SimParams.nTxAntenna = 8;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'Constant';
+SimParams.arrivalDist = 'SteadyFlow';
 
-SimParams.maxArrival = 12;
+SimParams.maxArrival = 2;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -64,6 +65,9 @@ if strcmp(SimParams.sysMode,'true')
     SimParams.nBases = 57;
     SimParams.nUsers = 570;
 end
+
+SimParams.multiCasting = 'true';
+SimParams.mcGroups = {[SimParams.nUsers]};
 
 [SimParams,SimStructs] = initializeBuffers(SimParams);
 
