@@ -93,18 +93,13 @@ switch selectionMethod
                 for iBase = 1:nBases                    
                     dX = double(X{iBase,iBand});
                     for iGroup = nGroupsPerCell(iBase,1)
-                        [P D] = eig(dX(:,:,iGroup));
-                        
-                        
-                        
-                        SimStructs.baseStruct{iBase,1}.PG{iBand,1} = 
+                        [P D] = eig(dX(:,:,iGroup));diagD = diag(D);
+                        desPrec = P(:,(diagD > epsilonT)) * sqrt(diag(diagD(diagD > epsilonT)));                        
+                        SimStructs.baseStruct{iBase,1}.PG{iBand,1} = desPrec;
                     end
                 end
             end
         end
-        
-        
-        
         
     otherwise
         display('Unknown Algorithm !');    
