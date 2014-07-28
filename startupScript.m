@@ -13,7 +13,7 @@ SimParams.channelSaveFolder = 'Results';
 SimParams.cvxDisabled = 'true';
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'CPlot';
+SimParams.plotMode = 'DispMCInfo';
 
 prelimCheck;
 preConfiguration;
@@ -33,7 +33,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.weightedSumRateMethod = 'SDPMethod';
+SimParams.weightedSumRateMethod = 'ConicMethod';
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -46,16 +46,16 @@ SimParams.fbFraction = 0.00;
 
 SimParams.nBands = 1;
 SimParams.nBases = 1;
-SimParams.nUsers = 16;
+SimParams.nUsers = 1;
 
-SimParams.nTxAntenna = 8;
+SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'SteadyFlow';
+SimParams.arrivalDist = 'Constant';
 
-SimParams.maxArrival = 2;
+SimParams.maxArrival = 4;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -67,7 +67,7 @@ if strcmp(SimParams.sysMode,'true')
 end
 
 SimParams.multiCasting = 'true';
-SimParams.mcGroups = {[SimParams.nUsers]};
+SimParams.mcGroups = {[1]};
 
 [SimParams,SimStructs] = initializeBuffers(SimParams);
 
@@ -106,7 +106,11 @@ for iPkt = 1:length(SimParams.maxArrival)
             end
             
             [SimParams,SimStructs] = getPMatrix(SimParams,SimStructs);
-            [SimParams,SimStructs] = performReception(SimParams,SimStructs);
+            if strcmp(SimParams.multiCasting,'true')
+                [SimParams,SimStructs] = performGroupReception(SimParams,SimStructs);
+            else
+                [SimParams,SimStructs] = performReception(SimParams,SimStructs);
+            end
             
             for iUser = 1:SimParams.nUsers
                 SimParams.sumRateInstant(iSNR,iDrop,iPkt) = SimParams.sumRateInstant(iSNR,iDrop,iPkt) + SimStructs.userStruct{iUser,1}.dropThrpt(iDrop,1);

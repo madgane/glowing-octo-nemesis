@@ -112,8 +112,17 @@ switch SimParams.plotMode
                 fprintf(1,'eNodeB - %d, Band - %d, Scheduled Users - %s \n',iBase,iBand,mat2str(SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1}));
             end
         end
-           
-        %displayChannels;
+
+    case 'DispMCInfo'
+        
+        displayQueues(SimParams,SimStructs);
+        for iBand = 1:SimParams.nBands
+            for iBase = 1:SimParams.nBases
+                fprintf('txPower on SC [%d] from BS [%d] - %f \t',iBand,iBase,SimParams.txPower(end,end,iBase,iBand));
+            end
+            fprintf('\n');
+        end
+        
         
     otherwise
         
