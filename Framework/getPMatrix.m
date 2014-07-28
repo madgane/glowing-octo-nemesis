@@ -2,7 +2,7 @@ function [SimParams,SimStructs,varargout] = getPMatrix(SimParams,SimStructs,vara
 
 if nargin == 2
     
-    switch (SimParams.PrecodingMethod)
+    switch (SimParams.PrecodingFormat)
         
         case 'Best_ZF_Method'
             [SimParams,SimStructs] = getZFMatrix(SimParams,SimStructs);
@@ -62,7 +62,7 @@ if nargin == 2
     
 else
     
-    switch (SimParams.PrecodingMethod)
+    switch (SimParams.PrecodingFormat)
         
         case 'Best_ZF_Method'
             varargout{1,1} = sprintf('%s - %s',varargin{1,1},'ZF');

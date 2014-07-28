@@ -23,7 +23,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'CellEdge';
+SimParams.pathLossModel = 'Perturbed_3';
 SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
@@ -32,10 +32,10 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.weightedSumRateMethod = 'ConicMethod';
+SimParams.PrecodingFormat = 'Best_MultiCastBF_Method';
+SimParams.DesignType = 'SDPMethod';
 
-SimParams.nDrops = 1;
+SimParams.nDrops = 10;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -46,16 +46,16 @@ SimParams.fbFraction = 0.00;
 
 SimParams.nBands = 1;
 SimParams.nBases = 1;
-SimParams.nUsers = 1;
+SimParams.nUsers = 10;
 
-SimParams.nTxAntenna = 4;
+SimParams.nTxAntenna = 8;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'Constant';
+SimParams.arrivalDist = 'SteadyFlow';
 
-SimParams.maxArrival = 4;
+SimParams.maxArrival = [6];
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -67,68 +67,97 @@ if strcmp(SimParams.sysMode,'true')
 end
 
 SimParams.multiCasting = 'true';
-SimParams.mcGroups = {[1]};
-
-[SimParams,SimStructs] = initializeBuffers(SimParams);
-
-for iPkt = 1:length(SimParams.maxArrival)
+if strcmp(SimParams.multiCasting,'true')    
+    SimParams.usersPerGroup = 5;
+    SimParams.nGroupArray = 1:2:4;
+    SimParams.nAntennaArray = 10:4:40;
     
-    SimParams.iPkt = iPkt;
-    [SimParams,SimStructs] = fwkInitialization(SimParams,SimStructs);
-    
-    for iSNR = 1:length(SimParams.snrIndex)
-        
-        SimParams.N = 1;
-        SimParams.iSNR = iSNR;
-        SimParams.sPower = 10.^(SimParams.snrIndex(iSNR)/10);
-        [SimParams,SimStructs] = systemInitialize(SimParams,SimStructs);
-        [SimParams,SimStructs] = systemLinking(SimParams,SimStructs);
-        
-        % Resetting for every SNRs
-        resetRandomness;
-        
-        for iDrop = 1:SimParams.nDrops
-            SimParams.iDrop = iDrop;
-
-            if strcmp(SimParams.DebugMode,'true')
-                SimParams.Debug.activeStatus(:,1)'
-            end
-            
-            [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
-            [SimParams,SimStructs] = getScheduledUsers(SimParams,SimStructs);
-            
-            if iDrop > 1
-                displayQueues(SimParams,SimStructs,iDrop - 1);
-            end
-            
-            if strcmp(SimParams.precoderWithIdealChn,'true')
-                SimStructs.linkChan = SimStructs.actualChannel;
-            end
-            
-            [SimParams,SimStructs] = getPMatrix(SimParams,SimStructs);
-            if strcmp(SimParams.multiCasting,'true')
-                [SimParams,SimStructs] = performGroupReception(SimParams,SimStructs);
-            else
-                [SimParams,SimStructs] = performReception(SimParams,SimStructs);
-            end
-            
-            for iUser = 1:SimParams.nUsers
-                SimParams.sumRateInstant(iSNR,iDrop,iPkt) = SimParams.sumRateInstant(iSNR,iDrop,iPkt) + SimStructs.userStruct{iUser,1}.dropThrpt(iDrop,1);
-            end
-            
-        end
-        
-        finalSystemUpdate;        
-        if strcmp(SimParams.DebugMode,'true')
-            display(squeeze(SimParams.QueueInfo.queueBacklogs(iSNR,:,iPkt)));
-        end
-        
-        cState = sprintf('SINR completed - %d',SimParams.snrIndex(iSNR));disp(cState);
-    end
-    
+    SimParams.mcGroups = cell(SimParams.nBases,1);
+    SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
+    SimParams.totalTXpower_SDP = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
+    SimParams.solverTiming = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
 end
 
-SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;    
+for iAntennaArray = 1:length(SimParams.nAntennaArray)
+    SimParams.iAntennaArray = iAntennaArray;
+    for iGroupArray = 1:length(SimParams.nGroupArray)
+        SimParams.iGroupArray = iGroupArray;
+        nGroupsPerCell = SimParams.nGroupArray(1,iGroupArray);
+        for iBase = 1:SimParams.nBases
+            SimParams.mcGroups{iBase,1} = [];
+            for iGroup = 1:nGroupsPerCell
+                SimParams.mcGroups{iBase,1} = [SimParams.mcGroups{iBase,1}, SimParams.usersPerGroup];
+            end
+        end
+        
+        SimParams.nUsers = SimParams.usersPerGroup * SimParams.nBases * nGroupsPerCell;
+        SimParams.nTxAntenna = SimParams.nAntennaArray(1,iAntennaArray);
+        
+        [SimParams,SimStructs] = initializeBuffers(SimParams);
+        
+        for iPkt = 1:length(SimParams.maxArrival)
+            
+            SimParams.iPkt = iPkt;
+            [SimParams,SimStructs] = fwkInitialization(SimParams,SimStructs);
+            
+            for iSNR = 1:length(SimParams.snrIndex)
+                
+                SimParams.N = 1;
+                SimParams.iSNR = iSNR;
+                SimParams.sPower = 10.^(SimParams.snrIndex(iSNR)/10);
+                [SimParams,SimStructs] = systemInitialize(SimParams,SimStructs);
+                [SimParams,SimStructs] = systemLinking(SimParams,SimStructs);
+                
+                % Resetting for every SNRs
+                resetRandomness;
+                
+                for iDrop = 1:SimParams.nDrops
+                    
+                    SimParams.iDrop = iDrop;
+                    
+                    if strcmp(SimParams.DebugMode,'true')
+                        SimParams.Debug.activeStatus(:,1)'
+                    end
+                    
+                    [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
+                    [SimParams,SimStructs] = getScheduledUsers(SimParams,SimStructs);
+                    
+                    if iDrop > 1
+                        displayQueues(SimParams,SimStructs,iDrop - 1);
+                    end
+                    
+                    if strcmp(SimParams.precoderWithIdealChn,'true')
+                        SimStructs.linkChan = SimStructs.actualChannel;
+                    end
+                    
+                    [SimParams,SimStructs] = getPMatrix(SimParams,SimStructs);
+                    if strcmp(SimParams.multiCasting,'true')
+                        [SimParams,SimStructs] = performGroupReception(SimParams,SimStructs);
+                    else
+                        [SimParams,SimStructs] = performReception(SimParams,SimStructs);
+                    end
+                    
+                    for iUser = 1:SimParams.nUsers
+                        SimParams.sumRateInstant(iSNR,iDrop,iPkt) = SimParams.sumRateInstant(iSNR,iDrop,iPkt) + SimStructs.userStruct{iUser,1}.dropThrpt(iDrop,1);
+                    end
+                    
+                    [SimParams,SimStructs] = updateTransmitPower(SimParams,SimStructs);
+                    
+                end
+                
+                finalSystemUpdate;
+                if strcmp(SimParams.DebugMode,'true')
+                    display(squeeze(SimParams.QueueInfo.queueBacklogs(iSNR,:,iPkt)));
+                end
+                
+                cState = sprintf('SINR completed - %d',SimParams.snrIndex(iSNR));disp(cState);
+            end
+            
+        end
+    end
+end
+
+SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;
 displayOutputs(SimParams,SimStructs);
 
 if strcmp(saveContents,'true')
@@ -145,7 +174,7 @@ if strcmp(saveContents,'true')
     
     SimParamsCell{globalCount,1} = SimParams;
     SimStructsCell{globalCount,1} = SimStructs;
-    save(SimParams.outFile,'globalCount','SimParamsCell','SimStructsCell');    
+    save(SimParams.outFile,'globalCount','SimParamsCell','SimStructsCell');
     cd ../
     
 end

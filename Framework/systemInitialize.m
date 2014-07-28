@@ -24,6 +24,10 @@ for iBase = 1:SimParams.nBases
     SimStructs.baseStruct{iBase,1}.allocGains = cell(SimParams.nBands,1);
     SimStructs.baseStruct{iBase,1}.allocPattern = cell(SimParams.nBands,1);
     SimStructs.baseStruct{iBase,1}.P = cell(SimParams.nBands,1);
+    if strcmp(SimParams.multiCasting,'true')
+        SimStructs.baseStruct{iBase,1}.PG = cell(SimParams.nBands,1);
+        SimStructs.baseStruct{iBase,1}.P_SDP = cell(SimParams.nBands,1);
+    end
 end
 
 SimStructs.linkChan = cell(SimParams.nBases,SimParams.nBands);
