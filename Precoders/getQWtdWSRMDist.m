@@ -1273,10 +1273,6 @@ switch selectionMethod
                                 baseNode = SimStructs.userStruct{jUser,1}.baseNode;
                                 iH = cH{baseNode,iBand}(:,:,cUser);
                                 
-                                if baseNode ~= iBase
-                                    continue;
-                                end
-                                
                                 if jUser ~= cUser
                                     if baseNode ~= iBase
                                         intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * cellM(:,:,jUser,iBand)];
@@ -1292,11 +1288,9 @@ switch selectionMethod
                             
                             norm(intVector,2) <= sqrt(b(iLayer,cUser,iBand));
                             log(1 + g(iLayer,cUser,iBand)) >= t(iLayer,cUser,iBand) * log(2);
-                            p(iLayer,cUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * nH * cellM(:,iLayer,cUser,iBand));
-                            q(iLayer,cUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * nH * cellM(:,iLayer,cUser,iBand));
-                            (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)) + ...
-                                (2 / cellB(iLayer,cUser,iBand)) * (cellP(iLayer,cUser,iBand) * (p(iLayer,cUser,iBand) - cellP(iLayer,cUser,iBand))) + ...
-                                (2 / cellB(iLayer,cUser,iBand)) * (cellQ(iLayer,cUser,iBand) * (q(iLayer,cUser,iBand) - cellQ(iLayer,cUser,iBand))) - ...
+                            p(iLayer,cUser,iBand) = cellP(iLayer,cUser,iBand);
+                            q(iLayer,cUser,iBand) = cellQ(iLayer,cUser,iBand);
+                            (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)) - ...
                                 (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)^2) * ...
                                 (b(iLayer,cUser,iBand) - cellB(iLayer,cUser,iBand)) >= g(iLayer,cUser,iBand);
                         end
