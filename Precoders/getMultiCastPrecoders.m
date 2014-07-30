@@ -45,15 +45,98 @@ switch selectionMethod
         
     case 'ConicMethod'
         
-        searchType = 'SDP';
         iterateSCAMax = 50;
-        rX = randn(nUsers,nBands);
-        iX = randn(nUsers,nBands);
-
+        txPower = 2 * max(reqSINRPerUser) * SimParams.N;
+        
+        rX = randn(nUsers,nBands) * txPower;
+        iX = randn(nUsers,nBands) * txPower;
+        
+        searchType = 'Dual';
+        
         % Feasible point generation !
         
         switch searchType
             
+            case 'Dual'
+                
+                objective = -1;
+                iterateSCA = 1;
+                iIterateSCA = 0;
+                while iterateSCA
+                    
+                    gConstraints = [];
+                    X = cell(nBases,nBands);
+                    for iBand = 1:nBands
+                        for iBase = 1:nBases
+                            X{iBase,iBand} = sdpvar(SimParams.nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
+                        end
+                    end                    
+                    oX = sdpvar(nUsers,nBands,'full');
+                    for iBand = 1:nBands
+                        for iBase = 1:nBases
+                            for iGroup = 1:nGroupsPerCell(iBase,1)
+                                groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
+                                for iUser = 1:length(groupUsers)
+                                    cUser = groupUsers(iUser,1);
+                                    Hsdp = cH{iBase,iBand}(:,:,cUser);
+                                    
+                                    riX = real(Hsdp * X{iBase,iBand}(:,iGroup));
+                                    iiX = imag(Hsdp * X{iBase,iBand}(:,iGroup));
+                                    tempExpression = rX(cUser,iBand)^2 + iX(cUser,iBand)^2 + 2 * (rX(cUser,iBand) * (riX - rX(cUser,iBand)) + iX(cUser,iBand) * (iiX - iX(cUser,iBand)));
+                                    tempSum = SimParams.N;
+                                    for jBase = 1:nBases
+                                        for jGroup = 1:nGroupsPerCell(jBase,1)
+                                            Hsdp = cH{jBase,iBand}(:,:,cUser);
+                                            if ~and((iBase == jBase),(iGroup == jGroup))
+                                                riX = real(Hsdp * X{jBase,iBand}(:,jGroup));
+                                                iiX = imag(Hsdp * X{jBase,iBand}(:,jGroup));
+                                                tempSum = tempSum + riX^2 + iiX^2;
+                                            end
+                                        end
+                                    end
+                                    gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * tempSum - tempExpression <= oX(cUser,iBand)];
+                                end
+                            end
+                        end
+                    end
+                    
+                    gConstraints = [gConstraints, oX <= 0];
+                    options = sdpsettings('verbose',1,'solver','Gurobi');
+                    solverOut = solvesdp(gConstraints,[],options);
+                    SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+                    
+                    if solverOut.problem == 0
+                        for iBand = 1:nBands
+                            for iBase = 1:nBases
+                                for iGroup = 1:nGroupsPerCell(iBase,1)
+                                    groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
+                                    for iUser = 1:length(groupUsers)
+                                        cUser = groupUsers(iUser,1);
+                                        Hsdp = cH{iBase,iBand}(:,:,cUser);
+                                        rX(cUser,iBand) = real(Hsdp * double(X{iBase,iBand}(:,iGroup)));
+                                        iX(cUser,iBand) = imag(Hsdp * double(X{iBase,iBand}(:,iGroup)));
+                                    end
+                                end
+                                
+                            end
+                        end
+                    else
+                        display(solverOut);
+                        rX = rX / 2;iX = iX / 2;
+                        continue;
+                    end
+                    
+                    if iIterateSCA < iterateSCAMax
+                        iIterateSCA = iIterateSCA + 1;
+                    else
+                        iterateSCA = 0;
+                    end
+                    
+                    if double(objective) < 0
+                        iterateSCA = 0;
+                    end
+                end
+                
             case 'Nonlinear'
                 
                 gConstraints = [];
@@ -71,27 +154,27 @@ switch selectionMethod
                             for iUser = 1:length(groupUsers)
                                 cUser = groupUsers(iUser,1);
                                 Hsdp = cH{iBase,iBand}(:,:,cUser);
-                                rX = real(Hsdp * X{iBase,iBand}(:,iGroup));
-                                iX = imag(Hsdp * X{iBase,iBand}(:,iGroup));
-                                tempExpression = rX^2 + iX^2;
-                                                                
+                                rcX = real(Hsdp * X{iBase,iBand}(:,iGroup));
+                                icX = imag(Hsdp * X{iBase,iBand}(:,iGroup));
+                                tempExpression = rcX^2 + icX^2;
+                                
                                 tempSum = SimParams.N;
                                 for jBase = 1:nBases
                                     for jGroup = 1:nGroupsPerCell(jBase,1)
                                         Hsdp = cH{jBase,iBand}(:,:,cUser);
                                         if ~and((iBase == jBase),(iGroup == jGroup))
-                                            rX = real(Hsdp * X{jBase,iBand}(:,jGroup));
-                                            iX = imag(Hsdp * X{jBase,iBand}(:,jGroup));
-                                            tempSum = tempSum + rX^2 + iX^2;
+                                            rcX = real(Hsdp * X{jBase,iBand}(:,jGroup));
+                                            icX = imag(Hsdp * X{jBase,iBand}(:,jGroup));
+                                            tempSum = tempSum + rcX^2 + icX^2;
                                         end
                                     end
-                                end                                
+                                end
                                 gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * tempSum - tempExpression <= 0];
                             end
                         end
                     end
                 end
-                                
+                
                 options = sdpsettings('verbose',1,'solver','nomad');
                 solverOut = solvesdp(gConstraints,[],options);
                 SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
@@ -133,6 +216,12 @@ switch selectionMethod
                     end
                 end
                 
+            otherwise
+                
+                rX = randn(nUsers,nBands) * txPower;
+                iX = randn(nUsers,nBands) * txPower;
+                display('Using Randomized data !');
+                
         end
         
         iterateSCA = 1;
@@ -162,18 +251,18 @@ switch selectionMethod
                             iiX = imag(Hsdp * X{iBase,iBand}(:,iGroup));
                             tempExpression = rX(cUser,iBand)^2 + iX(cUser,iBand)^2 + 2 * (rX(cUser,iBand) * (riX - rX(cUser,iBand)) + iX(cUser,iBand) * (iiX - iX(cUser,iBand)));
                             gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * bX(cUser,iBand) * bX(cUser,iBand) - tempExpression <= 0];
-                            tempSum = [sqrt(SimParams.N)];
+                            tempVec = [sqrt(SimParams.N)];
                             for jBase = 1:nBases
                                 for jGroup = 1:nGroupsPerCell(jBase,1)
                                     Hsdp = cH{jBase,iBand}(:,:,cUser);
                                     if ~and((iBase == jBase),(iGroup == jGroup))
                                         riX = real(Hsdp * X{jBase,iBand}(:,jGroup));
                                         iiX = imag(Hsdp * X{jBase,iBand}(:,jGroup));
-                                        tempSum = [tempSum, riX, iiX];
+                                        tempVec = [tempVec, riX, iiX];
                                     end
                                 end
                             end
-                            gConstraints = [gConstraints , cone(tempSum,bX(cUser,iBand))];
+                            gConstraints = [gConstraints , tempVec * tempVec' - bX(cUser,iBand) <= 0];
                         end
                     end
                 end
@@ -186,7 +275,7 @@ switch selectionMethod
                 end
             end
             
-            options = sdpsettings('verbose',1,'solver','Mosek');
+            options = sdpsettings('verbose',1,'solver','Gurobi');
             solverOut = solvesdp(gConstraints,objective,options);
             SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
             
@@ -207,7 +296,10 @@ switch selectionMethod
                 end
             else
                 display(solverOut);
-                rX = rX / 2;iX = iX /2;
+                txPower = 2 * max(reqSINRPerUser) * SimParams.N;
+                rX = randn(nUsers,nBands) * txPower;
+                iX = randn(nUsers,nBands) * txPower;
+                continue;
             end
             
             if iIterateSCA < iterateSCAMax
@@ -230,7 +322,7 @@ switch selectionMethod
         end
         
     otherwise
-        display('Unknown Algorithm !');
+        display('Unknown Precoding Method !');
         
 end
 

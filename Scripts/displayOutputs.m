@@ -115,24 +115,27 @@ switch SimParams.plotMode
 
     case 'DispMCInfo'
         
-        sdpPower = 0;        
+        totalBFPower = 0;
+        totalSDPPower = 0;       
         displayQueues(SimParams,SimStructs);
         for iBand = 1:SimParams.nBands
             for iBase = 1:SimParams.nBases
-                totalPowerSDP = 0;
+                sdpPower = 0;
                 for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
-                    totalPowerSDP = totalPowerSDP + real(trace(SimStructs.baseStruct{iBase,1}.P_SDP{iBand,1}(:,:,iGroup)));
+                    if ~isempty(SimStructs.baseStruct{iBase,1}.P_SDP{iBand,1})
+                        sdpPower = sdpPower + real(trace(SimStructs.baseStruct{iBase,1}.P_SDP{iBand,1}(:,:,iGroup)));
+                    end
                 end
-                fprintf('Transmit Power on SC [%d] from BS [%d] : BF Pwr - %f \t SDP Pwr (LB) - %f',iBand,iBase,...
-                    real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}')),...
-                    totalPowerSDP);
-                sdpPower = sdpPower + totalPowerSDP;
+                bfPower = real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}'));
+                fprintf('Transmit Power on SC [%d] from BS [%d] : BF Pwr - %f \t SDP Pwr (LB) - %f \n',iBand,iBase,bfPower,sdpPower);
+                
+                totalBFPower = totalBFPower + bfPower;
+                totalSDPPower = sdpPower + totalSDPPower;
             end
             fprintf('\n');
         end
         
-        
-        
+        fprintf('Total Power SDP (LB) - %f, BF - %f \n',totalSDPPower,totalBFPower);
         
     otherwise
         

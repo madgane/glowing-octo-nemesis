@@ -26,17 +26,18 @@ SimParams.ChannelModel = 'IID';
 SimParams.pathLossModel = 'Perturbed_3';
 SimParams.DopplerType = 'Uniform_10';
 
-SimParams.queueWt = 1;
-SimParams.mdpFactor = 0;
-SimParams.robustNoise = 0;
-
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingFormat = 'Best_MultiCastBF_Method';
 SimParams.DesignType = 'SDPMethod';
 
-SimParams.nDrops = 10;
+SimParams.nBands = 1;
+SimParams.nBases = 2;
+SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
+
+SimParams.maxArrival = [6];
+SimParams.arrivalDist = 'SteadyFlow';
 
 SimParams.PF_dur = 40;
 SimParams.SFSymbols = 14;
@@ -44,20 +45,14 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 1;
-SimParams.nBases = 1;
-SimParams.nUsers = 10;
-
-SimParams.nTxAntenna = 8;
-SimParams.nRxAntenna = 1;
-SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
-
 SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'SteadyFlow';
-
-SimParams.maxArrival = [6];
 SimParams.FixedPacketArrivals = [6];
+SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
+
+SimParams.queueWt = 1;
+SimParams.mdpFactor = 0;
+SimParams.robustNoise = 0;
 
 if strcmp(SimParams.sysMode,'true')
     SimParams.snrIndex = [0];
@@ -68,9 +63,9 @@ end
 
 SimParams.multiCasting = 'true';
 if strcmp(SimParams.multiCasting,'true')    
-    SimParams.usersPerGroup = 5;
-    SimParams.nGroupArray = 1:2:4;
-    SimParams.nAntennaArray = 10:4:40;
+    SimParams.usersPerGroup = 10;
+    SimParams.nGroupArray = 2;
+    SimParams.nAntennaArray = 40;
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
@@ -90,9 +85,10 @@ for iAntennaArray = 1:length(SimParams.nAntennaArray)
             end
         end
         
-        SimParams.nUsers = SimParams.usersPerGroup * SimParams.nBases * nGroupsPerCell;
+        SimParams.nRxAntenna = 1;
         SimParams.nTxAntenna = SimParams.nAntennaArray(1,iAntennaArray);
-        
+        SimParams.nUsers = SimParams.usersPerGroup * SimParams.nBases * nGroupsPerCell;
+                
         [SimParams,SimStructs] = initializeBuffers(SimParams);
         
         for iPkt = 1:length(SimParams.maxArrival)
