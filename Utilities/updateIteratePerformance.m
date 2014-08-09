@@ -76,7 +76,9 @@ for iUser = 1:nUsers
     end
 end
 
-display(sum(cell2mat(SimParams.Debug.tempResource{2,SimParams.iDrop})));
+tempSum = sum(cell2mat(SimParams.Debug.tempResource{2,SimParams.iDrop}));
+tempQueue = sum(cell2mat(SimParams.Debug.tempResource{3,SimParams.iDrop}));
+fprintf('(%.2f, %.2f) \n',tempSum(end),tempQueue(end));
 saveGlobals(SimParams,SimStructs,'runPrintFile');
 
 end

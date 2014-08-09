@@ -2,7 +2,7 @@
 function [SimParams,SimStructs] = getQWtdWSRM(SimParams,SimStructs)
 
 epsilonT = 1e-5;
-maxIterations = 100;
+maxIterations = 250;
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;
@@ -96,6 +96,7 @@ switch selectionMethod
         xIndex = 0;
         reIterate = 1;
         currentIteration = 0;
+        receiverMode = 'MMSE';
         cvx_hist = -500 * ones(2,1);
         maxRank = SimParams.maxRank;
         [p_o,q_o,b_o,vW] = randomizeInitialSCApoint(SimParams,SimStructs);
@@ -176,26 +177,8 @@ switch selectionMethod
             
             if strfind(cvx_status,'Solved')
                 
-                b_o = b;p_o = p;q_o = q;        
-                for iBand = 1:nBands
-                    for iBase = 1:nBases
-                        for iUser = 1:usersPerCell(iBase,1)
-                            cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for iLayer = 1:maxRank
-                                R = SimParams.N * eye(SimParams.nRxAntenna);
-                                for jBase = 1:nBases
-                                    for jUser = 1:usersPerCell(jBase,1)
-                                        rUser = cellUserIndices{jBase,1}(jUser,1);
-                                        H = cH{jBase,iBand}(:,:,cUser);
-                                        R = R + H * M(:,:,rUser,iBand) * M(:,:,rUser,iBand)' * H';
-                                    end
-                                end
-                                H = cH{iBase,iBand}(:,:,cUser);
-                                vW{cUser,iBand}(:,iLayer) = R \ (H * M(:,iLayer,cUser,iBand));
-                            end
-                        end
-                    end
-                end
+                M = full(M);
+                b_o = full(b);p_o = full(p);q_o = full(q);
                                 
                 if min(abs(cvx_optval - cvx_hist)) <= epsilonT
                     reIterate = 0;
@@ -203,6 +186,33 @@ switch selectionMethod
                     xIndex = xIndex + 1;
                     cvx_hist(mod(xIndex,2) + 1,1) = cvx_optval;
                 end
+                
+                if strcmp(receiverMode,'MMSE')
+                    
+                    for iBand = 1:nBands
+                        for iBase = 1:nBases
+                            for iUser = 1:usersPerCell(iBase,1)
+                                cUser = cellUserIndices{iBase,1}(iUser,1);
+                                for iLayer = 1:maxRank
+                                    R = SimParams.N * eye(SimParams.nRxAntenna);
+                                    for jBase = 1:nBases
+                                        for jUser = 1:usersPerCell(jBase,1)
+                                            rUser = cellUserIndices{jBase,1}(jUser,1);
+                                            H = cH{jBase,iBand}(:,:,cUser);
+                                            R = R + H * M(:,:,rUser,iBand) * M(:,:,rUser,iBand)' * H';
+                                        end
+                                    end
+                                    H = cH{iBase,iBand}(:,:,cUser);
+                                    vW{cUser,iBand}(:,iLayer) = R \ (H * M(:,iLayer,cUser,iBand));
+                                end
+                            end
+                        end
+                    end                    
+                    
+                else
+                    [~, ~, ~, vW] = findOptimalW(SimParams,SimStructs,M,vW,p_o,q_o,b_o);
+                end
+                
                 
             else
                 b_o = b_o * 2;
@@ -457,6 +467,8 @@ switch selectionMethod
                     norm(vec(M(:,:,cellUserIndices{iBase,1},:)),2) <= sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower(1,:)));
                 end
             end
+            
+            t >= 0;
             
             cvx_end
             

@@ -5,6 +5,13 @@ if nargin == 2
     iDrop = SimParams.nDrops;
 end
 
+underscore_location = strfind(SimParams.weightedSumRateMethod,'_');
+if isempty(underscore_location)
+    qExponent = 1;
+else
+    qExponent = str2double(SimParams.weightedSumRateMethod(underscore_location + 1:end));
+end
+
 fprintf('\n');
 fprintf('Displaying User Queue status for drop - %2d \n',iDrop);
 display('------------------------------------------');
@@ -27,6 +34,7 @@ QueueMatrix = [txPkts Queues servedPkts presentQueues];
 display(QueueMatrix);
 fprintf('Queue Deviation - %f bits \n',Qdeviation);
 fprintf('Total Tx Rate - %f bits \n',sum(txPkts(:)));
+fprintf('Objective Function - %f bits \n',norm((Queues - servedPkts),qExponent));
 
 % Displaying in Latex import format
 
