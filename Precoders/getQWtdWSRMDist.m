@@ -986,7 +986,7 @@ switch selectionMethod
         maxIterations = 250;
         currentIteration = 0;
         cvx_hist = -500 * ones(2,1);
-		SimParams.distDecompSteps = 1;
+        SimParams.distDecompSteps = 1;
         
         M = cell(nUsers,nBands);
         R = cell(maxRank,nUsers,nBands);
@@ -995,7 +995,7 @@ switch selectionMethod
         [mseError_o,W] = randomizeInitialMSESCApoint(SimParams,SimStructs);
         
         while reIterate
-            for dualIterate = 1:2
+            for dualIterate = 1:100
                 for iBand = 1:nBands
                     for iUser = 1:nUsers
                         xNode = SimStructs.userStruct{iUser,1}.baseNode;
@@ -1034,7 +1034,6 @@ switch selectionMethod
                                 else
                                     muMax = currentMu;
                                 end
-                                
                                 if abs(muMin - muMax) <= 1e-6
                                     iterateAgain = 0;
                                 end
@@ -1121,7 +1120,6 @@ switch selectionMethod
                         end
                     end
                 end
- 
             end
             
             for iBand = 1:nBands
@@ -1143,7 +1141,6 @@ switch selectionMethod
                     end
                 end
             end
-            
             
             cvx_optval = 0;
             for iUser = 1:nUsers
@@ -1283,10 +1280,6 @@ switch selectionMethod
                                 baseNode = SimStructs.userStruct{jUser,1}.baseNode;
                                 iH = cH{baseNode,iBand}(:,:,cUser);
                                 
-                                if baseNode ~= iBase
-                                    continue;
-                                end
-                                
                                 if jUser ~= cUser
                                     if baseNode ~= iBase
                                         intVector = [intVector W{cUser,iBand}(:,iLayer)' * iH * cellM(:,:,jUser,iBand)];
@@ -1302,11 +1295,9 @@ switch selectionMethod
                             
                             norm(intVector,2) <= sqrt(b(iLayer,cUser,iBand));
                             log(1 + g(iLayer,cUser,iBand)) >= t(iLayer,cUser,iBand) * log(2);
-                            p(iLayer,cUser,iBand) = real(W{cUser,iBand}(:,iLayer)' * nH * cellM(:,iLayer,cUser,iBand));
-                            q(iLayer,cUser,iBand) = imag(W{cUser,iBand}(:,iLayer)' * nH * cellM(:,iLayer,cUser,iBand));
-                            (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)) + ...
-                                (2 / cellB(iLayer,cUser,iBand)) * (cellP(iLayer,cUser,iBand) * (p(iLayer,cUser,iBand) - cellP(iLayer,cUser,iBand))) + ...
-                                (2 / cellB(iLayer,cUser,iBand)) * (cellQ(iLayer,cUser,iBand) * (q(iLayer,cUser,iBand) - cellQ(iLayer,cUser,iBand))) - ...
+                            p(iLayer,cUser,iBand) = cellP(iLayer,cUser,iBand);
+                            q(iLayer,cUser,iBand) = cellQ(iLayer,cUser,iBand);
+                            (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)) - ...
                                 (cellP(iLayer,cUser,iBand)^2 + cellQ(iLayer,cUser,iBand)^2) / (cellB(iLayer,cUser,iBand)^2) * ...
                                 (b(iLayer,cUser,iBand) - cellB(iLayer,cUser,iBand)) >= g(iLayer,cUser,iBand);
                         end
