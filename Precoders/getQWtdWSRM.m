@@ -96,7 +96,7 @@ switch selectionMethod
         xIndex = 0;
         reIterate = 1;
         currentIteration = 0;
-        receiverMode = 'MMSE';
+        receiverMode = SimParams.additionalParams;
         cvx_hist = -500 * ones(2,1);
         maxRank = SimParams.maxRank;
         [p_o,q_o,b_o,vW] = randomizeInitialSCApoint(SimParams,SimStructs);
@@ -210,7 +210,7 @@ switch selectionMethod
                     end                    
                     
                 else
-                    [~, ~, ~, vW] = findOptimalW(SimParams,SimStructs,M,vW,p_o,q_o,b_o);
+                    [~,~,~,vW] = findOptimalW(SimParams,SimStructs,M,vW,p_o,q_o,b_o);
                 end
                 
                 

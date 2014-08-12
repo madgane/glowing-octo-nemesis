@@ -22,7 +22,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
@@ -32,7 +32,8 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
-SimParams.weightedSumRateMethod = 'MSEKKTMethod';
+SimParams.weightedSumRateMethod = 'KKTMethod-1';
+SimParams.additionalParams = 'Optimal';
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -44,10 +45,10 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
 SimParams.nBands = 1;
-SimParams.nBases = 3;
-SimParams.nUsers = 3;
+SimParams.nBases = 1;
+SimParams.nUsers = 4;
 
-SimParams.nTxAntenna = 3;
+SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
@@ -87,7 +88,7 @@ for iPkt = 1:length(SimParams.maxArrival)
             SimParams.iDrop = iDrop;
 
             if strcmp(SimParams.DebugMode,'true')
-                SimParams.Debug.activeStatus(:,1)'
+                display(SimParams.Debug.activeStatus(:,1)');
             end
             
             [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
