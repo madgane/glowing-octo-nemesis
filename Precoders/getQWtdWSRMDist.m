@@ -1444,7 +1444,7 @@ switch selectionMethod
         
         betaLKN_o = zeros(maxRank,nUsers,nBands);
         gammaLKN_o = zeros(maxRank,nUsers,nBands);
-
+        
         for iUser = 1:nUsers
             for iBand = 1:nBands
                 xM{iUser,iBand} = complex(randn(SimParams.nTxAntenna,maxRank),randn(SimParams.nTxAntenna,maxRank)) / sqrt(SimParams.nTxAntenna);
@@ -1455,7 +1455,7 @@ switch selectionMethod
         rho = 1e-4;
         alphaLKN_1 = ones(maxRank,nUsers,nBands);
         alphaLKN_2 = ones(maxRank,nUsers,nBands);
-
+        
         while reIterate
             
             for iBand = 1:nBands
@@ -1478,7 +1478,7 @@ switch selectionMethod
             end
             
             phiLKN = gammaLKN_o ./ betaLKN_o;
-
+            
             for dualIterate = 1:1e3
                 
                 for iBand = 1:nBands
@@ -1560,7 +1560,7 @@ switch selectionMethod
                 
                 betaLKN = alphaLKN_2 ./ (alphaLKN_1 .* phiLKN);
                 gammaLKN = -0.5 + 0.5 * sqrt(1 + (4 * phiLKN ./ alphaLKN_1));
-              
+                
                 for iBand = 1:nBands
                     for iBase = 1:nBases
                         for iUser = 1:usersPerCell(iBase,1)
