@@ -48,7 +48,7 @@ SimParams.nBands = 1;
 SimParams.nBases = 1;
 SimParams.nUsers = 4;
 
-SimParams.nTxAntenna = 4;
+SimParams.nTxAntenna = 8;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
