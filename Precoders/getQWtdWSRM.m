@@ -2,7 +2,7 @@
 function [SimParams,SimStructs] = getQWtdWSRM(SimParams,SimStructs)
 
 epsilonT = 1e-5;
-maxIterations = 250;
+maxIterations = 300;
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;

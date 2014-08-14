@@ -7,5 +7,5 @@ if isunix
     cvx_solver('Mosek_2');
 else
     cvx_quiet('true');
-    cvx_solver('Mosek_2');
+    cvx_solver('Mosek');
 end
