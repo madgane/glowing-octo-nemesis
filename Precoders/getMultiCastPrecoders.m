@@ -40,7 +40,7 @@ switch selectionMethod
     
     case 'SDPMethod'
         
-        [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,50);
+        [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,10);
         
     case 'ConicMethod'
         
@@ -50,13 +50,13 @@ switch selectionMethod
         rX = randn(nUsers,nBands) * txPower;
         iX = randn(nUsers,nBands) * txPower;
         
-        searchType = 'Dual';
+        searchType = 'FeasPoint';
         
         % Feasible point generation !
         
         switch searchType
             
-            case 'Dual'
+            case 'FeasPoint'
                 
                 objective = -1;
                 iterateSCA = 1;

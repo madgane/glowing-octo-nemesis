@@ -102,7 +102,7 @@ else
                     Y{iBase,iBand} = zeros(SimParams.nTxAntenna,nGroupsPerCell(iBase,1));
                     for iGroup = 1:nGroupsPerCell(iBase,1)
                         [P, D] = eig(dX(:,:,iGroup));
-                        randSelection = complex(rand(SimParams.nTxAntenna,1),rand(SimParams.nTxAntenna,1));
+                        randSelection = complex(randn(SimParams.nTxAntenna,1),randn(SimParams.nTxAntenna,1));
                         Y{iBase,iBand}(:,iGroup) = P * sqrt(D) * randSelection / norm(randSelection);
                         beamPower{iBase,1}(iGroup,iBand) = norm(Y{iBase,iBand}(:,iGroup),2)^2;
                     end
