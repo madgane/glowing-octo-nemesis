@@ -16,9 +16,8 @@ else
     selectionMethod = SimParams.DesignType(1:underscore_location-1);
 end
 
-txPower = 2 * max(reqSINRPerUser) * SimParams.N;
-SimParams.Debug.tempResource{2,1}{1,1} = randn(nUsers,nBands) * sqrt(txPower);
-SimParams.Debug.tempResource{3,1}{1,1} = randn(nUsers,nBands) * sqrt(txPower);
+SimParams.Debug.tempResource{2,1}{1,1} = randn(nUsers,nBands);
+SimParams.Debug.tempResource{3,1}{1,1} = randn(nUsers,nBands);
 
 switch selectionMethod
     
@@ -28,7 +27,7 @@ switch selectionMethod
         
     case 'ConicMethod'
         
-        searchType = 'Dual';
+        searchType = 'FC';
         switch searchType
             case 'SDP'
                 [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,1);
@@ -39,7 +38,7 @@ switch selectionMethod
             otherwise
                 for iBase = 1:nBases
                     for iBand = 1:nBands
-                        SimStructs.baseStruct{iBase,1}.PG{iBand,1} = complex(randn(SimParams.nTxAntenna,nGroupsPerCell(iBase,1)),randn(SimParams.nTxAntenna,nGroupsPerCell(iBase,1))) * sqrt(txPower);
+                        SimStructs.baseStruct{iBase,1}.PG{iBand,1} = complex(randn(SimParams.nTxAntenna,nGroupsPerCell(iBase,1)),randn(SimParams.nTxAntenna,nGroupsPerCell(iBase,1)));
                     end
                 end
                 display('Using Randomized data !');                
@@ -59,6 +58,7 @@ switch selectionMethod
             end
         end
         
+        display('Initialization point found !');
         [SimParams,SimStructs] = getMultiCastConic(SimParams,SimStructs,'MP');        
         
     case 'KKTMethod'

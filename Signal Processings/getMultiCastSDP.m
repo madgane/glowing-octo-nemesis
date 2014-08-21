@@ -57,7 +57,7 @@ for iBand = 1:nBands
     end
 end
 
-options = sdpsettings('verbose',0,'solver','SDPT3');
+options = sdpsettings('verbose',0,'solver','DSDP');
 solverOut = solvesdp(gConstraints,objective,options);
 SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
 
@@ -96,7 +96,7 @@ for iIterate = 1:nIterations
                     P = P(:,(diag(D) >= epsilonT));
                     D = diag(D); D = D(D >= epsilonT);
                     randSelection = complex(randn(length(D),1),randn(length(D),1));
-                    Y{iBase,iBand}(:,iGroup) = P * diag(sqrt(D)) * randSelection / norm(randSelection);
+                    Y{iBase,iBand}(:,iGroup) = P * diag(sqrt(D)) * randSelection;
                 end
             end
         end

@@ -65,7 +65,7 @@ while weightedDualInf
         end
     end
     
-    options = sdpsettings('verbose',0,'solver','Mosek');
+    options = sdpsettings('verbose',0,'solver','DSDP');
     solverOut = solvesdp(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
     
@@ -119,13 +119,13 @@ if bisectionBasedDualSearch
     dualLambdaMin = zeros(nBases,nBands);
     dualLambdaMax = 1e5 * ones(nBases,nBands);
     
-    while bisectionSearch
-        
-        dualLambda = (dualLambdaMax + dualLambdaMin) / 2;
-        
+    while bisectionSearch        
+               
         gConstraints = [];
         X = cell(nBases,nBands);
         Xtilde = cell(nBases,nBands);
+        dualLambda = (dualLambdaMax + dualLambdaMin) / 2;
+        
         for iBand = 1:nBands
             for iBase = 1:nBases
                 Xtilde{iBase,iBand} = sdpvar(SimParams.nTxAntenna,SimParams.nTxAntenna,'full');
@@ -224,10 +224,8 @@ for iBase = 1:nBases
 end
 
 if reducedSDPMultiCasting
-
     SimParams.Debug.MultiCastSDPExchange = enabledAntenna;
-    [SimParams, SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations);
-    
+    [SimParams, SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations);    
 end
 
 end

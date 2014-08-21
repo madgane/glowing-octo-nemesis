@@ -25,13 +25,17 @@ end
 
 while iterateSCA
     
-    dConstraints = 0;
+    xConstraints = [];
     gConstraints = [];
     X = cell(nBases,nBands);
     for iBand = 1:nBands
         for iBase = 1:nBases
             X{iBase,iBand} = sdpvar(nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
         end
+    end
+    
+    if sum(strcmpi({'FC','Dual'},ObjType))
+        feasVariable = sdpvar(nUsers,nBands,'full');
     end
     
     for iBand = 1:nBands
@@ -57,8 +61,11 @@ while iterateSCA
                             end
                         end
                     end
-                    dConstraints = dConstraints + (reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression);
+                    
                     gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression <= 0];
+                    if sum(strcmpi({'FC','Dual'},ObjType))
+                        xConstraints = [xConstraints , reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression <= feasVariable(cUser,iBand)];
+                    end
                 end
             end
         end
@@ -66,7 +73,8 @@ while iterateSCA
     
     switch ObjType
         case 'FC'
-            objective = [];
+            gConstraints = xConstraints;
+            objective = sum(max(feasVariable(:),0));            
         case 'MP'            
             objective = 0;
             for iBand = 1:nBands
@@ -81,8 +89,8 @@ while iterateSCA
                     objective = objective + (X{iBase,iBand}(:)' * X{iBase,iBand}(:));
                 end
             end
-            objective = 10 * dConstraints + objective;
-            gConstraints = [];    
+            objective = sum(max(feasVariable(:),0)) + objective * 1e-4;
+            gConstraints = xConstraints;    
     end
     
     options = sdpsettings('verbose',0,'solver','Mosek');
@@ -103,19 +111,23 @@ while iterateSCA
                 end                
             end
         end
-        if sum(strcmpi({'FC','Dual'},ObjType))
-            break;
-        end
     else
         display(solverOut);
         if sum(strcmpi({'FC','Dual'},ObjType))
-            rX = rX * 2;iX = iX * 2;
+            rX = zeros(size(rX));iX = zeros(size(iX));
         else
             display(solverOut);
             break;
         end
     end
     
+    if sum(strcmpi({'FC','Dual'},ObjType))
+        display(double(feasVariable(:))');
+        if sum(double(feasVariable) <= 0) == nUsers * nBands
+            break;
+        end
+    end
+        
     if iIterateSCA < iterateSCAMax
         iIterateSCA = iIterateSCA + 1;
     else
