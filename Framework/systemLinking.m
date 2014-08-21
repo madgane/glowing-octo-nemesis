@@ -61,7 +61,11 @@ if SimParams.multiCasting
             if iGroup ~= 1
                 sIndex = sum(SimParams.mcGroups{iBase,1}(1,1:iGroup - 1)) + 1;
             end
-            SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1} = cUsers(sIndex:eIndex);
+            groupUserIndices = cUsers(sIndex:eIndex);
+            SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1} = groupUserIndices;
+            for iUser = 1:length(groupUserIndices)
+                SimStructs.userStruct{groupUserIndices(iUser,1)}.groupIndex = iGroup;
+            end
         end
     end
 end

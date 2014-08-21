@@ -32,10 +32,10 @@ SimParams.DopplerType = 'Uniform_10';
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingFormat = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'SDPMethod';
+SimParams.DesignType = 'ConicMethod';
 
 SimParams.nBands = 1;
-SimParams.nBases = 1;
+SimParams.nBases = 2;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
 
@@ -64,17 +64,16 @@ if strcmp(SimParams.sysMode,'true')
     SimParams.nUsers = 570;
 end
 
-if strcmp(SimParams.multiCasting,'true')    
-    
+if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
-    SimParams.usersPerGroup = 15;
-    SimParams.nAntennaArray = 20;
+    SimParams.usersPerGroup = 5;
+    SimParams.nAntennaArray = 12;
+    SimParams.nTxAntennaEnabled = 5;
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
     SimParams.totalTXpower_SDP = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
-    SimParams.solverTiming = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
-    
+    SimParams.solverTiming = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));    
 end
 
 for iAntennaArray = 1:length(SimParams.nAntennaArray)
