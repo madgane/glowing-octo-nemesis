@@ -102,7 +102,7 @@ while iterateSCA
     end
     
     objective = double(objective);
-    if abs(objective - minPower) < 1e-2
+    if abs(objective - minPower) < epsilonT
         iterateSCA = 0;
     else
         minPower = objective;
