@@ -32,7 +32,7 @@ SimParams.DopplerType = 'Uniform_10';
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingFormat = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'SDPASMethod';
+SimParams.DesignType = 'ConicASMethod';
 
 SimParams.nBands = 1;
 SimParams.nBases = 2;
@@ -66,7 +66,7 @@ end
 
 if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
-    SimParams.usersPerGroup = 5;
+    SimParams.usersPerGroup = 2;
     SimParams.nAntennaArray = 12;
     SimParams.nTxAntennaEnabled = 5;
     
