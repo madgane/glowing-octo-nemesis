@@ -32,10 +32,10 @@ SimParams.DopplerType = 'Uniform_10';
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingFormat = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'ConicASMethod';
+SimParams.DesignType = 'ConicBSMethod';
 
-SimParams.nBands = 1;
-SimParams.nBases = 2;
+SimParams.nBands = 2;
+SimParams.nBases = 1;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
 

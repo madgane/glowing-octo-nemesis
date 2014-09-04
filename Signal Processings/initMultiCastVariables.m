@@ -16,6 +16,7 @@ for iBase = 1:nBases
     end
 end
 
+QueuedNats = QueuedPkts * log(2);
 nGroupsPerCell = zeros(SimParams.nBases,1);
 for iBase = 1:nBases
     nGroupsPerCell(iBase,1) = length(SimParams.mcGroups{iBase,1});

@@ -1,28 +1,42 @@
 
-function [SimParams,SimStructs] = getMultiCastConicAS(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,ObjType)
 
 initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
-reqSINRPerUser = 2.^(QueuedPkts / nBands) - 1;
 
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
 iterateSCAMax = 50;
 
+reqSINRPerUser = 2.^(QueuedPkts / nBands) - 1;
+if isfield(SimParams.Debug,'MultiCastSDPExchange')
+    nTxAntenna = SimParams.nTxAntennaEnabled;
+    enabledAntenna = SimParams.Debug.MultiCastSDPExchange;
+else
+    enabledAntenna = cell(nBases,nBands);
+    for iBase = 1:nBases
+        for iBand = 1:nBands
+            enabledAntenna{iBase,iBand} = linspace(1,SimParams.nTxAntenna,SimParams.nTxAntenna);
+        end
+    end
+    nTxAntenna = SimParams.nTxAntenna;
+end
+
 while iterateSCA
     
+    xConstraints = [];
     gConstraints = [];
     X = cell(nBases,nBands);
-    binVar = cell(nBases,nBands);
-    aPowVar = cell(nBases,nBands);
     for iBand = 1:nBands
         for iBase = 1:nBases
-            binVar{iBase,iBand} = binvar(SimParams.nTxAntenna,1,'full');
-            aPowVar{iBase,iBand} = sdpvar(SimParams.nTxAntenna,1,'full');
-            X{iBase,iBand} = sdpvar(SimParams.nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
+            X{iBase,iBand} = sdpvar(nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
         end
+    end
+    
+    if sum(strcmpi({'FC','Dual'},ObjType))
+        feasVariable = sdpvar(nUsers,nBands,'full');
     end
     
     for iBand = 1:nBands
@@ -31,7 +45,7 @@ while iterateSCA
                 groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
                 for iUser = 1:length(groupUsers)
                     cUser = groupUsers(iUser,1);
-                    Hsdp = cH{iBase,iBand}(:,:,cUser);
+                    Hsdp = cH{iBase,iBand}(:,enabledAntenna{iBase,iBand},cUser);
                     
                     tempVec = [sqrt(SimParams.N)];
                     riX = real(Hsdp * X{iBase,iBand}(:,iGroup));
@@ -40,7 +54,7 @@ while iterateSCA
                     
                     for jBase = 1:nBases
                         for jGroup = 1:nGroupsPerCell(jBase,1)
-                            Hsdp = cH{jBase,iBand}(:,:,cUser);
+                            Hsdp = cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser);
                             if ~and((iBase == jBase),(iGroup == jGroup))
                                 riX = real(Hsdp * X{jBase,iBand}(:,jGroup));
                                 iiX = imag(Hsdp * X{jBase,iBand}(:,jGroup));
@@ -50,25 +64,34 @@ while iterateSCA
                     end
                     
                     gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression <= 0];
+                    if sum(strcmpi({'FC','Dual'},ObjType))
+                        xConstraints = [xConstraints , reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression <= feasVariable(cUser,iBand)];
+                    end
                 end
             end
         end
     end
     
-    for iBase = 1:nBases
-        for iBand = 1:nBands
-            for iAntenna = 1:SimParams.nTxAntenna
-                tempVector = [2 * X{iBase,iBand}(iAntenna,:), (aPowVar{iBase,iBand}(iAntenna,1) - binVar{iBase,iBand}(iAntenna,1))];
-                gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,iBand}(iAntenna,1) + binVar{iBase,iBand}(iAntenna,1)))];
+    switch ObjType
+        case 'FC'
+            gConstraints = xConstraints;
+            objective = sum(max(feasVariable(:),0));            
+        case 'MP'            
+            objective = 0;
+            for iBand = 1:nBands
+                for iBase = 1:nBases
+                    objective = objective + (X{iBase,iBand}(:)' * X{iBase,iBand}(:));
+                end
             end
-        end
-    end
-    
-    objective = 0;
-    for iBand = 1:nBands
-        for iBase = 1:nBases
-            objective = objective + aPowVar{iBase,iBand}' * aPowVar{iBase,iBand} + max((sum(binVar{iBase,iBand}) - SimParams.nTxAntennaEnabled),0) * 1e3;
-        end
+        case 'Dual'
+            objective = 0;
+            for iBand = 1:nBands
+                for iBase = 1:nBases
+                    objective = objective + (X{iBase,iBand}(:)' * X{iBase,iBand}(:));
+                end
+            end
+            objective = sum(max(feasVariable(:),0)) + objective * 1e-4;
+            gConstraints = xConstraints;    
     end
     
     options = sdpsettings('verbose',0,'solver','Mosek');
@@ -82,18 +105,28 @@ while iterateSCA
                     groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
                     for iUser = 1:length(groupUsers)
                         cUser = groupUsers(iUser,1);
-                        Hsdp = cH{iBase,iBand}(:,:,cUser);
+                        Hsdp = cH{iBase,iBand}(:,enabledAntenna{iBase,iBand},cUser);
                         rX(cUser,iBand) = real(Hsdp * double(X{iBase,iBand}(:,iGroup)));
                         iX(cUser,iBand) = imag(Hsdp * double(X{iBase,iBand}(:,iGroup)));
                     end
-                end
-                nEnabledAntenna = sum(double(binVar{iBase,iBand}));
-                display(nEnabledAntenna);
+                end                
             end
-        end        
+        end
     else
         display(solverOut);
-        break;
+        if sum(strcmpi({'FC','Dual'},ObjType))
+            rX = zeros(size(rX));iX = zeros(size(iX));
+        else
+            display(solverOut);
+            break;
+        end
+    end
+    
+    if sum(strcmpi({'FC','Dual'},ObjType))
+        display(double(feasVariable(:))');
+        if sum(double(feasVariable) <= 0) == nUsers * nBands
+            break;
+        end
     end
         
     if iIterateSCA < iterateSCAMax
@@ -113,12 +146,11 @@ while iterateSCA
     
 end
 
-SimParams.Debug.tempResource{2,1}{1,1} = rX;
-SimParams.Debug.tempResource{3,1}{1,1} = iX;
-SimParams.Debug.MultiCastSDPExchange = cell(nBases,nBands);
 for iBase = 1:nBases
     for iBand = 1:nBands
-        SimParams.Debug.MultiCastSDPExchange{iBase,iBand} = logical(int8(double(binVar{iBase,iBand})));
+        tempPrecoder = double(X{iBase,iBand});
+        SimStructs.baseStruct{iBase,1}.PG{iBand,1} = zeros(SimParams.nTxAntenna,nGroupsPerCell(iBase,1));
+        SimStructs.baseStruct{iBase,1}.PG{iBand,1}(enabledAntenna{iBase,iBand},:) = tempPrecoder;
     end
 end
 
