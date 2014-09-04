@@ -8,6 +8,7 @@ nBases = SimParams.nBases;
 nBands = SimParams.nBands;
 globalMode = SimParams.totalPwrDistOverSC;
 
+vec = @(x)(x(:));
 updatePrecoders = 'true';
 usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
@@ -660,6 +661,158 @@ switch selectionMethod
             end
         end
         
+    case 'GenAllocY'
+        
+        xIndex = 0;
+        reIterate = 1;
+        currentIteration = 0;
+        cvx_hist = -500 * ones(2,1);
+        maxRank = SimParams.maxRank;
+        [p_o,q_o,b_o,vW] = randomizeInitialSCApoint(SimParams,SimStructs);
+        t_o = log(ones(size(p_o)) + (p_o.^2 + q_o.^2)./b_o);
+        
+        while reIterate
+            
+            cvx_begin
+            
+            M = sdpvar(SimParams.nTxAntenna,maxRank,nUsers,nBands,'full','complex');
+            t = sdpvar(maxRank,nUsers,nBands,'full');b = sdpvar(maxRank,nUsers,nBands,'full');g = sdpvar(maxRank,nUsers,nBands,'full');
+            userObjective = sdpvar(nUsers,1,'full');epiObjective = sdpvar(1);
+
+            G = [];
+            for iUser = 1:nUsers
+                G = [G, userWts(iUser,1) * abs(QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:)))) <= userObjective(iUser,1)];
+            end
+            
+            G = [G, epiObjective >= norm(userObjective,qExponent)];
+            
+            for iBase = 1:nBases
+                for iBand = 1:nBands
+                    for iUser = 1:usersPerCell(iBase,1)
+                        
+                        cUser = cellUserIndices{iBase,1}(iUser,1);
+                        for iLayer = 1:maxRank
+                            intVector = sqrt(SimParams.N) * vW{cUser,iBand}(:,iLayer);
+                            
+                            for jBase = 1:nBases
+                                currentH = cH{jBase,iBand}(:,:,cUser);
+                                for jUser = 1:usersPerCell(jBase,1)
+                                    rUser = cellUserIndices{jBase,1}(jUser,1);
+                                    if rUser ~= cUser
+                                        for jLayer = 1:maxRank
+                                            intVector = [intVector ; vW{cUser,iBand}(:,iLayer)' * currentH * M(:,jLayer,rUser,iBand)];
+                                        end
+                                    else
+                                        for jLayer = 1:maxRank
+                                            if jLayer ~= iLayer
+                                                intVector = [intVector ; vW{cUser,iBand}(:,iLayer)' * currentH * M(:,jLayer,rUser,iBand)];
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                            
+                            G = [G, intVector' * intVector <= b(iLayer,cUser,iBand)];
+                            baseExponent = exp(t_o(iLayer,cUser,iBand) * log(2));
+                            G = [G, 1 + g(iLayer,cUser,iBand) >= baseExponent * (1 + (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand)) ...
+                                + 0.5 * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand))^2)];                                     
+                            currentH = cH{iBase,iBand}(:,:,cUser);
+                            p = real(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));
+                            q = imag(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));                            
+                            G = [G, (p_o(iLayer,cUser,iBand)^2 + q_o(iLayer,cUser,iBand)^2) / (b_o(iLayer,cUser,iBand)) + ...
+                                (2 / b_o(iLayer,cUser,iBand)) * (p_o(iLayer,cUser,iBand) * (p - p_o(iLayer,cUser,iBand))) + ...
+                                (2 / b_o(iLayer,cUser,iBand)) * (q_o(iLayer,cUser,iBand) * (q - q_o(iLayer,cUser,iBand))) - ...
+                                (p_o(iLayer,cUser,iBand)^2 + q_o(iLayer,cUser,iBand)^2) / (b_o(iLayer,cUser,iBand)^2) * ...
+                                (b(iLayer,cUser,iBand) - b_o(iLayer,cUser,iBand)) >= g(iLayer,cUser,iBand)];
+                            
+                        end
+                    end
+                end
+                
+                if strcmp(globalMode,'false')
+                    for iBand = 1:nBands
+                        tempM = vec(M(:,:,cellUserIndices{iBase,1},iBand));
+                        G = [G, tempM' * tempM <= (SimStructs.baseStruct{iBase,1}.sPower(1,iBand))];
+                    end
+                else
+                    tempM = vec(M(:,:,cellUserIndices{iBase,1},:));
+                    G = [G, tempM' * tempM <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
+                end
+                
+            end
+            
+            sdpOptions = sdpsettings('verbose',0,'solver','Knitro','relax',2);
+            sdpSol = solvesdp(G,epiObjective,sdpOptions);
+
+            if sdpSol.problem == 0
+                for iBand = 1:nBands
+                    for iUser = 1:nUsers
+                        currentH = cH{SimStructs.userStruct{iUser,1}.baseNode,iBand}(:,:,iUser);
+                        for iLayer = 1:maxRank
+                            p_o(iLayer,iUser,iBand) = real(vW{iUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
+                            q_o(iLayer,iUser,iBand) = imag(vW{iUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
+                            M(:,iLayer,iUser,iBand) = (double(M(:,iLayer,iUser,iBand)));
+                            t_o(iLayer,iUser,iBand) = (double(t(iLayer,iUser,iBand)));
+                            b_o(iLayer,iUser,iBand) = (double(b(iLayer,iUser,iBand)));
+
+                        end
+                    end
+                end
+                
+                cvx_optval = double(epiObjective);
+                if min(abs(cvx_optval - cvx_hist)) <= epsilonT
+                    reIterate = 0;
+                else
+                    xIndex = xIndex + 1;
+                    cvx_hist(mod(xIndex,2) + 1,1) = cvx_optval;
+                end
+                
+                for iBand = 1:nBands
+                    for iBase = 1:nBases
+                        for iUser = 1:usersPerCell(iBase,1)
+                            cUser = cellUserIndices{iBase,1}(iUser,1);
+                            for iLayer = 1:maxRank
+                                R = SimParams.N * eye(SimParams.nRxAntenna);
+                                for jBase = 1:nBases
+                                    for jUser = 1:usersPerCell(jBase,1)
+                                        rUser = cellUserIndices{jBase,1}(jUser,1);
+                                        H = cH{jBase,iBand}(:,:,cUser);
+                                        R = R + H * M(:,:,rUser,iBand) * M(:,:,rUser,iBand)' * H';
+                                    end
+                                end
+                                H = cH{iBase,iBand}(:,:,cUser);
+                                vW{cUser,iBand}(:,iLayer) = R \ (H * M(:,iLayer,cUser,iBand));
+                            end
+                        end
+                    end
+                end
+                
+            else
+                b_o = b_o * 2;
+                display('Failed to converge !');
+            end
+                  
+            currentIteration = currentIteration + 1;
+            if currentIteration >= maxIterations
+                reIterate = 0;
+            end
+            
+            [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,M,vW);
+            
+        end
+        
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                P = [];
+                SimStructs.baseStruct{iBase,1}.P{iBand,1} = zeros(SimParams.nTxAntenna,usersPerCell(iBase,1));
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    P = [P M(:,:,cUser,iBand)];
+                end
+                SimStructs.baseStruct{iBase,1}.P{iBand,1} = P;
+            end
+        end
+       
         
 end
 
