@@ -714,8 +714,8 @@ switch selectionMethod
                             
                             G = [G, intVector' * intVector <= b(iLayer,cUser,iBand)];
                             baseExponent = exp(t_o(iLayer,cUser,iBand) * log(2));
-                            G = [G, 1 + g(iLayer,cUser,iBand) >= baseExponent * (1 + (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand)) ...
-                                + 0.5 * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand))^2)];                                     
+                            G = [G, 1 + g(iLayer,cUser,iBand) >= baseExponent * (1 + log(2) * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand)) ...
+                                + 0.5 * log(2)^2 * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand))^2)];                                     
                             currentH = cH{iBase,iBand}(:,:,cUser);
                             p = real(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));
                             q = imag(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));                            
@@ -741,20 +741,19 @@ switch selectionMethod
                 
             end
             
-            sdpOptions = sdpsettings('verbose',0,'solver','Knitro','relax',2);
+            sdpOptions = sdpsettings('verbose',0,'solver','Gurobi');
             sdpSol = solvesdp(G,epiObjective,sdpOptions);
 
             if sdpSol.problem == 0
+                M = full(double(M));
+                b_o = full(double(b));
+                t_o = full(double(t));
                 for iBand = 1:nBands
                     for iUser = 1:nUsers
                         currentH = cH{SimStructs.userStruct{iUser,1}.baseNode,iBand}(:,:,iUser);
                         for iLayer = 1:maxRank
                             p_o(iLayer,iUser,iBand) = real(vW{iUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
                             q_o(iLayer,iUser,iBand) = imag(vW{iUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
-                            M(:,iLayer,iUser,iBand) = (double(M(:,iLayer,iUser,iBand)));
-                            t_o(iLayer,iUser,iBand) = (double(t(iLayer,iUser,iBand)));
-                            b_o(iLayer,iUser,iBand) = (double(b(iLayer,iUser,iBand)));
-
                         end
                     end
                 end
