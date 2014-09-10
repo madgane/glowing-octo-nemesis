@@ -590,9 +590,11 @@ switch selectionMethod
                 
             end
             
-            for iUser = 1:nUsers
-                sum(vec(t(:,iUser,:))) <= QueuedPkts(iUser,1);
-            end
+            if (strcmpi(SimParams.additionalParams,'Optimal'))
+                for iUser = 1:nUsers
+                    sum(vec(t(:,iUser,:))) <= QueuedPkts(iUser,1);
+                end
+            end                
             
             for iBase = 1:nBases
                 if strcmp(globalMode,'false')
@@ -663,13 +665,22 @@ switch selectionMethod
         
     case 'GenAllocY'
         
+        epsilon = 0.5;
+        pNoise = 1e-30;
+        taylorApprox = SimParams.additionalParams;
+        
         xIndex = 0;
         reIterate = 1;
         currentIteration = 0;
         cvx_hist = -500 * ones(2,1);
         maxRank = SimParams.maxRank;
         [p_o,q_o,b_o,vW] = randomizeInitialSCApoint(SimParams,SimStructs);
-        t_o = log(ones(size(p_o)) + (p_o.^2 + q_o.^2)./b_o);
+        
+        if strcmpi(taylorApprox,'LOG')
+            g_o = (p_o.^2 + q_o.^2)./b_o;
+        else
+            t_o = log(ones(size(p_o)) + (p_o.^2 + q_o.^2)./b_o);
+        end
         
         while reIterate
             
@@ -713,9 +724,19 @@ switch selectionMethod
                             end
                             
                             G = [G, intVector' * intVector <= b(iLayer,cUser,iBand)];
-                            baseExponent = exp(t_o(iLayer,cUser,iBand) * log(2));
-                            G = [G, 1 + g(iLayer,cUser,iBand) >= baseExponent * (1 + log(2) * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand)) ...
-                                + 0.5 * log(2)^2 * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand))^2)];                                     
+                            
+                            if strcmpi(taylorApprox,'LOG')
+                                G = [G, g(iLayer,cUser,iBand) >= g_o(iLayer,cUser,iBand) * (1 - epsilon)];
+                                G = [G, g(iLayer,cUser,iBand) <= g_o(iLayer,cUser,iBand) * (1 + epsilon)];
+                                G = [G, log(1 + g_o(iLayer,cUser,iBand)) + (g(iLayer,cUser,iBand) - g_o(iLayer,cUser,iBand)) / (1 + g_o(iLayer,cUser,iBand)) - (g(iLayer,cUser,iBand) - g_o(iLayer,cUser,iBand))^2 / (2 * (1 + g_o(iLayer,cUser,iBand))^2) ...
+                                    >= t(iLayer,cUser,iBand) * log(2)];
+                            else                                
+                                G = [G, t(iLayer,cUser,iBand) >= t_o(iLayer,cUser,iBand) * (1 - epsilon)];
+                                G = [G, t(iLayer,cUser,iBand) <= t_o(iLayer,cUser,iBand) * (1 + epsilon)];
+                                G = [G, 1 + g(iLayer,cUser,iBand) >= ...
+                                    exp(t_o(iLayer,cUser,iBand) * log(2)) * (1 + log(2) * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand)) + 0.5 * log(2)^2 * (t(iLayer,cUser,iBand) - t_o(iLayer,cUser,iBand))^2)];
+                            end
+                            
                             currentH = cH{iBase,iBand}(:,:,cUser);
                             p = real(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));
                             q = imag(vW{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,cUser,iBand));                            
@@ -745,9 +766,13 @@ switch selectionMethod
             sdpSol = solvesdp(G,epiObjective,sdpOptions);
 
             if sdpSol.problem == 0
-                M = full(double(M));
+                M = full(double(M)) + pNoise;
                 b_o = full(double(b));
-                t_o = full(double(t));
+                if strcmpi(taylorApprox,'LOG')
+                    g_o = full(double(g));
+                else
+                    t_o = full(double(t));
+                end
                 for iBand = 1:nBands
                     for iUser = 1:nUsers
                         currentH = cH{SimStructs.userStruct{iUser,1}.baseNode,iBand}(:,:,iUser);
