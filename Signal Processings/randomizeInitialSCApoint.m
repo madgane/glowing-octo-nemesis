@@ -1,7 +1,7 @@
 
 function [varargout] = randomizeInitialSCApoint(varargin)
 
-initPrecPoint = 'BF';
+initPrecPoint = 'Ones';
 
 switch nargin
     case 2

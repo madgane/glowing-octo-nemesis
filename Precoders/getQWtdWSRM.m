@@ -175,7 +175,7 @@ switch selectionMethod
             end
             
             cvx_end
-            
+
             if strfind(cvx_status,'Solved')
                 
                 M = full(M);
