@@ -9,7 +9,7 @@ nBands = SimParams.nBands;
 usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 
-closedFormSolution = 1;
+closedFormSolution = 0;
 
 for iBase = 1:nBases
 	for iBand = 1:nBands

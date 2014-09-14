@@ -3,7 +3,7 @@ function [SimParams SimStructs] = getWeightedMMSEDesign(SimParams,SimStructs)
 
 iIter = 0;
 maxIter = 1e4;
-epsilonCheck = min(1e-3,max(SimParams.sPower)^(-2));
+epsilonCheck = min(1e-4,max(SimParams.sPower)^(-2));
 nStreams = min(SimParams.maxRank,SimParams.nRxAntenna);
 
 SumCapacity = cell(SimParams.nBands,1);
