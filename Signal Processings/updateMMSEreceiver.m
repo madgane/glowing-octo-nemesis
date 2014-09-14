@@ -43,7 +43,7 @@ for iBand = 1:SimParams.nBands
                 end
             end
             
-            SimStructs.userStruct{cUser,1}.W{iBand,1}(:,:,cStream) = (H * P)' / W;
+            SimStructs.userStruct{cUser,1}.W{iBand,1}(:,cStream) = (H * P)' / W;
             
         end
     end

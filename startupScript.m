@@ -22,8 +22,8 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'CellEdge';
-SimParams.DopplerType = 'Uniform_10';
+SimParams.pathLossModel = 'Perturbed_3';
+SimParams.DopplerType = 'Uniform_5';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 0;
@@ -31,9 +31,9 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
-SimParams.weightedSumRateMethod = 'KKTMethod-1';
-SimParams.additionalParams = 'Optimal';
+SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
+SimParams.weightedSumRateMethod = 'GenAlloc';
+SimParams.additionalParams = 'MMSE';
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -44,18 +44,18 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 1;
-SimParams.nBases = 1;
-SimParams.nUsers = 4;
+SimParams.nBands = 3;
+SimParams.nBases = 3;
+SimParams.nUsers = 9;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 1;
+SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
 SimParams.arrivalDist = 'Constant';
 
-SimParams.maxArrival = 12;
+SimParams.maxArrival = 16;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -138,7 +138,7 @@ if strcmp(saveContents,'true')
     
     SimParamsCell{globalCount,1} = SimParams;
     SimStructsCell{globalCount,1} = SimStructs;
-    save(SimParams.outFile,'globalCount','SimParamsCell','SimStructsCell');    
+    save(SimParams.outFile,'globalCount','SimParamsCell','SimStructsCell');
     cd ../
     
 end
