@@ -15,7 +15,7 @@ else
     initPrecPoint = 'BF';
 end
 
-if SimParams.iDrop == 1
+if SimParams.distIteration == 1
     initPrecPoint = 'BF';
 end
 
@@ -55,7 +55,7 @@ switch initPrecPoint
         M = complex(zeros(SimParams.nTxAntenna,maxRank,nUsers,nBands),zeros(SimParams.nTxAntenna,maxRank,nUsers,nBands));
         for iBase = 1:nBases
             for iBand = 1:nBands
-                M(:,:,cellUserIndices{iBase,1},iBand) = SimParams.Debug.DataExchanges{1,1}{iBase,1};
+                M(:,:,cellUserIndices{iBase,1},iBand) = SimParams.Debug.DataExchange{1,1}{iBase,1}(:,:,:,iBand);
             end
         end
 end
@@ -90,7 +90,7 @@ for iBand = 1:nBands
                     end
                 end
                 H = cH{iBase,iBand}(:,:,cUser);
-                W{cUser,iBand}(:,iLayer) = R \ (H * M(:,iLayer,cUser,iBand));
+                W{cUser,iBand}(:,iLayer) = R \ (H * M(:,iLayer,cUser,iBand)) + 1e-20;
             end
         end
     end
