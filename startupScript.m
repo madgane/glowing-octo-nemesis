@@ -35,7 +35,7 @@ SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
 SimParams.weightedSumRateMethod = 'GenAlloc';
 SimParams.additionalParams = 'Optimal';
 
-SimParams.nDrops = 1;
+SimParams.nDrops = 5;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -45,17 +45,17 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
 SimParams.nBands = 2;
-SimParams.nBases = 3;
-SimParams.nUsers = 9;
+SimParams.nBases = 2;
+SimParams.nUsers = 12;
 
-SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 2;
+SimParams.nTxAntenna = 2;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
 SimParams.arrivalDist = 'Constant';
 
-SimParams.maxArrival = 8;
+SimParams.maxArrival = 2;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 

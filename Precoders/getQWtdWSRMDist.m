@@ -68,12 +68,19 @@ switch selectionMethod
         scaContinue = 1;
         currentIF = zeros(nLayers,nUsers,nBases,nBands);
         [p_o,q_o,b_o,W] = randomizeInitialSCApoint(SimParams,SimStructs);
-        
+                
         for iBase = 1:nBases
-            currentIF(:,:,iBase,:) = b_o / nBases;
             cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
             cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
             cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
+        end
+        
+        if SimParams.iDrop == 1
+            for iBase = 1:nBases
+                currentIF(:,:,iBase,:) = b_o / nBases;
+            end
+        else
+            currentIF = SimParams.Debug.DataExchange{2,1};
         end
         
         while scaContinue
@@ -280,6 +287,9 @@ switch selectionMethod
             end
         end
         
+        SimParams.Debug.DataExchange{1,1} = cellM;
+        SimParams.Debug.DataExchange{2,1} = currentIF;
+
     case 'ADMMMethod'
         
         nLayers = SimParams.maxRank;
@@ -293,12 +303,20 @@ switch selectionMethod
         [p_o,q_o,b_o,W] = randomizeInitialSCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases
-            cellXGlobal(:,:,iBase,:) = zeros(nLayers,nUsers,nBands);
             cellP{iBase,1} = p_o(:,cellUserIndices{iBase,1},:);
             cellQ{iBase,1} = q_o(:,cellUserIndices{iBase,1},:);
             cellB{iBase,1} = b_o(:,cellUserIndices{iBase,1},:);
             cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
-            currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
+       end
+        
+        if SimParams.iDrop == 1
+            for iBase = 1:nBases
+                cellXGlobal(:,:,iBase,:) = zeros(nLayers,nUsers,nBands);
+                currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
+            end
+        else
+            cellXGlobal = SimParams.Debug.DataExchange{2,1};
+            currentDual = SimParams.Debug.DataExchange{3,1};
         end
         
         while scaContinue
@@ -530,6 +548,10 @@ switch selectionMethod
             
         end
         
+        SimParams.Debug.DataExchange{1,1} = cellM;
+        SimParams.Debug.DataExchange{2,1} = cellXGlobal;
+        SimParams.Debug.DataExchange{3,1} = currentDual;
+        
         for iBand = 1:nBands
             for iBase = 1:nBases
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM{iBase,1}(:,:,:,iBand);
@@ -548,7 +570,14 @@ switch selectionMethod
         
         for iBase = 1:nBases
             cellTH{iBase,1} = initialMSE(:,cellUserIndices{iBase,1},:);
-            currentIF(:,:,iBase,:) = currentF / nBases;
+        end
+        
+        if SimParams.iDrop == 1
+            for iBase = 1:nBases
+                currentIF(:,:,iBase,:) = currentF / nBases;
+            end
+        else
+            currentIF = SimParams.Debug.DataExchange{2,1};
         end
         
         while scaContinue
@@ -735,6 +764,9 @@ switch selectionMethod
             
         end
         
+        SimParams.Debug.DataExchange{1,1} = cellM;
+        SimParams.Debug.DataExchange{2,1} = currentIF;
+        
         for iBand = 1:nBands
             for iBase = 1:nBases
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM{iBase,1}(:,:,:,iBand);
@@ -749,14 +781,21 @@ switch selectionMethod
         xIteration = 0;
         scaContinue = 1;
         currentDual = cell(nBases,1);
-        cellXGlobal = zeros(nLayers,nUsers,nBases,nBands);
         [initialMSE,W,~] = randomizeInitialMSESCApoint(SimParams,SimStructs);
         
         for iBase = 1:nBases
-            cellXGlobal(:,:,iBase,:) = zeros(nLayers,nUsers,nBands);
             cellX{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
-            currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
             cellBH{iBase,1} = initialMSE(:,cellUserIndices{iBase,1},:);
+        end
+        
+        if SimParams.iDrop == 1
+            for iBase = 1:nBases
+                cellXGlobal = zeros(nLayers,nUsers,nBases,nBands);
+                currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
+            end
+        else
+            cellXGlobal = SimParams.Debug.DataExchange{2,1};
+            currentDual = SimParams.Debug.DataExchange{3,1};
         end
         
         while scaContinue
@@ -967,10 +1006,13 @@ switch selectionMethod
                         W{iUser,iBand}(:,iLayer) = R \ (H * cellM{baseNode,1}(:,iLayer,xUser,iBand));
                     end
                 end
-            end
-            
+            end            
         end
         
+        SimParams.Debug.DataExchange{1,1} = cellM;
+        SimParams.Debug.DataExchange{2,1} = cellXGlobal;
+        SimParams.Debug.DataExchange{3,1} = currentDual;
+
         for iBand = 1:nBands
             for iBase = 1:nBases
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM{iBase,1}(:,:,:,iBand);
@@ -983,19 +1025,26 @@ switch selectionMethod
         
         xIndex = 1;
         reIterate = 1;
-        maxIterations = 250;
         currentIteration = 0;
         cvx_hist = -500 * ones(2,1);
-        SimParams.distDecompSteps = 1;
+        SimParams.distDecompSteps = mIterationsSG;
         
         M = cell(nUsers,nBands);
         R = cell(maxRank,nUsers,nBands);
-        alphaLKN = zeros(maxRank,nUsers,nBands);
-        lambdaLKN = zeros(maxRank,nUsers,nBands);
         [mseError_o,W] = randomizeInitialMSESCApoint(SimParams,SimStructs);
         
+        if SimParams.iDrop == 1
+            alphaLKN = zeros(maxRank,nUsers,nBands);
+            lambdaLKN = zeros(maxRank,nUsers,nBands);
+        else
+            alphaLKN = SimParams.Debug.DataExchange{2,1};
+            lambdaLKN = SimParams.Debug.DataExchange{3,1};
+        end
+                
         while reIterate
-            for dualIterate = 1:100
+            
+            for dualIterate = 1:mIterationsSG
+                
                 for iBand = 1:nBands
                     for iUser = 1:nUsers
                         xNode = SimStructs.userStruct{iUser,1}.baseNode;
@@ -1114,7 +1163,9 @@ switch selectionMethod
                             tempT = t(:,iUser,:);
                             lambdaLKN(iRank,iUser,iBand) = qExponent * (QueuedPkts(iUser,1) - sum(tempT(:)))^(qExponent - 1) / log(2);
                             if QueuedPkts(iUser,1) < sum(tempT(:))
-                                %                                 lambdaLKN(iRank,iUser,iBand) = 0;
+                                if mod(qExponent,2) ~= 0
+                                    lambdaLKN(iRank,iUser,iBand) = 0;
+                                end
                             end
                             alphaLKN(iRank,iUser,iBand) = alphaLKN(iRank,iUser,iBand) + 0.1 * (max((lambdaLKN(iRank,iUser,iBand) / mseError(iRank,iUser,iBand)),0) - alphaLKN(iRank,iUser,iBand));
                         end
@@ -1179,12 +1230,16 @@ switch selectionMethod
             end
             
             currentIteration = currentIteration + 1;
-            if currentIteration > maxIterations
+            if currentIteration > mIterationsSCA
                 reIterate = 0;
             end
             
         end
         
+        SimParams.Debug.DataExchange{1,1} = cellP;
+        SimParams.Debug.DataExchange{2,1} = alphaLKN;
+        SimParams.Debug.DataExchange{3,1} = lambdaLKN;
+
         for iBase = 1:nBases
             for iBand = 1:nBands
                 P = [];
@@ -1196,8 +1251,7 @@ switch selectionMethod
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = P;
             end
         end
-        
-        
+                
     case 'ScutariMethod'
         
         prevQ = 1e50;

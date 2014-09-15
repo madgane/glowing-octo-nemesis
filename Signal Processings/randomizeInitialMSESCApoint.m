@@ -1,14 +1,22 @@
 
 function [varargout] = randomizeInitialMSESCApoint(varargin)
 
-initPrecPoint = 'BF';
-
 switch nargin
     case 2
         SimParams = varargin{1};
         SimStructs = varargin{2};
     otherwise
         display('Unknown arguments !');
+end
+
+if strcmpi(SimParams.PrecodingMethod,'Best_QwtWSRMD_Method')
+    initPrecPoint = 'RT-XD';
+else
+    initPrecPoint = 'BF';
+end
+
+if SimParams.iDrop == 1
+    initPrecPoint = 'BF';
 end
 
 cH = SimStructs.linkChan;
@@ -41,6 +49,13 @@ switch initPrecPoint
             for iUser = 1:nUsers
                 [~,~,V] = svd(cH{SimStructs.userStruct{iUser,1}.baseNode,iBand}(:,:,iUser));
                 M(:,:,iUser,iBand) = V(:,1:maxRank);
+            end
+        end
+    case 'RT-XD'
+        M = complex(zeros(SimParams.nTxAntenna,maxRank,nUsers,nBands),zeros(SimParams.nTxAntenna,maxRank,nUsers,nBands));
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                M(:,:,cellUserIndices{iBase,1},iBand) = SimParams.Debug.DataExchanges{1,1}{iBase,1};
             end
         end
 end
@@ -103,7 +118,7 @@ for iBand = 1:nBands
                     end
                 end
             end
-
+            
             S = cW' * cH{SimStructs.userStruct{iUser,1}.baseNode,iBand}(:,:,iUser) * M(:,iLayer,iUser,iBand);
             mseError(iLayer,iUser,iBand) = abs(1 - S)^2 + N;
             ifMatrix(iLayer,iUser,iBand) = N;
