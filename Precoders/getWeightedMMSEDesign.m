@@ -1,5 +1,5 @@
 
-function [SimParams SimStructs] = getWeightedMMSEDesign(SimParams,SimStructs)
+function [SimParams, SimStructs] = getWeightedMMSEDesign(SimParams,SimStructs)
 
 iIter = 0;
 maxIter = 1e4;

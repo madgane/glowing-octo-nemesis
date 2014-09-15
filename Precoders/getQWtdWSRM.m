@@ -178,9 +178,7 @@ switch selectionMethod
 
             if strfind(cvx_status,'Solved')
                 
-                M = full(M);
-                b_o = full(b);p_o = full(p);q_o = full(q);
-                                
+                M = full(M);b_o = full(b);                                
                 if min(abs(cvx_optval - cvx_hist)) <= epsilonT
                     reIterate = 0;
                 else
@@ -218,6 +216,17 @@ switch selectionMethod
             else
                 b_o = b_o * 2;
                 display('Failed CVX !');
+            end
+            
+            for iBand = 1:nBands
+                for iUser = 1:nUsers
+                    baseNode = SimStructs.userStruct{iUser,1}.baseNode;
+                    channelH = cH{baseNode,iBand}(:,:,iUser);
+                    for iLayer = 1:maxRank
+                        p_o(iLayer,iUser,iBand) = real(vW{iUser,iBand}(:,iLayer)' * channelH * M(:,iLayer,iUser,iBand));
+                        q_o(iLayer,iUser,iBand) = imag(vW{iUser,iBand}(:,iLayer)' * channelH * M(:,iLayer,iUser,iBand));
+                    end
+                end
             end
             
             currentIteration = currentIteration + 1;

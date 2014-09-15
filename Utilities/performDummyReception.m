@@ -181,7 +181,7 @@ for xBand = 1:length(xBandIndices)
             
         end
         
-        L = eye(size(I)) + (I \ (S * S'));
+        L = eye(size(I)) + (pinv(I) * (S * S'));
         xThrpt = real(log2(det(L)));
 
         if ~isnan(xThrpt)
