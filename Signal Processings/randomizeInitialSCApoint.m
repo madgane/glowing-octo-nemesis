@@ -60,7 +60,7 @@ switch initPrecPoint
             end
         end
     case 'RT-XD'
-        M = complex(ones(SimParams.nTxAntenna,maxRank,nUsers,nBands),ones(SimParams.nTxAntenna,maxRank,nUsers,nBands)) * sqrt(0.0);
+        M = complex(ones(SimParams.nTxAntenna,maxRank,nUsers,nBands),ones(SimParams.nTxAntenna,maxRank,nUsers,nBands)) * sqrt(0.5);
         for iBase = 1:nBases
             for iBand = 1:nBands
                 M(:,:,cellUserIndices{iBase,1},iBand) = SimParams.Debug.DataExchange{1,1}{iBase,1}(:,:,:,iBand) + M(:,:,cellUserIndices{iBase,1},iBand);

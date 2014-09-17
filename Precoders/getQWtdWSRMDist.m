@@ -1024,7 +1024,6 @@ switch selectionMethod
         maxRank = SimParams.maxRank;
         
         xIndex = 1;
-        reIterate = 1;
         currentIteration = 0;
         cvx_hist = -500 * ones(2,1);
         SimParams.distDecompSteps = mIterationsSG;
@@ -1041,7 +1040,7 @@ switch selectionMethod
             lambdaLKN = SimParams.Debug.DataExchange{3,1};
         end
                 
-        while reIterate
+        while currentIteration < mIterationsSCA
             
             for dualIterate = 1:mIterationsSG
                 
@@ -1230,9 +1229,6 @@ switch selectionMethod
             end
             
             currentIteration = currentIteration + 1;
-            if currentIteration > mIterationsSCA
-                reIterate = 0;
-            end
             
         end
         
