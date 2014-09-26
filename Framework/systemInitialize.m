@@ -8,7 +8,7 @@ for iUser = 1:SimParams.nUsers
     SimStructs.userStruct{iUser,1}.lastThrpt = 0;
     SimStructs.userStruct{iUser,1}.userID = iUser;
     SimStructs.userStruct{iUser,1}.tAllocation = 0;
-    SimStructs.userStruct{iUser,1}.W = cell(SimParams.nBands,1);    
+    SimStructs.userStruct{iUser,1}.W = cell(SimParams.nBands,1);
     SimStructs.userStruct{iUser,1}.dropThrpt = zeros(SimParams.nDrops,1);
     
     SimStructs.userStruct{iUser,1}.trafficStats.backLogPkt = 0;
@@ -16,6 +16,7 @@ for iUser = 1:SimParams.nUsers
     SimStructs.userStruct{iUser,1}.trafficHistory.pktService = zeros(1,(SimParams.nDrops + 1));
     SimStructs.userStruct{iUser,1}.trafficStats.backlogsOverTime = zeros(1,(SimParams.nDrops + 1));
     SimStructs.userStruct{iUser,1}.trafficStats.residuesOverTime = zeros(1,(SimParams.nDrops + 1));
+    
 end
 
 for iBase = 1:SimParams.nBases
