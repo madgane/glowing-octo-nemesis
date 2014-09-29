@@ -2,7 +2,7 @@
 function [SimParams,SimStructs] = getQWtdWSRM(SimParams,SimStructs)
 
 epsilonT = 1e-5;
-maxIterations = 10;
+maxIterations = 250;
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;
@@ -693,6 +693,8 @@ switch selectionMethod
         end
         
         while reIterate
+            
+            cvx_begin
             
             M = sdpvar(SimParams.nTxAntenna,maxRank,nUsers,nBands,'full','complex');
             t = sdpvar(maxRank,nUsers,nBands,'full');b = sdpvar(maxRank,nUsers,nBands,'full');g = sdpvar(maxRank,nUsers,nBands,'full');

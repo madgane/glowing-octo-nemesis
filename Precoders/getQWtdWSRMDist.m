@@ -365,7 +365,7 @@ switch selectionMethod
                             for jBase = 1:nBases
                                 if jBase ~= iBase
                                     tempFirst = tempFirst + sum(currentDual{iBase,1}(:,cUser,jBase,iBand) .* x(:,cUser,jBase,iBand));
-                                    tempADMM = tempADMM + sum(vec(x(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand)).^2);
+                                    tempADMM = tempADMM + vec(x(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand)).^2;
                                 end
                             end
                         end
@@ -373,7 +373,7 @@ switch selectionMethod
                         for iUser = 1:length(cellNeighbourIndices{iBase,1})
                             cUser = cellNeighbourIndices{iBase,1}(iUser,1);
                             tempSecond = tempSecond + sum(currentDual{iBase,1}(:,cUser,iBase,iBand) .* x(:,cUser,iBase,iBand));
-                            tempADMM = tempADMM + sum(vec(x(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand)).^2);
+                            tempADMM = tempADMM + vec(x(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand)).^2;
                         end
                         
                     end

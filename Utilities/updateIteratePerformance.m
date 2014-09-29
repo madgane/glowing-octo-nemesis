@@ -1,15 +1,5 @@
 
-function [SimParams,SimStructs] = updateIteratePerformance(varargin)
-
-if nargin == 2
-    SimParams = varargin{1,1};
-    SimStructs = varargin{1,2};
-else
-    SimParams = varargin{1,1};
-    SimStructs = varargin{1,2};
-    cellM = varargin{1,3};
-    W = varargin{1,4};
-end
+function [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellM,W)
 
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;
@@ -34,47 +24,43 @@ for iBase = 1:nBases
     end
 end
 
-if nargin ~= 2    
+if iscell(cellM)
     
-    if iscell(cellM)
-        
-        [~,xBands] = size(cellM);
-        
-        if xBands ~= nBands
-            for iBase = 1:nBases
-                for iBand = 1:nBands
-                    SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM{iBase,1}(:,:,:,iBand);
-                end
-            end
-        else
-            for iBase = 1:nBases
-                for iBand = 1:nBands
-                    SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM{iBase,1}(:,:,:,iBand);
-                end
-            end
-        end
-        
-    else
-        
+    [~,xBands] = size(cellM);
+
+    if xBands ~= nBands
         for iBase = 1:nBases
             for iBand = 1:nBands
-                P = [];
-                for iUser = 1:usersPerCell(iBase,1)
-                    cUser = cellUserIndices{iBase,1}(iUser,1);
-                    P = [P cellM(:,:,cUser,iBand)];
-                end
-                SimStructs.baseStruct{iBase,1}.P{iBand,1} = P;
+                SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM{iBase,1}(:,:,:,iBand);
             end
         end
-        
-    end
-    
-    for iUser = 1:nUsers
-        for iBand = 1:nBands
-            SimStructs.userStruct{iUser,1}.W{iBand,1} = W{iUser,iBand};
+    else
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                SimStructs.baseStruct{iBase,1}.P{iBand,1} = cellM{iBase,1}(:,:,:,iBand);
+            end
         end
     end
 
+else
+    
+    for iBase = 1:nBases
+        for iBand = 1:nBands
+            P = [];
+            for iUser = 1:usersPerCell(iBase,1)
+                cUser = cellUserIndices{iBase,1}(iUser,1);
+                P = [P cellM(:,:,cUser,iBand)];
+            end
+            SimStructs.baseStruct{iBase,1}.P{iBand,1} = P;
+        end
+    end
+        
+end
+    
+for iUser = 1:nUsers
+    for iBand = 1:nBands
+        SimStructs.userStruct{iUser,1}.W{iBand,1} = W{iUser,iBand};
+    end
 end
 
 SimParams.Debug.privateExchanges.resAllocation = zeros(nBands,nUsers);

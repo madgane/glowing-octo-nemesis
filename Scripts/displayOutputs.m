@@ -75,13 +75,7 @@ switch SimParams.plotMode
         
     case 'QTimePlot'
         
-        figStruct.N = 1;
-        figStruct.Y = sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(end,:,end,:)));
-        plotFigure(figStruct);
-        
-        figStruct.N = 2;
-        figStruct.Y = sum(squeeze(SimParams.QueueInfo.packetServiceOverTime(end,:,end,:)));
-        plotFigure(figStruct);        
+        plotFigure(struct('Y',sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(end,:,end,:)))));
         
     case 'CPlot'
         

@@ -22,8 +22,8 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'CellEdge';
-SimParams.DopplerType = 'Uniform_10';
+SimParams.pathLossModel = 'Perturbed_3';
+SimParams.DopplerType = 'Uniform_5';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 0;
@@ -31,12 +31,9 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_RTQWSRM_Method';
-SimParams.weightedSumRateMethod = 'distBSAlloc';
-SimParams.additionalParams = 'EXP';
-
-SimParams.nExchangesOverBH = 50;
-SimParams.exchangeResetInterval = 10;
+SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
+SimParams.weightedSumRateMethod = 'ADMMMethod';
+SimParams.additionalParams = 'MMSE';
 
 SimParams.nDrops = 2;
 SimParams.snrIndex = [10];
@@ -49,7 +46,7 @@ SimParams.fbFraction = 0.00;
 
 SimParams.nBands = 1;
 SimParams.nBases = 2;
-SimParams.nUsers = 6;
+SimParams.nUsers = 4;
 
 SimParams.nTxAntenna = 2;
 SimParams.nRxAntenna = 1;
@@ -58,7 +55,7 @@ SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 SimParams.gracePeriod = 0;
 SimParams.arrivalDist = 'SteadyFlow';
 
-SimParams.maxArrival = 1000;
+SimParams.maxArrival = 10;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -90,7 +87,7 @@ for iPkt = 1:length(SimParams.maxArrival)
         for iDrop = 1:SimParams.nDrops
             
             SimParams.iDrop = iDrop;
-            SimParams.distIteration = iDrop;
+            SimParams.distIteration = 1;
             
             if strcmp(SimParams.DebugMode,'true')
                 display(SimParams.Debug.activeStatus(:,1)');
