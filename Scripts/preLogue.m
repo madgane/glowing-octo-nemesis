@@ -1,13 +1,14 @@
 
 epsilonT = 1e-5;
-maxIterations = 10;
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;
+maxRank = SimParams.maxRank;
+globalMode = SimParams.totalPwrDistOverSC;
 
-% vec = @(x)(x(:));
 usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
+cellNeighbourIndices = cell(nBases,1);
 
 % Debug Buffers initialization
 
@@ -25,12 +26,19 @@ end
 
 nUsers = sum(usersPerCell);
 QueuedPkts = zeros(nUsers,1);
-bandRateMax = zeros(SimParams.nUsers,nBands);
 
 for iBase = 1:nBases
     for iUser = 1:usersPerCell(iBase,1)
         cUser = cellUserIndices{iBase,1}(iUser,1);
         QueuedPkts(cUser,1) = SimStructs.userStruct{cUser,1}.trafficStats.backLogPkt;
+    end
+end
+
+for iBase = 1:nBases
+    for jBase = 1:nBases
+        if jBase ~= iBase
+            cellNeighbourIndices{iBase,1} = [cellNeighbourIndices{iBase,1} ; cellUserIndices{jBase,1}];
+        end
     end
 end
 

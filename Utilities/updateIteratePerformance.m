@@ -1,14 +1,15 @@
 
 function [SimParams,SimStructs] = updateIteratePerformance(varargin)
 
-if nargin == 2
-    SimParams = varargin{1,1};
-    SimStructs = varargin{1,2};
-else
-    SimParams = varargin{1,1};
-    SimStructs = varargin{1,2};
-    cellM = varargin{1,3};
-    W = varargin{1,4};
+switch nargin
+    case 2
+        SimParams = varargin{1,1};
+        SimStructs = varargin{1,2};
+    otherwise
+        SimParams = varargin{1,1};
+        SimStructs = varargin{1,2};
+        cellM = varargin{1,3};
+        W = varargin{1,4};
 end
 
 nBases = SimParams.nBases;

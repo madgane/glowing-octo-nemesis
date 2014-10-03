@@ -1,8 +1,8 @@
-
+% (centr.)
 clc;
 clear all;close all;
 
-uiopen('Y:\Latex\glowing-octo-meme\Figures\Linux\fig-9-2.fig',1);
+uiopen('Y:\Latex\glowing-octo-meme\Figures\Linux\fig-5.fig',1);
 H = get(gca);F = get(gcf);
 figStruct = get(get(gca,'Children'));
 
@@ -14,14 +14,17 @@ figure(2);
 figMarkerSize = 4;
 hold all;grid on;box on;
 
-nMarkers = 12;
+nMarkers = 10;
 nCurves = length(figStruct);
 legendString = cell(nCurves,1);
 xCurveLegend = zeros(nCurves,1);
 for iCurve = 1:nCurves
     nJump = nCurves + iCurve;
     jCurve = nCurves - iCurve + 1;
-    randInterval = randperm(length(figStruct(iCurve).XData),nMarkers);
+    nLength = length(figStruct(iCurve).XData);
+    uniformJump = floor(nLength / nMarkers);
+    stPoint = randi(uniformJump,1,1);
+    randInterval = stPoint:uniformJump:nLength;
     figColor = figColorCell{mod(iCurve - 1,length(figColorCell)) + 1};
     lineType = lineCell{mod(iCurve - 1,length(lineCell)) + 1};
     marker = markerCell{mod(iCurve - 1,length(markerCell)) + 1};
@@ -37,5 +40,3 @@ end
 legend(xCurveLegend,legendString);
 xlabel('SCA Update Points');
 ylabel('Queue deviation (\chi) in bits / channel use');
-
-saveas(gcf,'Y:\Latex\glowing-octo-meme\Figures\Linux\fig-9-2-2.eps');
