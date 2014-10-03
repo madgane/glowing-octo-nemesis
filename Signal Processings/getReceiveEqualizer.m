@@ -1,6 +1,6 @@
 function [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,rxType,bsIndices)
 
-preLogue;
+proLogue;
 if nargin ~= 4
     bsIndices = 1:nBases;
 end

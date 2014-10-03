@@ -1,7 +1,7 @@
 
 function [SimParams,SimStructs] = getQWtdWSRMDist(SimParams,SimStructs)
 
-preLogue;
+proLogue;
 alpha = 10;
 sumDeviationH = -50;
 

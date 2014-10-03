@@ -22,7 +22,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'Perturbed_0.001';
+SimParams.pathLossModel = 'Isolated';
 SimParams.DopplerType = 'Uniform_10';
 
 SimParams.queueWt = 1;
@@ -39,7 +39,7 @@ SimParams.nExchangesOTA = 10;
 SimParams.exchangeResetInterval = 10;
 SimParams.nExchangesOBH = 10;
 
-SimParams.nDrops = 2;
+SimParams.nDrops = 10;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;

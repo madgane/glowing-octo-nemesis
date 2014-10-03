@@ -1,6 +1,6 @@
 function [SimParams,SimStructs] = getRealTimeQWSRM(SimParams,SimStructs)
 
-preLogue;
+proLogue;
 pNoise = 1e-30;
 SimParams.Debug.globalExchangeInfo.funcOut = cell(5,SimParams.nBases);
 
@@ -27,7 +27,7 @@ switch selectionMethod
                 for inLoop = 1:maxIterations
                 
                     kUsers = usersPerCell(iBase,1);
-                    if exchangeOTA == 1
+                    if and(exchangeOTA == 1,inLoop == 1)
                         SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
                         [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'BF',iBase);
                         [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
