@@ -12,6 +12,7 @@ cellNeighbourIndices = cell(nBases,1);
 
 % Debug Buffers initialization
 
+rankArray = linspace(1,maxRank,maxRank);
 SimParams.Debug.tempResource{2,SimParams.iDrop} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{3,SimParams.iDrop} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{4,SimParams.iDrop} = cell(SimParams.nUsers,SimParams.nBands);

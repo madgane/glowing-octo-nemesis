@@ -48,9 +48,7 @@ switch precInit
                 cUser = linkedUsers(iUser,1);
                 for jBase = 1:SimParams.nBases
                     if jBase ~= bsIndex
-                        if isfield(SimParams.Debug.globalExchangeInfo,'gI')
-                            addNoise(:,cUser,iBand) = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,iBand)^2;
-                        end
+                        addNoise(:,cUser,iBand) = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,iBand).^2;
                     end
                 end
             end

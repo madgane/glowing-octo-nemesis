@@ -29,7 +29,7 @@ end
 
 SimStructs.linkChan = cell(SimParams.nBases,SimParams.nBands);
 SimStructs.actualChannel = cell(SimParams.nBases,SimParams.nBands);
-SimStructs.chanHistory = cell(SimParams.nBases,SimParams.nBands);
+SimStructs.prevChan = cell(SimParams.nBases,SimParams.nBands);
 
 if strcmp(SimParams.ChannelModel,'Jakes')
     for iUser = 1:SimParams.nUsers

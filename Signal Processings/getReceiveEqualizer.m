@@ -1,8 +1,23 @@
 function [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,rxType,bsIndices)
 
-preLogue;
+cH = SimStructs.linkChan;
+nBases = SimParams.nBases;
+nBands = SimParams.nBands;
+nUsers = SimParams.nUsers;
+maxRank = SimParams.maxRank;
+cellUserIndices = cell(nBases,1);
+usersPerCell = zeros(nBases,1);
+
 if nargin ~= 4
     bsIndices = 1:nBases;
+end
+
+for iBase = 1:nBases
+    for iBand = 1:nBands
+        cellUserIndices{iBase,1} = [cellUserIndices{iBase,1} ; SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1}];
+    end
+    cellUserIndices{iBase,1} = unique(cellUserIndices{iBase,1});
+    usersPerCell(iBase,1) = length(cellUserIndices{iBase,1});
 end
 
 pertNoise = 1e-20;
@@ -37,14 +52,14 @@ for iBand = 1:nBands
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     H = cH{iBase,iBand}(:,:,cUser);
-                    for iLayer = 1:SimParams.maxRank
+                    for iLayer = 1:maxRank
                         R = eye(SimParams.nRxAntenna);
                         for jBase = bsIndices
                             for jUser = 1:usersPerCell(jBase,1)
                                 R = R + H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,:,jUser) * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,:,jUser)' * H';
                             end
                         end
-                        W{cUser,iBand} = R \ (H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,iLayer,iUser)) + pertNoise;
+                        W{cUser,iBand}(:,iLayer) = R \ (H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,iLayer,iUser)) + pertNoise;
                     end
                 end
             end
