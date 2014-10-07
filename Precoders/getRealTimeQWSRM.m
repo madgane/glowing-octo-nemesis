@@ -278,12 +278,9 @@ switch selectionMethod
         for iExchangeOTA = 1:SimParams.nExchangesOTA
             
             for iBase = 1:nBases
-                if and(SimParams.iDrop == 1,iExchangeOTA == 1)                
+                if iExchangeOTA == 1
                     SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
-                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF',iBase);
-                else
-                    SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
-                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'Last',iBase);
+                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF');
                 end
             end                
             

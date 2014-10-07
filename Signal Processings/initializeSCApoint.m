@@ -60,7 +60,12 @@ if ~ischar(bsIndex)
             end
     end
     
-    
+    for iBand = 1:nBands
+        totPower = norm(vec(M0(:,:,:,iBand)))^2;
+        totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+        M0(:,:,:,iBand) = M0(:,:,:,iBand) * totPower;
+    end
+
     for iBand = 1:nBands
         for iUser = 1:kUsers
             cUser = linkedUsers(iUser,1);
@@ -126,26 +131,30 @@ else
                         [~,~,V] = svd(cH{bsIndex,iBand}(:,:,cUser));
                         M0{bsIndex,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
                     end
+                    totPower = norm(vec(M0{bsIndex,1}(:,:,:,iBand)))^2;
+                    totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                    M0{bsIndex,1}(:,:,:,iBand) = M0{bsIndex,1}(:,:,:,iBand) * totPower;
                 end
-                for iBase = 1:nBases
-                    SimParams.Debug.globalExchangeInfo.funcOut{3,iBase} = ones(maxRank,usersPerCell(iBase,1),nBands);
-                    SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = ones(maxRank,usersPerCell(iBase,1),nBands);
-                end
+                SimParams.Debug.globalExchangeInfo.funcOut{3,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
+                SimParams.Debug.globalExchangeInfo.funcOut{4,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
                 
             case 'Ones'
                 for iBand = 1:nBands
                     M0{bsIndex,1}(:,:,:,iBand) = complex(ones(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1)),ones(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1)));
+                    totPower = norm(vec(M0{bsIndex,1}(:,:,:,iBand)))^2;
+                    totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                    M0{bsIndex,1}(:,:,:,iBand) = M0{bsIndex,1}(:,:,:,iBand) * totPower;
                 end
-                for iBase = 1:nBases
-                    SimParams.Debug.globalExchangeInfo.funcOut{3,iBase} = ones(maxRank,usersPerCell(iBase,1),nBands);
-                    SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = ones(maxRank,usersPerCell(iBase,1),nBands);
-                end
+                SimParams.Debug.globalExchangeInfo.funcOut{3,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
+                SimParams.Debug.globalExchangeInfo.funcOut{4,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
+
                 
             case 'Last'
                 for iBand = 1:nBands
                     M0{bsIndex,1}(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
                 end
         end
+        
     end
     
     for iBase = 1:nBases

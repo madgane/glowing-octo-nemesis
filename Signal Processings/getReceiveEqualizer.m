@@ -20,18 +20,21 @@ for iBase = 1:nBases
     usersPerCell(iBase,1) = length(cellUserIndices{iBase,1});
 end
 
-pertNoise = 1e-20;
+pertNoise = 1e-40;
 W = cell(nUsers,nBands);
 M0 = cell(SimParams.nBases,1);
 
 for iBand = 1:nBands
     for iBase = bsIndices
-        M0{iBase,1} = zeros(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(iBase,1),nBands);
         for iUser = 1:usersPerCell(iBase,1)
             cUser = cellUserIndices{iBase,1}(iUser,1);
             [~,~,V] = svd(cH{iBase,iBand}(:,:,cUser));
             M0{iBase,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
         end
+        
+        totPower = norm(vec(M0{iBase,1}(:,:,:,iBand)))^2;
+        totPower = sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower) / totPower);
+        M0{iBase,1}(:,:,:,iBand) = M0{iBase,1}(:,:,:,iBand) * totPower;
     end
 end
 
