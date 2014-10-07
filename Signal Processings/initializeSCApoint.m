@@ -7,14 +7,7 @@ maxRank = SimParams.maxRank;
 rankArray = linspace(1,maxRank,maxRank);
 
 if ~ischar(bsIndex)
-    
-    switch SimStructs.baseStruct{bsIndex,1}.selectionType
-        case {'BF','Ones'}
-            precInit = 'BF';
-        case 'Last'
-            precInit = 'Last';
-    end
-    
+        
     linkedUsers = SimStructs.baseStruct{bsIndex,1}.linkedUsers;
     kUsers = length(SimStructs.baseStruct{bsIndex,1}.linkedUsers);
     
@@ -30,7 +23,7 @@ if ~ischar(bsIndex)
         end
     end
     
-    switch precInit
+    switch SimStructs.baseStruct{bsIndex,1}.selectionType
         
         case 'BF'
             for iBand = 1:nBands
@@ -39,11 +32,17 @@ if ~ischar(bsIndex)
                     [~,~,V] = svd(cH{bsIndex,iBand}(:,:,cUser));
                     M0(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
                 end
+                totPower = norm(vec(M0(:,:,:,iBand)))^2;
+                totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                M0(:,:,:,iBand) = M0(:,:,:,iBand) * totPower;
             end
             
         case 'Ones'
             for iBand = 1:nBands
                 M0(:,:,:,iBand) = complex(ones(SimParams.nTxAntenna,SimParams.maxRank,kUsers),ones(SimParams.nTxAntenna,SimParams.maxRank,kUsers));
+                totPower = norm(vec(M0(:,:,:,iBand)))^2;
+                totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                M0(:,:,:,iBand) = M0(:,:,:,iBand) * totPower;
             end
             
         case 'Last'
@@ -60,12 +59,6 @@ if ~ischar(bsIndex)
             end
     end
     
-    for iBand = 1:nBands
-        totPower = norm(vec(M0(:,:,:,iBand)))^2;
-        totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
-        M0(:,:,:,iBand) = M0(:,:,:,iBand) * totPower;
-    end
-
     for iBand = 1:nBands
         for iUser = 1:kUsers
             cUser = linkedUsers(iUser,1);
@@ -111,18 +104,10 @@ else
         linkedUsers{iBase,1} = SimStructs.baseStruct{iBase,1}.linkedUsers;
         usersPerCell(iBase,1) = length(SimStructs.baseStruct{iBase,1}.linkedUsers);
     end
-
     
     for bsIndex = 1:nBases
         
         switch SimStructs.baseStruct{bsIndex,1}.selectionType
-            case {'BF','Ones'}
-                precInit = 'BF';
-            case 'Last'
-                precInit = 'Last';
-        end
-        
-        switch precInit
             
             case 'BF'
                 for iBand = 1:nBands
@@ -168,9 +153,9 @@ else
                             jxUser = linkedUsers{jBase,1}(jUser,1);
                             currentH = cH{jBase,iBand}(:,:,cUser);
                             if jxUser ~= cUser
-                                intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{iBase,1}(:,iLayer~=rankArray,jUser,iBand)];
+                                intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{jBase,1}(:,iLayer~=rankArray,jUser,iBand)];
                             else
-                                intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{iBase,1}(:,:,jUser,iBand)];
+                                intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{jBase,1}(:,:,jUser,iBand)];
                             end
                         end
                     end
@@ -178,7 +163,7 @@ else
                     currentH = cH{iBase,iBand}(:,:,cUser);
                     givenVector = (1 - W0{cUser,iBand}(:,iLayer)' * currentH * M0{iBase,1}(:,iLayer,iUser,iBand));
                     intVector = [intVector, givenVector];
-                    E0{iBase,1}(iLayer,iUser,iBand) = norm(intVector,2)^2;
+                    E0{iBase,1}(iLayer,iUser,iBand) = norm(intVector)^2;
                 end
             end
         end
@@ -188,7 +173,7 @@ else
         SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M0{iBase,1};
         SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = E0{iBase,1};
         SimParams.Debug.globalExchangeInfo.funcOut{5,iBase} = W0;
-    end    
+    end
     
 end
 

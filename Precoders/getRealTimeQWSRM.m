@@ -22,7 +22,7 @@ switch selectionMethod
             SimParams.Debug.globalExchangeInfo.gI{iBase,1} = zeros(maxRank,nUsers,nBands);
         end
         
-        for exchangeOTA = 1:1
+        for iExchangeOTA = 1:1
             
             for iBase = 1:nBases
                 
@@ -36,6 +36,7 @@ switch selectionMethod
                         [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
                     else
                         SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
+                        [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE',iBase);
                         [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
                     end
                     
@@ -105,7 +106,6 @@ switch selectionMethod
                         SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = M0(:,:,:,iBand);
                     end
                     
-                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE',iBase);
                 end
                 
                 fprintf('\n');
@@ -117,27 +117,26 @@ switch selectionMethod
     case 'distBSAlloc'
         
         stepIndex = 10;
-        for iExchangeOTA = 1:SimParams.nExchangesOTA
+        for iExchangeOTA = 0:SimParams.nExchangesOTA
             
-            if iExchangeOTA == 1
+            if iExchangeOTA == 0
                 for iBase = 1:nBases
                     SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'BF',iBase);
                     SimParams.Debug.globalExchangeInfo.gI{iBase,1} = zeros(maxRank,nUsers,nBands);
                     SimParams.Debug.globalExchangeInfo.D{iBase,1} = zeros(maxRank,nUsers,nBands,nBases);
                 end
-                cH = SimStructs.prevChan;
-                maxBackHaulExchanges = SimParams.nExchangesOBH;
+                cH = SimStructs.prevChan;maxBackHaulExchanges = SimParams.nExchangesOBH;
             else
-                cH = SimStructs.linkChan;
-                maxBackHaulExchanges = 1;
+                cH = SimStructs.linkChan;maxBackHaulExchanges = 1;
+                [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
             end
             
             for iExchangeBH = 1:maxBackHaulExchanges
                 
                 for iBase = 1:nBases
                     
-                    if ~and(iExchangeBH == 1,iExchangeOTA == 1)
+                    if ~and(iExchangeBH == 1,iExchangeOTA == 0)
                         SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
                     end
                     
@@ -266,7 +265,6 @@ switch selectionMethod
             end
             
             fprintf('OTA Performed - %d \n',iExchangeOTA);
-            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
             
         end
         
@@ -275,18 +273,22 @@ switch selectionMethod
         M0 = cell(nBases,1);E0 = cell(nBases,1);
         alphaLKN = cell(nBases,1);lambdaLKN = cell(nBases,1);
         
-        for iExchangeOTA = 1:SimParams.nExchangesOTA
+        for iExchangeOTA = 0:SimParams.nExchangesOTA
             
             for iBase = 1:nBases
-                if iExchangeOTA == 1
+                if and(iExchangeOTA == 0,SimParams.distIteration == 1)
                     SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF');
+                else
+                    if iBase == 1
+                        [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
+                    end
                 end
             end                
             
             for iExchangeBH = 1:SimParams.nExchangesOBH
                 
-                if ~and(iExchangeBH == 1,iExchangeOTA == 1)
+                if ~and(iExchangeBH == 1,iExchangeOTA == 0)
                     for iBase = 1:nBases
                         SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
                     end
@@ -301,6 +303,7 @@ switch selectionMethod
                     lambdaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};
                 end
                 
+                display(E0{1});
                 W = SimParams.Debug.globalExchangeInfo.funcOut{5,1};
 
                 for iBase = 1:nBases
@@ -355,7 +358,7 @@ switch selectionMethod
                         for iUser = 1:kUsers
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             for iLayer = 1:maxRank
-                                intVector = sqrt(SimParams.N) * W{iUser,iBand}(:,iLayer)';
+                                intVector = sqrt(SimParams.N) * W{cUser,iBand}(:,iLayer)';
                                 for jBase = 1:nBases
                                     if jBase ~= iBase
                                         P = M0{jBase,1};
@@ -417,8 +420,6 @@ switch selectionMethod
                 
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);                
             end
-            
-            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
         end
         
 end
