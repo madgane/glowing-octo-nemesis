@@ -22,7 +22,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.pathLossModel = 'Isolated';
 SimParams.DopplerType = 'Constant_25';
 
 SimParams.queueWt = 1;
@@ -32,12 +32,12 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_RTQWSRM_Method';
-SimParams.weightedSumRateMethod = 'perBSAlloc';
+SimParams.weightedSumRateMethod = 'distMSEAlloc';
 SimParams.additionalParams = 'MMSE';
 
 SimParams.nExchangesOTA = 10;
 SimParams.exchangeResetInterval = 10;
-SimParams.nExchangesOBH = 10;
+SimParams.nExchangesOBH = 1;
 
 SimParams.nDrops = 10;
 SimParams.snrIndex = [10];

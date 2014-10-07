@@ -1,7 +1,7 @@
 
 function [SimParams,SimStructs] = getQWtdWSRM(SimParams,SimStructs)
 
-preLogue;
+proLogue;
 updatePrecoders = 'true';
 maxIterations = SimParams.nExchangesOTA;
 bandRateMax = zeros(SimParams.nUsers,nBands);

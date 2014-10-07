@@ -22,6 +22,18 @@ end
 
 pertNoise = 1e-20;
 W = cell(nUsers,nBands);
+M0 = cell(SimParams.nBases,1);
+
+for iBand = 1:nBands
+    for iBase = bsIndices
+        M0{iBase,1} = zeros(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(iBase,1),nBands);
+        for iUser = 1:usersPerCell(iBase,1)
+            cUser = cellUserIndices{iBase,1}(iUser,1);
+            [~,~,V] = svd(cH{iBase,iBand}(:,:,cUser));
+            M0{iBase,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
+        end
+    end
+end
 
 for iBand = 1:nBands
     
@@ -61,6 +73,33 @@ for iBand = 1:nBands
                         end
                         W{cUser,iBand}(:,iLayer) = R \ (H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,iLayer,iUser)) + pertNoise;
                     end
+                end
+            end
+            
+        case 'MMSE-BF'
+
+            for iBase = bsIndices
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    H = cH{iBase,iBand}(:,:,cUser);
+                    for iLayer = 1:maxRank
+                        R = eye(SimParams.nRxAntenna);
+                        for jBase = bsIndices
+                            for jUser = 1:usersPerCell(jBase,1)
+                                R = R + H * M0{iBase,1}(:,:,jUser,iBand) * M0{iBase,1}(:,:,jUser,iBand)' * H';
+                            end
+                        end
+                        W{cUser,iBand}(:,iLayer) = R \ (H * M0{iBase,1}(:,iLayer,iUser,iBand)) + pertNoise;
+                    end
+                end
+            end
+            
+        case 'Last'
+            
+            for iBase = bsIndices
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    W{cUser,iBand} = SimStructs.userStruct{cUser,1}.pW{iBand,1};
                 end
             end
     end
