@@ -128,6 +128,7 @@ switch selectionMethod
                 end
                 cH = SimStructs.prevChan;maxBackHaulExchanges = SimParams.nExchangesOBH;
             else
+                fprintf('OTA Performed - %d \n',iExchangeOTA);
                 cH = SimStructs.linkChan;maxBackHaulExchanges = 1;
                 [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
             end
@@ -263,9 +264,6 @@ switch selectionMethod
                 
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
             end
-            
-            fprintf('OTA Performed - %d \n',iExchangeOTA);
-            
         end
         
     case 'distMSEAlloc'
@@ -281,6 +279,7 @@ switch selectionMethod
                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF');
                 else
                     if iBase == 1
+                        fprintf('OTA Performed - %d \n',iExchangeOTA);
                         [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
                     end
                 end
