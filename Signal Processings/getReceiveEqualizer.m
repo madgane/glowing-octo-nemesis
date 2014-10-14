@@ -24,21 +24,22 @@ pertNoise = 1e-40;
 W = cell(nUsers,nBands);
 M0 = cell(SimParams.nBases,1);
 
-for iBand = 1:nBands
+switch rxType
     
-    switch rxType
+    case 'Ones'
         
-        case 'Ones'
-            
+        for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     W{cUser,iBand} = ones(SimParams.nRxAntenna,SimParams.maxRank);
                 end
             end
-            
-        case 'BF'
-            
+        end
+        
+    case 'BF'
+        
+        for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
@@ -46,13 +47,14 @@ for iBand = 1:nBands
                     W{cUser,iBand} = U;
                 end
             end
-            
-        case 'MMSE'
-            
+        end
+        
+    case 'MMSE'
+        
+        for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
-                    H = cH{iBase,iBand}(:,:,cUser);
                     for iLayer = 1:maxRank
                         R = SimParams.N * eye(SimParams.nRxAntenna);
                         for jBase = bsIndices
@@ -66,21 +68,27 @@ for iBand = 1:nBands
                     end
                 end
             end
-            
-        case 'MMSE-BF'
-
+        end
+        
+    case 'MMSE-BF'
+        
+        for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     [~,~,V] = svd(cH{iBase,iBand}(:,:,cUser));
                     M0{iBase,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
                 end
-                
-                totPower = norm(vec(M0{iBase,1}(:,:,:,iBand)))^2;
-                totPower = sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower) / totPower);
-                M0{iBase,1}(:,:,:,iBand) = M0{iBase,1}(:,:,:,iBand) * totPower;
             end
+        end
+        
+        for iBase = bsIndices
+            totPower = norm(vec(M0{iBase,1}))^2;
+            totPower = sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower) / totPower);
+            M0{iBase,1} = M0{iBase,1} * totPower;
+        end
 
+        for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
@@ -97,16 +105,21 @@ for iBand = 1:nBands
                     end
                 end
             end
-            
-        case 'MMSE-Ones'
+        end
+        
+    case 'MMSE-Ones'
+        
+        for iBase = bsIndices
+            M0{iBase,1} = complex(ones(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1),nBands),ones(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1),nBands));
+        end
+        
+        for iBase = bsIndices
+            totPower = norm(vec(M0{iBase,1}))^2;
+            totPower = sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower) / totPower);
+            M0{iBase,1} = M0{iBase,1} * totPower;
+        end
 
-            for iBase = bsIndices
-                M0{iBase,1}(:,:,:,iBand) = complex(ones(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1),1),ones(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1),1));                
-                totPower = norm(vec(M0{iBase,1}(:,:,:,iBand)))^2;
-                totPower = sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower) / totPower);
-                M0{iBase,1}(:,:,:,iBand) = M0{iBase,1}(:,:,:,iBand) * totPower;
-            end
-
+        for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
@@ -123,18 +136,20 @@ for iBand = 1:nBands
                     end
                 end
             end
-            
-        case 'Last'
-            
+        end
+        
+    case 'Last'
+        
+        for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     W{cUser,iBand} = SimStructs.userStruct{cUser,1}.pW{iBand,1};
                 end
             end
-    end
-    
+        end
 end
+
 
 for iBand = 1:nBands
     for iBase = bsIndices

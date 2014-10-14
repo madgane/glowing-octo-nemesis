@@ -6,13 +6,17 @@
 clc;clear all;
 
 saveContents = 'false';
-SimParams.outFile = 'defaultFile';
+if strfind(saveContents,'true')
+    addpath(genpath(pwd));
+end
+
+SimParams.outFile = 'systemFile';
 SimParams.saveChannelInfo = 'false';
 SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'QTimePlot';
+SimParams.plotMode = 'CPlot';
 
 prelimCheck;
 preConfiguration;
@@ -22,8 +26,8 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'CellEdge';
-SimParams.DopplerType = 'Constant_25';
+SimParams.pathLossModel = 'Perturbed_3';
+SimParams.DopplerType = 'Uniform_3';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 0;
@@ -31,17 +35,15 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-% SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
-% SimParams.weightedSumRateMethod = 'MSEKKTMethod';
 SimParams.PrecodingMethod = 'Best_RTQWSRM_Method';
-SimParams.weightedSumRateMethod = 'distBSAlloc';
+SimParams.weightedSumRateMethod = 'distMSEAlloc_1';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 3;
+SimParams.nExchangesOTA = 100;
 SimParams.exchangeResetInterval = 10;
 SimParams.nExchangesOBH = 10;
 
-SimParams.nDrops = 5;
+SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -50,18 +52,18 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 1;
+SimParams.nBands = 5;
 SimParams.nBases = 2;
-SimParams.nUsers = 10;
+SimParams.nUsers = 8;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 2;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
 SimParams.arrivalDist = 'Constant';
 
-SimParams.maxArrival = 6;
+SimParams.maxArrival = 8;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -133,6 +135,10 @@ SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;
 displayOutputs(SimParams,SimStructs);
 
 if strcmp(saveContents,'true')
+
+    xVal = fix(clock);
+    SimParams.Log.date = date;
+    SimParams.Log.clock = sprintf('%d:%d:%d',xVal(1,4),xVal(1,5),xVal(1,6));
     
     cd Results;
     if exist(sprintf('%s.mat',SimParams.outFile),'file')

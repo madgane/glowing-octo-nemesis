@@ -94,6 +94,6 @@ end
 tempSum = sum(cell2mat(SimParams.Debug.tempResource{2,SimParams.iDrop}));
 tempQueue = sum(cell2mat(SimParams.Debug.tempResource{3,SimParams.iDrop}));
 fprintf('(%.2f, %.2f) \n',tempSum(end),tempQueue(end));
-saveGlobals(SimParams,SimStructs,'runPrintFile');
+% saveGlobals(SimParams,SimStructs,'runPrintFile');
 
 end

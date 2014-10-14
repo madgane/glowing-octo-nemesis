@@ -86,7 +86,6 @@ switch selectionMethod
                         cUser = cellUserIndices{iBase,1}(iUser,1);
                         for iLayer = 1:maxRank
                             intVector = sqrt(SimParams.N) * vW{cUser,iBand}(:,iLayer);
-                            
                             for jBase = 1:nBases
                                 currentH = cH{jBase,iBand}(:,:,cUser);
                                 for jUser = 1:usersPerCell(jBase,1)
@@ -161,7 +160,7 @@ switch selectionMethod
                                         end
                                     end
                                     H = cH{iBase,iBand}(:,:,cUser);
-                                    vW{cUser,iBand}(:,iLayer) = R \ (H * M(:,iLayer,cUser,iBand));
+                                    vW{cUser,iBand}(:,iLayer) = R \ (H * M(:,iLayer,cUser,iBand)) + epsilonT;
                                 end
                             end
                         end

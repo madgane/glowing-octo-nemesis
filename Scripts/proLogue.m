@@ -6,6 +6,7 @@ nBands = SimParams.nBands;
 maxRank = SimParams.maxRank;
 globalMode = SimParams.totalPwrDistOverSC;
 
+vector = @(x)(x(:));
 usersPerCell = zeros(nBases,1);
 cellUserIndices = cell(nBases,1);
 cellNeighbourIndices = cell(nBases,1);

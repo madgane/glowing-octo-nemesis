@@ -116,23 +116,16 @@ else
                         [~,~,V] = svd(cH{bsIndex,iBand}(:,:,cUser));
                         M0{bsIndex,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
                     end
-                    totPower = norm(vec(M0{bsIndex,1}(:,:,:,iBand)))^2;
-                    totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
-                    M0{bsIndex,1}(:,:,:,iBand) = M0{bsIndex,1}(:,:,:,iBand) * totPower;
                 end
-                SimParams.Debug.globalExchangeInfo.funcOut{3,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
-                SimParams.Debug.globalExchangeInfo.funcOut{4,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
+                totPower = norm(vec(M0{bsIndex,1}))^2;
+                totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                M0{bsIndex,1} = M0{bsIndex,1} * totPower;
                 
             case 'Ones'
-                for iBand = 1:nBands
-                    M0{bsIndex,1}(:,:,:,iBand) = complex(ones(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1)),ones(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1)));
-                    totPower = norm(vec(M0{bsIndex,1}(:,:,:,iBand)))^2;
-                    totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
-                    M0{bsIndex,1}(:,:,:,iBand) = M0{bsIndex,1}(:,:,:,iBand) * totPower;
-                end
-                SimParams.Debug.globalExchangeInfo.funcOut{3,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
-                SimParams.Debug.globalExchangeInfo.funcOut{4,bsIndex} = ones(maxRank,usersPerCell(bsIndex,1),nBands);
-
+                M0{bsIndex,1} = complex(ones(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1),nBands),ones(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1),nBands));
+                totPower = norm(vec(M0{bsIndex,1}))^2;
+                totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                M0{bsIndex,1} = M0{bsIndex,1} * totPower;
                 
             case 'Last'
                 for iBand = 1:nBands
@@ -152,7 +145,7 @@ else
                         for jUser = 1:usersPerCell(jBase,1)
                             jxUser = linkedUsers{jBase,1}(jUser,1);
                             currentH = cH{jBase,iBand}(:,:,cUser);
-                            if jxUser ~= cUser
+                            if jxUser == cUser
                                 intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{jBase,1}(:,iLayer~=rankArray,jUser,iBand)];
                             else
                                 intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{jBase,1}(:,:,jUser,iBand)];

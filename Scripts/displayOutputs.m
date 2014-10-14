@@ -78,10 +78,15 @@ switch SimParams.plotMode
         figStruct.N = 1;
         figStruct.Y = sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(end,:,end,:)));
         plotFigure(figStruct);
+        xlabel('Time instant (T)');
+        ylabel('Total number of backlogged packets {\chi} in bits/channel use');
         
         figStruct.N = 2;
         figStruct.Y = sum(squeeze(SimParams.QueueInfo.packetServiceOverTime(end,:,end,:)));
-        plotFigure(figStruct);        
+        plotFigure(figStruct); 
+        xlabel('Time instant (T)');
+        ylabel('Total number of transmitted packets in bits/channel use');
+
         
     case 'CPlot'
         
