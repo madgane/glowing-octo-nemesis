@@ -25,9 +25,9 @@ SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
-SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'Perturbed_3';
-SimParams.DopplerType = 'Uniform_3';
+SimParams.ChannelModel = 'IID';
+SimParams.pathLossModel = 'Isolated';
+SimParams.DopplerType = 'Constant_25';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 0;
@@ -35,13 +35,18 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
+if 1
+SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
+SimParams.weightedSumRateMethod = 'MSEKKTMethod';
+else
 SimParams.PrecodingMethod = 'Best_RTQWSRM_Method';
-SimParams.weightedSumRateMethod = 'distMSEAlloc_1';
+SimParams.weightedSumRateMethod = 'distMSEAlloc';
+end
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 100;
+SimParams.nExchangesOTA = 20;
 SimParams.exchangeResetInterval = 10;
-SimParams.nExchangesOBH = 10;
+SimParams.nExchangesOBH = 1;
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -52,18 +57,18 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 5;
+SimParams.nBands = 3;
 SimParams.nBases = 2;
-SimParams.nUsers = 8;
+SimParams.nUsers = 10;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 1;
+SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'Constant';
+SimParams.arrivalDist = 'SteadyFlow';
 
-SimParams.maxArrival = 8;
+SimParams.maxArrival = 5;
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -95,7 +100,7 @@ for iPkt = 1:length(SimParams.maxArrival)
         for iDrop = 1:SimParams.nDrops
             
             SimParams.iDrop = iDrop;
-            SimParams.distIteration = iDrop;
+            SimParams.distIteration = 1;
             
             if strcmp(SimParams.DebugMode,'true')
                 display(SimParams.Debug.activeStatus(:,1)');

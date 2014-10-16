@@ -13,9 +13,9 @@ switch nargin
 end
 
 figLineWidth = {1};
-figLineType = {'-','--','-.',':'};
-figColor = {'b','g','r','m','c','k'};
-figMarker = {'.','x','+','v','p','s','d','o'};
+figLineType = {'-.'};
+figColor = {'b',[0 0.5 0],'r','m',[0 0.75 0.75],[0.5 0.5 0]};
+figMarker = {'o','v','<','d','s','p','v','^'};
 legendString = cell(1,globalCount);
 
 for iScheme = 1:globalCount
@@ -30,13 +30,9 @@ for iScheme = 1:globalCount
     fltIndex = mod(randI + iScheme - 1,(length(figLineType))) + 1;
     flwIndex = mod(randI + iScheme - 1,(length(figLineWidth))) + 1;
     
-    reply = input('Do you want to display in plot Y/N [Y]:','s');
-    
-    if strcmpi(reply,'Y')
-        yValues = sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime(end,:,end,:)));
-        plot(yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
-            'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});        
-    end
+    yValues = sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime(end,:,end,:)));
+    plot(yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+        'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
     
     hold all;
     legendString{1,iScheme} = SimParams.weightedSumRateMethod;
@@ -45,5 +41,7 @@ end
 
 box on;
 legend(legendString);
+
+modifyFigure
 
 end

@@ -1,8 +1,13 @@
-% (centr.)
-clc;
-clear all;close all;
 
-uiopen('Y:\Latex\glowing-octo-meme\Figures\Linux\fig-5.fig',1);
+function modifyFigure(varargin)
+
+switch nargin
+    case 1
+        uiopen(varargin{1});
+    otherwise
+        display('Using current Figure !');
+end
+
 H = get(gca);F = get(gcf);
 figStruct = get(get(gca,'Children'));
 
@@ -11,15 +16,14 @@ figColorCell = {[0,0,0.75],[0,0.75,0],[0.75,0,0],[1,0,1],[0.25,0.25,0.5],[0.15,0
 markerCell = {'o','s','d','h','v','*','^','p','>'};
 
 figure(2);
-figMarkerSize = 4;
+figMarkerSize = 6;
 hold all;grid on;box on;
 
-nMarkers = 10;
+nMarkers = 20;
 nCurves = length(figStruct);
 legendString = cell(nCurves,1);
 xCurveLegend = zeros(nCurves,1);
 for iCurve = 1:nCurves
-    nJump = nCurves + iCurve;
     jCurve = nCurves - iCurve + 1;
     nLength = length(figStruct(iCurve).XData);
     uniformJump = floor(nLength / nMarkers);
@@ -37,6 +41,7 @@ for iCurve = 1:nCurves
     legendString{jCurve,1} = figStruct(iCurve).DisplayName;
 end
 
+box on;grid on;
 legend(xCurveLegend,legendString);
 xlabel('SCA Update Points');
 ylabel('Queue deviation (\chi) in bits / channel use');

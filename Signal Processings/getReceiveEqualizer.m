@@ -27,7 +27,6 @@ M0 = cell(SimParams.nBases,1);
 switch rxType
     
     case 'Ones'
-        
         for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
@@ -37,8 +36,18 @@ switch rxType
             end
         end
         
-    case 'BF'
+    case 'Random'
+        for iBand = 1:nBands
+            for iBase = bsIndices
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    W{cUser,iBand} = complex(randn(SimParams.nRxAntenna,SimParams.maxRank),randn(SimParams.nRxAntenna,SimParams.maxRank));
+                end
+            end
+        end
+
         
+    case 'BF'        
         for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
@@ -49,8 +58,7 @@ switch rxType
             end
         end
         
-    case 'MMSE'
-        
+    case 'MMSE'        
         for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
@@ -70,8 +78,7 @@ switch rxType
             end
         end
         
-    case 'MMSE-BF'
-        
+    case 'MMSE-BF'        
         for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
@@ -107,8 +114,7 @@ switch rxType
             end
         end
         
-    case 'MMSE-Ones'
-        
+    case 'MMSE-Ones'        
         for iBase = bsIndices
             M0{iBase,1} = complex(ones(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1),nBands),ones(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1),nBands));
         end
@@ -138,8 +144,7 @@ switch rxType
             end
         end
         
-    case 'Last'
-        
+    case 'Last'        
         for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)

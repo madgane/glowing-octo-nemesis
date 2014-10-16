@@ -35,6 +35,15 @@ for iBase = 1:nBases
     end
 end
 
+underscore_location = strfind(SimParams.weightedSumRateMethod,'_');
+if isempty(underscore_location)
+    qExponent = 1;
+    selectionMethod = SimParams.weightedSumRateMethod;
+else
+    qExponent = str2double(SimParams.weightedSumRateMethod(underscore_location + 1:end));
+    selectionMethod = SimParams.weightedSumRateMethod(1:underscore_location-1);
+end
+
 if nargin ~= 2    
     
     if iscell(cellM)
@@ -82,8 +91,10 @@ SimParams.Debug.privateExchanges.resAllocation = zeros(nBands,nUsers);
 [SimParams,SimStructs] = performDummyReception(SimParams,SimStructs);
 tBandUser = SimParams.Debug.privateExchanges.resAllocation;
 
+qVector = zeros(nUsers,1);
 for iUser = 1:nUsers
     qDeviation = max(QueuedPkts(iUser,1) - sum(tBandUser(:,iUser)),0);
+    qVector(iUser,1) = QueuedPkts(iUser,1) - sum(tBandUser(:,iUser));
     SimParams.Debug.tempResource{2,SimParams.iDrop}{iUser,1} = [SimParams.Debug.tempResource{2,SimParams.iDrop}{iUser,1} sum(tBandUser(:,iUser))];
     SimParams.Debug.tempResource{3,SimParams.iDrop}{iUser,1} = [SimParams.Debug.tempResource{3,SimParams.iDrop}{iUser,1} qDeviation];
     for iBand = 1:nBands
@@ -93,7 +104,7 @@ end
 
 tempSum = sum(cell2mat(SimParams.Debug.tempResource{2,SimParams.iDrop}));
 tempQueue = sum(cell2mat(SimParams.Debug.tempResource{3,SimParams.iDrop}));
-fprintf('(%.2f, %.2f) \n',tempSum(end),tempQueue(end));
+fprintf('(%.2f, %.2f, %.2f) \n',tempSum(end),tempQueue(end),norm(qVector,qExponent));
 % saveGlobals(SimParams,SimStructs,'runPrintFile');
 
 end

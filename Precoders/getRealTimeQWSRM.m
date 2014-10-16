@@ -311,7 +311,7 @@ switch selectionMethod
     case 'distMSEAlloc'
         
         stInstant = 0;
-        stepIndex = 0.25;
+        stepIndex = 0.5;
         M0 = cell(nBases,1);E0 = cell(nBases,1);
         alphaLKN = cell(nBases,1);lambdaLKN = cell(nBases,1);
         
@@ -387,7 +387,9 @@ switch selectionMethod
                 
                 for iBase = 1:nBases
                     M0{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};
-                    E0{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
+                    if iExchangeBH == 1
+                        E0{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
+                    end
                     alphaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{3,iBase};
                     lambdaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};
                 end
@@ -443,29 +445,44 @@ switch selectionMethod
                     end
                     
                     for iBand = 1:nBands
+                        SimStructs.baseStruct{iBase,1}.P{iBand,1} = M(:,:,:,iBand);
+                        SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = M(:,:,:,iBand);
+                    end
+                    
+                    SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M;
+                end
+                
+                if iExchangeBH == 1                                   
+                    [SimParams, SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');                    
+                    for iBand = 1:nBands
+                        for iUser = 1:SimParams.nUsers
+                            W{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
+                        end
+                    end
+                end
+        
+                for iBase = 1:nBases
+                    
+                    for iBand = 1:nBands
                         for iUser = 1:kUsers
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             for iLayer = 1:maxRank
                                 intVector = sqrt(SimParams.N) * W{cUser,iBand}(:,iLayer)';
                                 for jBase = 1:nBases
-                                    if jBase ~= iBase
-                                        P = M0{jBase,1};
-                                    else
-                                        P = M;
-                                    end
+                                    P = SimParams.Debug.globalExchangeInfo.P{iBase,iBand};
                                     for jUser = 1:usersPerCell(jBase,1)
                                         jxUser = cellUserIndices{jBase,1}(jUser,1);
                                         currentH = cH{jBase,iBand}(:,:,cUser);
                                         if jxUser == cUser
-                                            intVector = [intVector, W{cUser,iBand}(:,iLayer)' * currentH * P(:,iLayer~=rankArray,jUser,iBand)];
+                                            intVector = [intVector, W{cUser,iBand}(:,iLayer)' * currentH * P(:,iLayer~=rankArray,jUser)];
                                         else
-                                            intVector = [intVector, W{cUser,iBand}(:,iLayer)' * currentH * P(:,:,jUser,iBand)];
+                                            intVector = [intVector, W{cUser,iBand}(:,iLayer)' * currentH * P(:,:,jUser)];
                                         end
                                     end
                                 end
                                 
                                 currentH = cH{iBase,iBand}(:,:,cUser);
-                                givenVector = (1 - W{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
+                                givenVector = (1 - W{cUser,iBand}(:,iLayer)' * currentH * P(:,iLayer,iUser));
                                 intVector = [intVector, givenVector];
                                 E(iLayer,iUser,iBand) = norm(intVector,2)^2;
                             end
@@ -484,22 +501,16 @@ switch selectionMethod
                             for iRank = 1:maxRank
                                 tempT = t(:,iUser,:);
                                 lambdaLKN{iBase,1}(iRank,iUser,iBand) = qExponent * (QueuedPkts(cUser,1) - sum(tempT(:)))^(qExponent - 1) / log(2);
-                                if QueuedPkts(cUser,1) < sum(tempT(:))
-                                    if mod(qExponent,2) ~= 0
+                                if mod(qExponent,2) ~= 0
+                                    if QueuedPkts(cUser,1) < sum(tempT(:))
                                         lambdaLKN{iBase,1}(iRank,iUser,iBand) = 0;
                                     end
                                 end
-                                alphaLKN{iBase,1}(iRank,iUser,iBand) = alphaLKN{iBase,1}(iRank,iUser,iBand) + stepIndex * (max(lambdaLKN{iBase,1}(iRank,iUser,iBand) / E(iRank,iUser,iBand),0) - alphaLKN{iBase,1}(iRank,iUser,iBand));
+                                alphaLKN{iBase,1}(iRank,iUser,iBand) = alphaLKN{iBase,1}(iRank,iUser,iBand) + 1 * (max(lambdaLKN{iBase,1}(iRank,iUser,iBand) / E(iRank,iUser,iBand),0) - alphaLKN{iBase,1}(iRank,iUser,iBand));
                             end
                         end
                     end
                     
-                    for iBand = 1:nBands
-                        SimStructs.baseStruct{iBase,1}.P{iBand,1} = M(:,:,:,iBand);
-                        SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = M(:,:,:,iBand);
-                    end
-                    
-                    SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M;
                     SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = E;
                     SimParams.Debug.globalExchangeInfo.funcOut{3,iBase} = alphaLKN{iBase,1};
                     SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = lambdaLKN{iBase,1};
@@ -508,12 +519,12 @@ switch selectionMethod
                 
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
             end
+            
         end
         
         
     case 'distYBSAlloc'
         
-        epsilon = 1;
         stepIndex = 10;
         for iExchangeOTA = -1:SimParams.nExchangesOTA
             

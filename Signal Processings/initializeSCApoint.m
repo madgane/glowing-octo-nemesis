@@ -45,6 +45,14 @@ if ~ischar(bsIndex)
                 M0(:,:,:,iBand) = M0(:,:,:,iBand) * totPower;
             end
             
+        case 'Random'
+            for iBand = 1:nBands
+                M0(:,:,:,iBand) = complex(randn(SimParams.nTxAntenna,SimParams.maxRank,kUsers),randn(SimParams.nTxAntenna,SimParams.maxRank,kUsers));
+                totPower = norm(vec(M0(:,:,:,iBand)))^2;
+                totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                M0(:,:,:,iBand) = M0(:,:,:,iBand) * totPower;
+            end
+                        
         case 'Last'
             for iBand = 1:nBands
                 M0(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
@@ -127,6 +135,12 @@ else
                 totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
                 M0{bsIndex,1} = M0{bsIndex,1} * totPower;
                 
+            case 'Random'
+                M0{bsIndex,1} = complex(randn(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1),nBands),randn(SimParams.nTxAntenna,SimParams.maxRank,usersPerCell(bsIndex,1),nBands));
+                totPower = norm(vec(M0{bsIndex,1}))^2;
+                totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                M0{bsIndex,1} = M0{bsIndex,1} * totPower;
+                
             case 'Last'
                 for iBand = 1:nBands
                     M0{bsIndex,1}(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
@@ -164,7 +178,9 @@ else
     
     for iBase = 1:nBases
         SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M0{iBase,1};
-        SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = E0{iBase,1};
+        if ~strcmp(SimStructs.baseStruct{iBase,1}.selectionType,'Last')
+            SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = E0{iBase,1};
+        end
         SimParams.Debug.globalExchangeInfo.funcOut{5,iBase} = W0;
     end
     
