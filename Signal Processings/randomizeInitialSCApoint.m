@@ -13,6 +13,7 @@ switch nargin
         display('Unknown arguments !');
 end
 
+vector = @(x)(x(:));
 if strcmpi(SimParams.PrecodingMethod,'Best_QwtWSRMD_Method')
     initPrecPoint = 'RT-XD';
 else
@@ -71,14 +72,14 @@ end
 if strcmp(SimParams.totalPwrDistOverSC,'false')
     for iBase = 1:nBases
         for iBand = 1:nBands
-            totPower = norm(vec(M(:,:,cellUserIndices{iBase,1},iBand)))^2;
+            totPower = norm(vector(M(:,:,cellUserIndices{iBase,1},iBand)))^2;
             totPower = sqrt(SimStructs.baseStruct{iBase,1}.sPower(1,iBand) / totPower);
             M(:,:,cellUserIndices{iBase,1},iBand) = M(:,:,cellUserIndices{iBase,1},iBand) * totPower;
         end
     end
 else
     for iBase = 1:nBases
-        totPower = norm(vec(M(:,:,cellUserIndices{iBase,1},:)))^2;
+        totPower = norm(vector(M(:,:,cellUserIndices{iBase,1},:)))^2;
         totPower = sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower) / totPower);
         M(:,:,cellUserIndices{iBase,1},:) = M(:,:,cellUserIndices{iBase,1},:) * totPower;
     end

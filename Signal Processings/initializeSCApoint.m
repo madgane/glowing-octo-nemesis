@@ -1,13 +1,19 @@
 
 function [SimParams,SimStructs] = initializeSCApoint(SimParams,SimStructs,bsIndex)
 
-cH = SimStructs.linkChan;
 nBands = SimParams.nBands;
 maxRank = SimParams.maxRank;
-rankArray = linspace(1,maxRank,maxRank);
 
 if ~ischar(bsIndex)
-        
+
+    stringCell = strsplit(SimStructs.baseStruct{bsIndex,1}.selectionType,'_');
+    if length(stringCell) == 1
+        cH = SimStructs.linkChan;
+    else
+        cH = SimStructs.prevChan;
+    end
+    
+    selectionType = stringCell{1};
     linkedUsers = SimStructs.baseStruct{bsIndex,1}.linkedUsers;
     kUsers = length(SimStructs.baseStruct{bsIndex,1}.linkedUsers);
     
@@ -23,7 +29,7 @@ if ~ischar(bsIndex)
         end
     end
     
-    switch SimStructs.baseStruct{bsIndex,1}.selectionType
+    switch selectionType
         
         case 'BF'
             for iBand = 1:nBands
@@ -115,7 +121,15 @@ else
     
     for bsIndex = 1:nBases
         
-        switch SimStructs.baseStruct{bsIndex,1}.selectionType
+        stringCell = strsplit(SimStructs.baseStruct{bsIndex,1}.selectionType,'_');
+        if length(stringCell) == 1
+            cH = SimStructs.linkChan;
+        else
+            cH = SimStructs.prevChan;
+        end
+        selectionType = stringCell{1};
+        
+        switch selectionType
             
             case 'BF'
                 for iBand = 1:nBands
@@ -154,23 +168,8 @@ else
             for iUser = 1:usersPerCell(iBase,1)
                 cUser = linkedUsers{iBase,1}(iUser,1);
                 for iLayer = 1:maxRank
-                    intVector = sqrt(SimParams.N) * W0{cUser,iBand}(:,iLayer)';
-                    for jBase = 1:nBases
-                        for jUser = 1:usersPerCell(jBase,1)
-                            jxUser = linkedUsers{jBase,1}(jUser,1);
-                            currentH = cH{jBase,iBand}(:,:,cUser);
-                            if jxUser == cUser
-                                intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{jBase,1}(:,iLayer~=rankArray,jUser,iBand)];
-                            else
-                                intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * currentH * M0{jBase,1}(:,:,jUser,iBand)];
-                            end
-                        end
-                    end
-                    
                     currentH = cH{iBase,iBand}(:,:,cUser);
-                    givenVector = (1 - W0{cUser,iBand}(:,iLayer)' * currentH * M0{iBase,1}(:,iLayer,iUser,iBand));
-                    intVector = [intVector, givenVector];
-                    E0{iBase,1}(iLayer,iUser,iBand) = norm(intVector)^2;
+                    E0{iBase,1}(iLayer,iUser,iBand) = real(1 - W0{cUser,iBand}(:,iLayer)' * currentH * M0{iBase,1}(:,iLayer,iUser,iBand));
                 end
             end
         end
@@ -178,9 +177,7 @@ else
     
     for iBase = 1:nBases
         SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M0{iBase,1};
-        if ~strcmp(SimStructs.baseStruct{iBase,1}.selectionType,'Last')
-            SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = E0{iBase,1};
-        end
+        SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = E0{iBase,1};
         SimParams.Debug.globalExchangeInfo.funcOut{5,iBase} = W0;
     end
     

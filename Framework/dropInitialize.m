@@ -135,5 +135,6 @@ for iUser = 1:SimParams.nUsers
 end
 
 saveChannelInformation;
+[SimParams,SimStructs] = updateFFRProfile(SimParams,SimStructs);
 
 end

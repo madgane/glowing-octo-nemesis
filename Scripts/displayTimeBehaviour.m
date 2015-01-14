@@ -1,6 +1,8 @@
 
 function displayTimeBehaviour(varargin)
 
+close all;
+
 switch nargin
     case 1
         load(varargin{1});
@@ -30,18 +32,27 @@ for iScheme = 1:globalCount
     fltIndex = mod(randI + iScheme - 1,(length(figLineType))) + 1;
     flwIndex = mod(randI + iScheme - 1,(length(figLineWidth))) + 1;
     
+    figure(1);hold all;
     yValues = sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime(end,:,end,:)));
     plot(yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
-    
-    hold all;
-    legendString{1,iScheme} = SimParams.weightedSumRateMethod;
 
+    figure(3);hold all;
+    yValues = sum(squeeze(SimParams.QueueInfo.packetServiceOverTime(end,:,end,:)));
+    plot(yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+        'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
+
+    legendString{1,iScheme} = SimParams.weightedSumRateMethod;
 end
 
+figure(1);
 box on;
 legend(legendString);
+modifyFigure;
 
-modifyFigure
+figure(3);
+box on;
+legend(legendString);
+modifyFigure;
 
 end

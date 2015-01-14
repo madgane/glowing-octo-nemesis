@@ -15,8 +15,8 @@ lineCell = {'-','-.'};
 figColorCell = {[0,0,0.75],[0,0.75,0],[0.75,0,0],[1,0,1],[0.25,0.25,0.5],[0.15,0.45,0.15],[0.75,0.5,0.35]};
 markerCell = {'o','s','d','h','v','*','^','p','>'};
 
-figure(2);
 figMarkerSize = 6;
+figure(H.Parent + 1);
 hold all;grid on;box on;
 
 nMarkers = 20;

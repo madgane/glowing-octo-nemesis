@@ -5,7 +5,7 @@
 
 clc;clear all;
 
-saveContents = 'false';
+saveContents = 'true';
 if strfind(saveContents,'true')
     addpath(genpath(pwd));
 end
@@ -16,7 +16,7 @@ SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'CPlot';
+SimParams.plotMode = 'QSurfacePlot';
 
 prelimCheck;
 preConfiguration;
@@ -25,8 +25,8 @@ SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
-SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'Isolated';
+SimParams.ChannelModel = 'Jakes';
+SimParams.pathLossModel = 'Perturbed_3';
 SimParams.DopplerType = 'Constant_25';
 
 SimParams.queueWt = 1;
@@ -35,20 +35,15 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-if 1
-SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
-SimParams.weightedSumRateMethod = 'MSEKKTMethod';
-else
 SimParams.PrecodingMethod = 'Best_RTQWSRM_Method';
-SimParams.weightedSumRateMethod = 'distMSEAlloc';
-end
-SimParams.additionalParams = 'MMSE';
+SimParams.weightedSumRateMethod = 'distBSAlloc';
+SimParams.additionalParams = 'None';
 
-SimParams.nExchangesOTA = 20;
-SimParams.exchangeResetInterval = 10;
-SimParams.nExchangesOBH = 1;
+SimParams.nExchangesOTA = 5;
+SimParams.exchangeResetInterval = 5;
+SimParams.nExchangesOBH = 5;
 
-SimParams.nDrops = 1;
+SimParams.nDrops = 100;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -57,18 +52,18 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 3;
+SimParams.nBands = 5;
 SimParams.nBases = 2;
-SimParams.nUsers = 10;
+SimParams.nUsers = 18;
 
 SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'SteadyFlow';
+SimParams.arrivalDist = 'Constant';
 
-SimParams.maxArrival = 5;
+SimParams.maxArrival = linspace(0.5,6,12);
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -79,6 +74,7 @@ if strcmp(SimParams.sysMode,'true')
     SimParams.nUsers = 570;
 end
 
+display(SimParams);
 [SimParams,SimStructs] = initializeBuffers(SimParams);
 
 for iPkt = 1:length(SimParams.maxArrival)

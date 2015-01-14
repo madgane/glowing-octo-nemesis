@@ -1136,7 +1136,7 @@ switch selectionMethod
                                 lambdaLKN(iRank,iUser,iBand) = 0;
                             end
                         end
-                        alphaLKN(iRank,iUser,iBand) = alphaLKN(iRank,iUser,iBand) + 0.25 * (max(lambdaLKN(iRank,iUser,iBand) / mseError(iRank,iUser,iBand),0) - alphaLKN(iRank,iUser,iBand));
+                        alphaLKN(iRank,iUser,iBand) = alphaLKN(iRank,iUser,iBand) + 0.1 * (max(lambdaLKN(iRank,iUser,iBand) / mseError(iRank,iUser,iBand),0) - alphaLKN(iRank,iUser,iBand));
                     end
                 end
             end

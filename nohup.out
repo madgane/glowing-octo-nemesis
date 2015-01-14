@@ -1,0 +1,74 @@
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2014 The MathWorks, Inc.
+                   R2014b (8.4.0.150421) 64-bit (glnxa64)
+                             September 15, 2014
+
+ 
+For online documentation, see http://www.mathworks.com/support
+For product information, visit www.mathworks.com.
+ 
+>> >> >> >> >> >> >> >> >> {Operation terminated by user during genpath (line 31)
+
+} 
+>> >> >> >> >> >> >> >> >> >> {Undefined function or variable 'prelimCheck'.
+} 
+>> {Undefined function or variable 'preConfiguration'.
+} 
+>> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> >> 
+SimParams = 
+
+                  outFile: 'systemFile'
+          saveChannelInfo: 'false'
+        channelSaveFolder: 'Results'
+            maxDebugCells: 4
+                  version: '8.4.0.150421 (R2014b)'
+                 plotMode: 'QTimePlot'
+                  sysMode: 'false'
+                DebugMode: 'false'
+     precoderWithIdealChn: 'false'
+       totalPwrDistOverSC: 'true'
+             ChannelModel: 'Jakes'
+            pathLossModel: 'Perturbed_3'
+              DopplerType: 'Constant_25'
+                  queueWt: 1
+                mdpFactor: 0
+              robustNoise: 0
+            weighingEqual: 'false'
+                SchedType: 'SkipScheduling'
+          PrecodingMethod: 'Best_RTQWSRM_Method'
+    weightedSumRateMethod: 'perBSAlloc_1'
+         additionalParams: 'MMSE'
+            nExchangesOTA: 50
+    exchangeResetInterval: 10
+            nExchangesOBH: 1
+                   nDrops: 250
+                 snrIndex: 10
+                   PF_dur: 40
+                SFSymbols: 14
+                 sampTime: 1.0000e-03
+                 estError: 0
+               fbFraction: 0
+                   nBands: 5
+                   nBases: 2
+                   nUsers: 18
+               nTxAntenna: 4
+               nRxAntenna: 2
+            ffrProfile_dB: [0 0 0 0 0]
+              gracePeriod: 0
+              arrivalDist: 'Constant'
+               maxArrival: 5
+      FixedPacketArrivals: 6
+               PL_Profile: [2x8 double]
+
+>> {Undefined function 'initializeBuffers' for input arguments of type 'struct'.
+} 
+>> >> {Undefined function or variable 'SimStructs'.
+} 
+>> >> {Reference to non-existent field 'txPower'.
+} 
+>> {Undefined function or variable 'SimStructs'.
+} 
+>> >> {Undefined function or variable 'SimStructs'.
+} 
+>> >> 

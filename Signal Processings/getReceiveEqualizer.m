@@ -1,6 +1,13 @@
 function [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,rxType,bsIndices)
 
-cH = SimStructs.linkChan;
+stringCells = strsplit(rxType,'_');
+if length(stringCells) == 1
+    cH = SimStructs.linkChan;
+else
+    cH = SimStructs.prevChan;
+end
+
+rxType = stringCells{1};
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;
 nUsers = SimParams.nUsers;
@@ -68,7 +75,7 @@ switch rxType
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)
-                                R = R + H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,:,jUser) * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,:,jUser)' * H';
+                                R = R + H * SimStructs.baseStruct{jBase,1}.P{iBand,1}(:,:,jUser) * SimStructs.baseStruct{jBase,1}.P{iBand,1}(:,:,jUser)' * H';
                             end
                         end
                         H = cH{iBase,iBand}(:,:,cUser);
@@ -104,7 +111,7 @@ switch rxType
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)
-                                R = R + H * M0{iBase,1}(:,:,jUser,iBand) * M0{iBase,1}(:,:,jUser,iBand)' * H';
+                                R = R + H * M0{jBase,1}(:,:,jUser,iBand) * M0{jBase,1}(:,:,jUser,iBand)' * H';
                             end
                         end
                         H = cH{iBase,iBand}(:,:,cUser);
@@ -134,7 +141,7 @@ switch rxType
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)
-                                R = R + H * M0{iBase,1}(:,:,jUser,iBand) * M0{iBase,1}(:,:,jUser,iBand)' * H';
+                                R = R + H * M0{jBase,1}(:,:,jUser,iBand) * M0{jBase,1}(:,:,jUser,iBand)' * H';
                             end
                         end
                         H = cH{iBase,iBand}(:,:,cUser);

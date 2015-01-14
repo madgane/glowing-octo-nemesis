@@ -144,7 +144,9 @@ switch selectionMethod
                     cvx_hist(mod(xIndex,2) + 1,1) = cvx_optval;
                 end
                 
-                if strcmp(receiverMode,'MMSE')
+                switch receiverMode
+                    
+                    case 'MMSE'
                     
                     for iBand = 1:nBands
                         for iBase = 1:nBases
@@ -166,8 +168,13 @@ switch selectionMethod
                         end
                     end                    
                     
-                else
-                    [~,~,~,vW] = findOptimalW(SimParams,SimStructs,M,vW,p_o,q_o,b_o);
+                    case 'Optimal'
+                        [~,~,~,vW] = findOptimalW(SimParams,SimStructs,M,vW,p_o,q_o,b_o);
+                    otherwise
+                        updatePrecoders = 'false';
+                        if reIterate == 1                            
+                            display('No receiver selected and therefore not updating !');
+                        end
                 end
                 
                 
@@ -198,15 +205,17 @@ switch selectionMethod
         
         for iBase = 1:nBases
             for iBand = 1:nBands
-                P = [];
+                P = zeros(SimParams.nTxAntenna,maxRank,usersPerCell(iBase,1));
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = zeros(SimParams.nTxAntenna,usersPerCell(iBase,1));
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
-                    P = [P M(:,:,cUser,iBand)];
+                    P(:,:,iUser) = M(:,:,cUser,iBand);
                 end
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = P;
             end
         end
+        
+        [SimParams, SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
         
     case 'GenBandAlloc'
         

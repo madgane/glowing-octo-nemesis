@@ -126,6 +126,23 @@ switch SimParams.plotMode
            
         %displayChannels;
         
+    case 'QSurfacePlot'
+        
+        ylabel('Slots');
+        xlabel('Average packet arrivals in bits');
+        zlabel('Total Packets arrived');
+        plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.packetArrivalsOverTime),1)),2),'N',1));
+        
+        xlabel('Average packet arrivals in bits');
+        ylabel('Slots');
+        zlabel('Total Packets backlogged');
+        plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime),1)),2),'N',2));
+
+        xlabel('Average packet arrivals in bits');
+        ylabel('Slots');
+        zlabel('Total Packets residues');
+        plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime),1)),2),'N',3));
+               
     otherwise
         
         display('Simulation Completed without any display !');

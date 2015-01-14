@@ -39,17 +39,6 @@ else
     
 end
 
-if exist('SimParams.ffrProfile_dB','var')
-    ffrProfile = 10.^(0.1 * SimParams.ffrProfile_dB);
-    SimParams.sPower = SimParams.nBands * SimParams.sPower * ffrProfile;
-else
-    SimParams.sPower = ones(1,SimParams.nBands) * SimParams.sPower;
-end
-
-for iBase = 1:SimParams.nBases
-    SimStructs.baseStruct{iBase,1}.sPower = circshift(SimParams.sPower',(iBase - 1))';
-end
-
 end
 
 
