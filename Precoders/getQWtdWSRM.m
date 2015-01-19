@@ -201,6 +201,10 @@ switch selectionMethod
             
             [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,M,vW);
             
+            if (SimParams.currentQueue <= epsilonT)
+                reIterate = 0;
+            end
+
         end
         
         for iBase = 1:nBases
@@ -490,6 +494,10 @@ switch selectionMethod
             
             [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,M,vW);
             
+            if (SimParams.currentQueue <= epsilonT)
+                reIterate = 0;
+            end
+            
         end
         
         for iBase = 1:nBases
@@ -624,6 +632,10 @@ switch selectionMethod
             end
             
             [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,M,vW);
+            
+            if (SimParams.currentQueue <= epsilonT)
+                reIterate = 0;
+            end
             
         end
         

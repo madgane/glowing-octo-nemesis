@@ -22,7 +22,6 @@ legendString = cell(1,globalCount + 1);
 
 for iScheme = 1:globalCount
     
-    clc;
     SimParams = SimParamsCell{iScheme,1};
     SimStructs = SimStructsCell{iScheme,1};
     displaySystemDetails;displayQueues(SimParams,SimStructs);
@@ -36,13 +35,13 @@ for iScheme = 1:globalCount
     yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime),1)),2);
     plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
-    legendString{1,iScheme} = sprintf('OTA iterations - %d',SimParams.nExchangesOTA);
+    legendString{1,iScheme} = SimParams.weightedSumRateMethod;
     
     figure(2);hold on;box on;grid on;
     yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime),1)),2);
     plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
-    legendString{1,iScheme} = sprintf('OTA iterations - %d',SimParams.nExchangesOTA);
+    legendString{1,iScheme} = SimParams.weightedSumRateMethod;
 end
 
 legendString{1,globalCount + 1} = 'Average Arrival Rate';
@@ -52,11 +51,15 @@ yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.packetArrivalsOverTime),1
 plot(SimParams.maxArrival,yValues,'Color','b','LineWidth',2,...
     'LineStyle','-','MarkerFaceColor','b','Marker','o');
 legend(legendString);
+xlabel('Average packet arrivals (bits)');
+ylabel('Average backlogged packets (bits)');
 
 figure(2);
 yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.packetArrivalsOverTime),1)),2);
 plot(SimParams.maxArrival,yValues,'Color','b','LineWidth',2,...
     'LineStyle','-','MarkerFaceColor','b','Marker','o');
 legend(legendString);
+xlabel('Average packet arrivals (bits)');
+ylabel('Average backlogged packets (bits)');
 
 end

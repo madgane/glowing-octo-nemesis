@@ -1,7 +1,7 @@
 
 function plotFigure(figStruct)
 
-figColor = 'g';
+figColor = 'm';
 figMarker = 'p';
 figLineType = '-.';
 figLineWidth = 1;
