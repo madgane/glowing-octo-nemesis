@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = generateUserTrafficArrivals(SimParams,SimStructs)
+function [SimParams,SimStructs] = generateTraffic(SimParams,SimStructs)
 
 enStatToolBox = 'true';
 
