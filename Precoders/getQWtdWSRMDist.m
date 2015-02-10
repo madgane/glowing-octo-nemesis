@@ -1162,6 +1162,10 @@ switch selectionMethod
             
             [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellP,W);
             
+            if (SimParams.currentQueue <= epsilonT)
+                reIterate = 0;
+            end
+            
             tBandUser = SimParams.Debug.privateExchanges.resAllocation;
             qDeviation = QueuedPkts(iUser,1) - sum(tBandUser(:,iUser));
             totalDeviation = norm(qDeviation,qExponent);

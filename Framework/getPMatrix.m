@@ -46,8 +46,11 @@ if nargin == 2
         case 'Best_QwtWSRMD_Method'
             [SimParams,SimStructs] = getQWtdWSRMDist(SimParams,SimStructs);
             
-        case 'Best_RTQWSRM_Method'
+        case 'Best_QwtWSRMRT_Method'
             [SimParams,SimStructs] = getRealTimeQWSRM(SimParams,SimStructs);
+            
+        case 'Best_QwtWSRMRTM_Method'
+            [SimParams,SimStructs] = getModifiedRTQWtdWSRM(SimParams,SimStructs);
             
         case 'Best_PerAntPwrConst_Method'
             [SimParams,SimStructs] = getPerAntennaPwrConstraintMethod(SimParams,SimStructs);

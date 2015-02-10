@@ -118,8 +118,8 @@ switch selectionMethod
         
     case 'distBSAlloc'
         
-        stInstant = -1;
-        stepIndex = 10;
+        stInstant = 0;
+        stepFactor = 2;
         SimParams.currentQueue = 100;
         for iExchangeOTA = stInstant:SimParams.nExchangesOTA
             
@@ -127,8 +127,7 @@ switch selectionMethod
                 
                 case -1
                     for iBase = 1:nBases
-                        resetPoint = (iBase - 1) * floor(SimParams.exchangeResetInterval / nBases);
-                        if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == resetPoint)
+                        if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
                             fprintf('Resetting History for BS - %d \n',iBase);
                             SimStructs.baseStruct{iBase,1}.selectionType = 'BF_Prev';
                             [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF_Prev',iBase);
@@ -147,8 +146,7 @@ switch selectionMethod
                 case 0
                     if stInstant == 0
                         for iBase = 1:nBases
-                            resetPoint = (iBase - 1) * floor(SimParams.exchangeResetInterval / nBases);
-                            if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == resetPoint)
+                            if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
                                 fprintf('Resetting History for BS - %d \n',iBase);
                                 SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
                                 [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF',iBase);
@@ -169,16 +167,18 @@ switch selectionMethod
                         end
                     end
                     cH = SimStructs.linkChan;
-                    maxBackHaulExchanges = 1;
+                    maxBackHaulExchanges = SimParams.nExchangesOBH;
                     fprintf('OTA Performed - %d \n',iExchangeOTA);
                 otherwise
                     cH = SimStructs.linkChan;
-                    maxBackHaulExchanges = 1;
+                    maxBackHaulExchanges = SimParams.nExchangesOBH;
                     fprintf('OTA Performed - %d \n',iExchangeOTA);
                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
             end
             
             for iExchangeBH = 1:maxBackHaulExchanges
+                
+                stepIndex = stepFactor^((iExchangeBH - 1) + iExchangeOTA * maxBackHaulExchanges);
                 
                 for iBase = 1:nBases
                     
@@ -272,10 +272,7 @@ switch selectionMethod
                         end
                     end
                     
-%                     vec(M)' * vec(M) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:));
-                    for iBand = 1:nBands
-                        vec(M(:,:,:,iBand))' * vec(M(:,:,:,iBand)) <= SimStructs.baseStruct{iBase,1}.sPower(1,iBand);
-                    end
+                    vec(M)' * vec(M) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:));
                     
                     cvx_end
                     
@@ -316,7 +313,7 @@ switch selectionMethod
             if SimParams.currentQueue < epsilonT
                 break;
             end
-
+            
         end
         
     case 'distMSEAllocA'
@@ -332,8 +329,7 @@ switch selectionMethod
             switch iExchangeOTA
                 case -1
                     for iBase = 1:nBases
-                        resetPoint = (iBase - 1) * floor(SimParams.exchangeResetInterval / nBases);
-                        if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == resetPoint)
+                        if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
                             fprintf('Resetting History for BS - %d \n',iBase);
                             SimStructs.baseStruct{iBase,1}.selectionType = 'BF_Prev';
                             [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF_Prev',iBase);
@@ -352,8 +348,7 @@ switch selectionMethod
                 case 0
                     if stInstant == 0
                         for iBase = 1:nBases
-                            resetPoint = (iBase - 1) * floor(SimParams.exchangeResetInterval / nBases);
-                            if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == resetPoint)
+                            if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == 0)
                                 fprintf('Resetting History for BS - %d \n',iBase);
                                 SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
                                 [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF',iBase);
@@ -407,7 +402,7 @@ switch selectionMethod
                 
                 for iBase = 1:nBases
                     
-                    kUsers = usersPerCell(iBase,1);                    
+                    kUsers = usersPerCell(iBase,1);
                     for iBand = 1:nBands
                         for iUser = 1:kUsers
                             cUser = cellUserIndices{iBase,1}(iUser,1);
@@ -516,9 +511,9 @@ switch selectionMethod
                     end
                     
                     SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M;
-
+                    
                 end
-
+                
                 
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
             end
@@ -527,184 +522,6 @@ switch selectionMethod
                 break;
             end
             
-        end
-        
-    case 'distYBSAlloc'
-        
-        epsilon = 0.5;
-        stepIndex = 10;
-        for iExchangeOTA = -1:SimParams.nExchangesOTA
-            
-            switch iExchangeOTA
-                
-                case -1
-                    for iBase = 1:nBases
-                        resetPoint = (iBase - 1) * floor(SimParams.exchangeResetInterval / nBases);
-                        if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == resetPoint)
-                            fprintf('Resetting History for BS - %d \n',iBase);
-                            SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
-                            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'BF',iBase);
-                            SimParams.Debug.globalExchangeInfo.gI{iBase,1} = zeros(maxRank,nUsers,nBands);
-                            SimParams.Debug.globalExchangeInfo.D{iBase,1} = zeros(maxRank,nUsers,nBands,nBases);
-                        else
-                            if iBase == 1
-                                fprintf('Reusing History \n');
-                            end
-                            SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
-                            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'Last',iBase);
-                        end
-                    end
-                    cH = SimStructs.prevChan;
-                    maxBackHaulExchanges = SimParams.nExchangesOBH;
-                case 0
-                    for iBase = 1:nBases
-                        SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
-                        [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'Last',iBase);
-                    end
-                    cH = SimStructs.linkChan;
-                    maxBackHaulExchanges = 1;
-                    fprintf('OTA Performed - %d \n',iExchangeOTA);
-                otherwise
-                    cH = SimStructs.linkChan;
-                    maxBackHaulExchanges = 1;
-                    fprintf('OTA Performed - %d \n',iExchangeOTA);
-                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
-            end
-            
-            for iExchangeBH = 1:maxBackHaulExchanges
-                
-                for iBase = 1:nBases
-                    
-                    if iExchangeBH ~= 1
-                        SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
-                    end
-                    
-                    constVector = [];
-                    kUsers = usersPerCell(iBase,1);
-                    [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
-                    M0 = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};B0 = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
-                    T0 = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};W0 = SimParams.Debug.globalExchangeInfo.funcOut{5,iBase};
-                    
-                    M = sdpvar(SimParams.nTxAntenna,maxRank,kUsers,nBands,'full','complex');
-                    T = sdpvar(maxRank,kUsers,nBands,'full');B = sdpvar(maxRank,kUsers,nBands,'full');G = sdpvar(maxRank,kUsers,nBands,'full');
-                    I = sdpvar(maxRank,nUsers,nBands,nBases,'full');userObjective = sdpvar(kUsers,1);epiObjective = sdpvar(1,1);
-                    
-                    for iUser = 1:kUsers
-                        cUser = cellUserIndices{iBase,1}(iUser,1);
-                        constVector = [constVector, userWts(cUser,1) * abs(QueuedPkts(cUser,1) - sum(vector(T(:,iUser,:)))) <= userObjective(iUser,1)];
-                    end
-                    
-                    augmentedTerms = 0;
-                    for jBand = 1:nBands
-                        for jUser = 1:nUsers
-                            nCellIndex = SimStructs.userStruct{jUser,1}.baseNode;
-                            if nCellIndex ~= iBase
-                                augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,jUser,jBand,iBase)) ...
-                                    + (stepIndex / 2) * sum(vector(SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)).^2);
-                            end
-                        end
-                        
-                        for jUser = 1:kUsers
-                            cUser = cellUserIndices{iBase,1}(jUser,1);
-                            for jBase = 1:nBases
-                                if jBase ~= iBase
-                                    augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cUser,jBand,jBase)) ...
-                                        + (stepIndex / 2) * sum(vector(SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)).^2);
-                                end
-                            end
-                        end
-                    end
-                    
-                    constVector = [constVector, epiObjective >= norm(userObjective,qExponent) + augmentedTerms];
-                    
-                    for iBand = 1:nBands
-                        for iUser = 1:kUsers
-                            cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for iLayer = 1:maxRank
-                                intVector = sqrt(SimParams.N) * W0{cUser,iBand}(:,iLayer)';
-                                for jUser = 1:kUsers
-                                    if jUser ~= iUser
-                                        intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,:,jUser,iBand)];
-                                    else
-                                        intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer ~= rankArray,iUser,iBand)];
-                                    end
-                                end
-                                
-                                for jBase = 1:nBases
-                                    if jBase ~= iBase
-                                        intVector = [intVector, I(iLayer,cUser,iBand,jBase)];
-                                    end
-                                end
-                                
-                                constVector = [constVector, norm(intVector) <= sqrt(B(iLayer,iUser,iBand))];
-                                
-                                for jUser = 1:nUsers
-                                    nCellIndex = SimStructs.userStruct{jUser,1}.baseNode;
-                                    if nCellIndex ~= iBase
-                                        for jLayer = 1:maxRank
-                                            intVector = [];
-                                            for inUser = 1:kUsers
-                                                intVector = [intVector, W0{jUser,iBand}(:,jLayer)' * cH{iBase,iBand}(:,:,jUser) * M(:,:,inUser,iBand)];
-                                            end
-                                            constVector = [constVector, norm(intVector,2) <= I(:,jUser,iBand,iBase)];
-                                        end
-                                    end
-                                end
-                                
-                                constVector = [constVector, T(iLayer,iUser,iBand) >= T0(iLayer,iUser,iBand) * (1 - epsilon)];
-                                constVector = [constVector, T(iLayer,iUser,iBand) <= T0(iLayer,iUser,iBand) * (1 + epsilon)];
-                                constVector = [constVector, 1 + G(iLayer,iUser,iBand) >= ...
-                                    exp(T0(iLayer,iUser,iBand) * log(2)) * (1 + log(2) * (T(iLayer,iUser,iBand) - T0(iLayer,iUser,iBand)) + 0.5 * log(2)^2 * (T(iLayer,iUser,iBand) - T0(iLayer,iUser,iBand))^2)];
-                                
-                                P = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
-                                Q = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
-                                P0 = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
-                                Q0 = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
-                                constVector = [constVector, (P0^2 + Q0^2) / B0(iLayer,iUser,iBand) + (2 / B0(iLayer,iUser,iBand)) * (P0 * (P - P0) + Q0 * (Q - Q0)) ...
-                                    - ((P0^2 + Q0^2) / (B0(iLayer,iUser,iBand)^2)) * (B(iLayer,iUser,iBand) - B0(iLayer,iUser,iBand)) >= G(iLayer,iUser,iBand)];
-                                
-                            end
-                        end
-                    end
-                    
-                    solverSettings = sdpsettings('verbose',0,'solver','Mosek');
-                    constVector = [constVector, vector(M)' * vector(M) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
-                    solutionOut = solvesdp(constVector,epiObjective,solverSettings);
-                    
-                    if solutionOut.problem == 0
-                        M0 = full(double(M));
-                    else
-                        display(solutionOut);
-                        break;
-                    end
-                    
-                    for iBand = 1:nBands
-                        SimStructs.baseStruct{iBase,1}.P{iBand,1} = M0(:,:,:,iBand);
-                        SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = M0(:,:,:,iBand);
-                    end
-                    SimParams.Debug.globalExchangeInfo.I{iBase,1} = double(I);
-                    
-                    SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M0;
-                    SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = double(B);
-                    SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = double(T);
-                    SimParams.Debug.globalExchangeInfo.funcOut{5,iBase} = W0;
-                end
-                
-                for jBand = 1:nBands
-                    for iUser = 1:nUsers
-                        dCell = SimStructs.userStruct{iUser,1}.baseNode;
-                        for jBase = 1:nBases
-                            if jBase ~= dCell
-                                SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) = 0.5 * (SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase) + SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase));
-                                SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase)) * stepIndex + SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase);
-                                SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,jBase) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase)) * stepIndex + SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,jBase);
-                            end
-                        end
-                    end
-                end
-                
-                [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
-            end
         end
         
     case 'distMSEAllocB'
@@ -719,8 +536,7 @@ switch selectionMethod
             switch iExchangeOTA
                 case 0
                     for iBase = 1:nBases
-                        resetPoint = (iBase - 1) * floor(SimParams.exchangeResetInterval / nBases);
-                        if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == resetPoint)
+                        if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
                             fprintf('Resetting History for BS - %d \n',iBase);
                             SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
                             [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF',iBase);
@@ -748,13 +564,13 @@ switch selectionMethod
             end
             
             [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,'MSE');
-                
+            
             for iBase = 1:nBases
                 E0{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
                 alphaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{3,iBase};
                 lambdaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};
             end
-                
+            
             W = SimParams.Debug.globalExchangeInfo.funcOut{5,1};
             
             for iBase = 1:nBases
@@ -811,7 +627,7 @@ switch selectionMethod
                 end
                 
                 SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M;
-
+                
             end
             
             [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
@@ -823,12 +639,12 @@ switch selectionMethod
             
             for iBase = 1:nBases
                 
-                P = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};                            
+                P = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};
                 for iBand = 1:nBands
                     for iUser = 1:kUsers
                         cUser = cellUserIndices{iBase,1}(iUser,1);
                         currentH = cH{iBase,iBand}(:,:,cUser);
-                        for iLayer = 1:maxRank                            
+                        for iLayer = 1:maxRank
                             E(iLayer,iUser,iBand) = (1 - W{cUser,iBand}(:,iLayer)' * currentH * P(:,iLayer,iUser,iBand));
                         end
                     end
@@ -861,13 +677,196 @@ switch selectionMethod
                 SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = lambdaLKN{iBase,1};
                 
             end
-                
+            
             [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
             
             if SimParams.currentQueue < epsilonT
                 break;
             end
-
+            
         end
         
 end
+
+% Update the receivers upon reception by all users (combined detection)
+[SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
+
+
+%%%% ------------ 'distYBSAlloc' %%%%%%%%%%%%%%%%%%%%%%
+
+% epsilon = 0.5;
+% stepIndex = 10;
+% for iExchangeOTA = -1:SimParams.nExchangesOTA
+%     
+%     switch iExchangeOTA
+%         
+%         case -1
+%             for iBase = 1:nBases
+%                 resetPoint = (iBase - 1) * floor(SimParams.exchangeResetInterval / nBases);
+%                 if or(SimParams.distIteration == 1,mod(SimParams.iDrop,SimParams.exchangeResetInterval) == resetPoint)
+%                     fprintf('Resetting History for BS - %d \n',iBase);
+%                     SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
+%                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'BF',iBase);
+%                     SimParams.Debug.globalExchangeInfo.gI{iBase,1} = zeros(maxRank,nUsers,nBands);
+%                     SimParams.Debug.globalExchangeInfo.D{iBase,1} = zeros(maxRank,nUsers,nBands,nBases);
+%                 else
+%                     if iBase == 1
+%                         fprintf('Reusing History \n');
+%                     end
+%                     SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
+%                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'Last',iBase);
+%                 end
+%             end
+%             cH = SimStructs.prevChan;
+%             maxBackHaulExchanges = SimParams.nExchangesOBH;
+%         case 0
+%             for iBase = 1:nBases
+%                 SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
+%                 [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'Last',iBase);
+%             end
+%             cH = SimStructs.linkChan;
+%             maxBackHaulExchanges = 1;
+%             fprintf('OTA Performed - %d \n',iExchangeOTA);
+%         otherwise
+%             cH = SimStructs.linkChan;
+%             maxBackHaulExchanges = 1;
+%             fprintf('OTA Performed - %d \n',iExchangeOTA);
+%             [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
+%     end
+%     
+%     for iExchangeBH = 1:maxBackHaulExchanges
+%         
+%         for iBase = 1:nBases
+%             
+%             if iExchangeBH ~= 1
+%                 SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
+%             end
+%             
+%             constVector = [];
+%             kUsers = usersPerCell(iBase,1);
+%             [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
+%             M0 = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};B0 = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
+%             T0 = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};W0 = SimParams.Debug.globalExchangeInfo.funcOut{5,iBase};
+%             
+%             M = sdpvar(SimParams.nTxAntenna,maxRank,kUsers,nBands,'full','complex');
+%             T = sdpvar(maxRank,kUsers,nBands,'full');B = sdpvar(maxRank,kUsers,nBands,'full');G = sdpvar(maxRank,kUsers,nBands,'full');
+%             I = sdpvar(maxRank,nUsers,nBands,nBases,'full');userObjective = sdpvar(kUsers,1);epiObjective = sdpvar(1,1);
+%             
+%             for iUser = 1:kUsers
+%                 cUser = cellUserIndices{iBase,1}(iUser,1);
+%                 constVector = [constVector, userWts(cUser,1) * abs(QueuedPkts(cUser,1) - sum(vector(T(:,iUser,:)))) <= userObjective(iUser,1)];
+%             end
+%             
+%             augmentedTerms = 0;
+%             for jBand = 1:nBands
+%                 for jUser = 1:nUsers
+%                     nCellIndex = SimStructs.userStruct{jUser,1}.baseNode;
+%                     if nCellIndex ~= iBase
+%                         augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,jUser,jBand,iBase)) ...
+%                             + (stepIndex / 2) * sum(vector(SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)).^2);
+%                     end
+%                 end
+%                 
+%                 for jUser = 1:kUsers
+%                     cUser = cellUserIndices{iBase,1}(jUser,1);
+%                     for jBase = 1:nBases
+%                         if jBase ~= iBase
+%                             augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cUser,jBand,jBase)) ...
+%                                 + (stepIndex / 2) * sum(vector(SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)).^2);
+%                         end
+%                     end
+%                 end
+%             end
+%             
+%             constVector = [constVector, epiObjective >= norm(userObjective,qExponent) + augmentedTerms];
+%             
+%             for iBand = 1:nBands
+%                 for iUser = 1:kUsers
+%                     cUser = cellUserIndices{iBase,1}(iUser,1);
+%                     for iLayer = 1:maxRank
+%                         intVector = sqrt(SimParams.N) * W0{cUser,iBand}(:,iLayer)';
+%                         for jUser = 1:kUsers
+%                             if jUser ~= iUser
+%                                 intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,:,jUser,iBand)];
+%                             else
+%                                 intVector = [intVector, W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer ~= rankArray,iUser,iBand)];
+%                             end
+%                         end
+%                         
+%                         for jBase = 1:nBases
+%                             if jBase ~= iBase
+%                                 intVector = [intVector, I(iLayer,cUser,iBand,jBase)];
+%                             end
+%                         end
+%                         
+%                         constVector = [constVector, norm(intVector) <= sqrt(B(iLayer,iUser,iBand))];
+%                         
+%                         for jUser = 1:nUsers
+%                             nCellIndex = SimStructs.userStruct{jUser,1}.baseNode;
+%                             if nCellIndex ~= iBase
+%                                 for jLayer = 1:maxRank
+%                                     intVector = [];
+%                                     for inUser = 1:kUsers
+%                                         intVector = [intVector, W0{jUser,iBand}(:,jLayer)' * cH{iBase,iBand}(:,:,jUser) * M(:,:,inUser,iBand)];
+%                                     end
+%                                     constVector = [constVector, norm(intVector,2) <= I(:,jUser,iBand,iBase)];
+%                                 end
+%                             end
+%                         end
+%                         
+%                         constVector = [constVector, T(iLayer,iUser,iBand) >= T0(iLayer,iUser,iBand) * (1 - epsilon)];
+%                         constVector = [constVector, T(iLayer,iUser,iBand) <= T0(iLayer,iUser,iBand) * (1 + epsilon)];
+%                         constVector = [constVector, 1 + G(iLayer,iUser,iBand) >= ...
+%                             exp(T0(iLayer,iUser,iBand) * log(2)) * (1 + log(2) * (T(iLayer,iUser,iBand) - T0(iLayer,iUser,iBand)) + 0.5 * log(2)^2 * (T(iLayer,iUser,iBand) - T0(iLayer,iUser,iBand))^2)];
+%                         
+%                         P = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
+%                         Q = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
+%                         P0 = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
+%                         Q0 = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
+%                         constVector = [constVector, (P0^2 + Q0^2) / B0(iLayer,iUser,iBand) + (2 / B0(iLayer,iUser,iBand)) * (P0 * (P - P0) + Q0 * (Q - Q0)) ...
+%                             - ((P0^2 + Q0^2) / (B0(iLayer,iUser,iBand)^2)) * (B(iLayer,iUser,iBand) - B0(iLayer,iUser,iBand)) >= G(iLayer,iUser,iBand)];
+%                         
+%                     end
+%                 end
+%             end
+%             
+%             solverSettings = sdpsettings('verbose',0,'solver','Mosek');
+%             constVector = [constVector, vector(M)' * vector(M) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
+%             solutionOut = solvesdp(constVector,epiObjective,solverSettings);
+%             
+%             if solutionOut.problem == 0
+%                 M0 = full(double(M));
+%             else
+%                 display(solutionOut);
+%                 break;
+%             end
+%             
+%             for iBand = 1:nBands
+%                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = M0(:,:,:,iBand);
+%                 SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = M0(:,:,:,iBand);
+%             end
+%             SimParams.Debug.globalExchangeInfo.I{iBase,1} = double(I);
+%             
+%             SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M0;
+%             SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = double(B);
+%             SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = double(T);
+%             SimParams.Debug.globalExchangeInfo.funcOut{5,iBase} = W0;
+%         end
+%         
+%         for jBand = 1:nBands
+%             for iUser = 1:nUsers
+%                 dCell = SimStructs.userStruct{iUser,1}.baseNode;
+%                 for jBase = 1:nBases
+%                     if jBase ~= dCell
+%                         SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) = 0.5 * (SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase) + SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase));
+%                         SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase)) * stepIndex + SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase);
+%                         SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,jBase) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase)) * stepIndex + SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,jBase);
+%                     end
+%                 end
+%             end
+%         end
+%         
+%         [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
+%     end
+% end
+

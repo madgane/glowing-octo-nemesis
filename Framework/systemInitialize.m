@@ -61,7 +61,7 @@ SimParams.Debug.tempResource{3,1} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{4,1} = cell(SimParams.nUsers,SimParams.nBands);
 
 SimParams.currentQueue = 100;
-SimParams.Debug.dataExchange = cell(5,1);
+SimParams.Debug.dataExchange = cell(6,1);
 
 % 1 used for per-antenna-power-constraint work
 % 2 used for queue-weighted precoding scheme

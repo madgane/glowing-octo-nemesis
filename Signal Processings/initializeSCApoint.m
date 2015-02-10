@@ -159,6 +159,7 @@ else
                 for iBand = 1:nBands
                     M0{bsIndex,1}(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
                 end
+                
         end
         
     end

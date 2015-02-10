@@ -5,7 +5,7 @@
 
 clc;clear all;
 
-saveContents = 'true';
+saveContents = 'false';
 if strfind(saveContents,'true')
     addpath(genpath(pwd));
 end
@@ -16,7 +16,7 @@ SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'QSurfacePlot';
+SimParams.plotMode = 'QTimePlot';
 
 prelimCheck;
 preConfiguration;
@@ -27,7 +27,7 @@ SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
 SimParams.pathLossModel = 'Perturbed_3';
-SimParams.DopplerType = 'Constant_25';
+SimParams.DopplerType = 'Uniform_25';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 0;
@@ -35,13 +35,13 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
-SimParams.weightedSumRateMethod = 'GenMSEAlloc_2';
+SimParams.PrecodingMethod = 'Best_QwtWSRMRTM_Method';
+SimParams.weightedSumRateMethod = 'distMSEAllocB';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 50;
-SimParams.exchangeResetInterval = 1;
-SimParams.nExchangesOBH = 50;
+SimParams.nExchangesOTA = 10;
+SimParams.exchangeResetInterval = 10;
+SimParams.nExchangesOBH = 1;
 
 SimParams.nDrops = 50;
 SimParams.snrIndex = [10];
@@ -52,19 +52,19 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 4;
+SimParams.nBands = 3;
 SimParams.nBases = 2;
-SimParams.nUsers = 12;
+SimParams.nUsers = 6;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 1;
+SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.gracePeriod = 0;
 SimParams.arrivalDist = 'Constant';
 
 SimParams.FixedPacketArrivals = [6];
-SimParams.maxArrival = linspace(1,8,8);
+SimParams.maxArrival = 8;
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
 if strcmp(SimParams.sysMode,'true')
@@ -95,7 +95,7 @@ for iPkt = 1:length(SimParams.maxArrival)
         for iDrop = 1:SimParams.nDrops
             
             SimParams.iDrop = iDrop;
-            SimParams.distIteration = 1;
+            SimParams.distIteration = iDrop;
             
             if strcmp(SimParams.DebugMode,'true')
                 display(SimParams.Debug.activeStatus(:,1)');
