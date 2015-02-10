@@ -6,6 +6,7 @@ for iUser = 1:SimParams.nUsers
     SimParams.fairness(iSNR,iUser,iPkt) = SimStructs.userStruct{iUser}.tAllocation / SimParams.utilityScale;
     SimParams.Thrpt(iSNR,iUser,iPkt) = (SimStructs.userStruct{iUser}.crThrpt - 1) / (SimParams.nDrops * SimParams.nBands);
     
+    SimParams.QueueInfo.residualPkts(iSNR,iUser,iPkt) = SimStructs.userStruct{iUser,1}.trafficStats.residualPkt;
     SimParams.QueueInfo.queueBacklogs(iSNR,iUser,iPkt) = SimStructs.userStruct{iUser,1}.trafficStats.backLogPkt;
     SimParams.QueueInfo.packetServiceOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficHistory.pktService;
     SimParams.QueueInfo.packetArrivalsOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficHistory.pktArrival;
