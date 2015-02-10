@@ -140,13 +140,18 @@ switch SimParams.plotMode
         
         xlabel('Average packet arrivals in bits');
         ylabel('Slots');
-        zlabel('Total Packets backlogged');
-        plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime),1)),2),'N',2));
+        zlabel('Total Packets backlogged Packets');
+        plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime(:,:,:,2:end)),1)),2),'N',2));
 
         xlabel('Average packet arrivals in bits');
         ylabel('Slots');
-        zlabel('Total Packets residues');
-        plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime),1)),2),'N',3));
+        zlabel('Total Packets residual Packets');
+        plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(:,:,:,2:end)),1)),2),'N',3));
+        
+        xlabel('Average packet arrivals in bits');
+        ylabel('Slots');
+        zlabel('Final Residual Packets in the system');
+        plotFigure(struct('Y',sum(squeeze(SimParams.QueueInfo.residualPkts),1),'N',4));
                
     otherwise
         
