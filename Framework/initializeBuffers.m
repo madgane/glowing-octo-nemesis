@@ -14,6 +14,7 @@ SimParams.fairness = zeros(nSINRSamples,SimParams.nUsers,nPacketSamples);
 SimParams.utilityScale = SimParams.nDrops * SimParams.muxRank * SimParams.nBands;
 
 SimParams.sumRateInstant = zeros(nSINRSamples,SimParams.nDrops,nPacketSamples);
+SimParams.QueueInfo.residualPkts = zeros(nSINRSamples,SimParams.nUsers,nPacketSamples);
 SimParams.QueueInfo.queueBacklogs = zeros(nSINRSamples,SimParams.nUsers,nPacketSamples);
 SimParams.QueueInfo.packetServiceOverTime = zeros(nSINRSamples,SimParams.nUsers,nPacketSamples,(SimParams.nDrops + 1));
 SimParams.QueueInfo.queueBacklogsOverTime = zeros(nSINRSamples,SimParams.nUsers,nPacketSamples,(SimParams.nDrops + 1));
