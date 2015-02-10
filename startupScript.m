@@ -7,7 +7,7 @@ clc;clear all;
 
 saveContents = 'false';
 if strfind(saveContents,'true')
-    addpath(genpath(pwd));
+    updatePath;
 end
 
 SimParams.outFile = 'reviewerFile';
