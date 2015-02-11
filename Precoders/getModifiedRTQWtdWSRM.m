@@ -13,7 +13,7 @@ if SimParams.iDrop == 1
     SimParams.Debug.globalExchangeInfo.funcOut = cell(5,nBases);
 end
 
-nPreExchanges = 25;
+nPreExchanges = 10;
 nSlots = SimParams.exchangeResetInterval;
 mdpFactor = 1 - (SimParams.userDoppler / norm(SimParams.userDoppler)^2);
 if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
@@ -65,7 +65,7 @@ if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exc
         for iUser = 1:nUsers
             abs((QueuedPkts(iUser,1) - mdpFactor(iUser,1) * sum(vec(t(:,iUser,:,1))))) <= B(iUser,1);
             for iSlot = 2:nSlots
-                abs((B(iUser,iSlot - 1) + avgArrival(iUser,1) - (mdpFactor(iUser,1)^iSlot) * sum(vec(t(:,iUser,:,iSlot))))) <= B(iUser,iSlot);
+                abs((B(iUser,iSlot - 1) - (mdpFactor(iUser,1)^iSlot) * sum(vec(t(:,iUser,:,iSlot))))) <= B(iUser,iSlot);
             end
         end
         
@@ -213,7 +213,7 @@ switch selectionMethod
                             SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                             SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                         end
-                        SimParams.Debug.globalExchangeInfo.funcOut{3,iBase} = SimParams.Debug.dataExchange{3,1}(:,cellUserIndices{iBase,1},:,SimParams.Debug.resetCounter);
+                        SimParams.Debug.globalExchangeInfo.funcOut{3,iBase} = abs(SimParams.Debug.dataExchange{3,1}(:,cellUserIndices{iBase,1},:,SimParams.Debug.resetCounter));
                         SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = ones(maxRank,usersPerCell(iBase,1),nBands);
                     end
                     fprintf('OTA Performed - %d \n',iExchangeOTA);

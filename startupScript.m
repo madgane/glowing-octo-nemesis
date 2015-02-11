@@ -39,11 +39,11 @@ SimParams.PrecodingMethod = 'Best_QwtWSRMRTM_Method';
 SimParams.weightedSumRateMethod = 'distMSEAllocB';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 10;
+SimParams.nExchangesOTA = 5;
 SimParams.exchangeResetInterval = 10;
 SimParams.nExchangesOBH = 1;
 
-SimParams.nDrops = 50;
+SimParams.nDrops = 10;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -60,11 +60,10 @@ SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'Constant';
-
-SimParams.FixedPacketArrivals = [6];
 SimParams.maxArrival = 8;
+SimParams.groupArrivalFreq = 10;
+SimParams.arrivalDist = 'Constant';
+SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
 if strcmp(SimParams.sysMode,'true')
