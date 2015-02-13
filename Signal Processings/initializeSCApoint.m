@@ -66,7 +66,7 @@ if ~ischar(bsIndex)
                     cUser = linkedUsers(iUser,1);
                     for jBase = 1:SimParams.nBases
                         if jBase ~= bsIndex
-                            addNoise(:,cUser,iBand) = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,iBand).^2;
+                            addNoise(:,cUser,iBand) = addNoise(:,cUser,iBand) + SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,iBand).^2;
                         end
                     end
                 end
