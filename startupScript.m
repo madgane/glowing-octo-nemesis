@@ -35,15 +35,15 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRMRTM_Method';
+SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
 SimParams.weightedSumRateMethod = 'distBSAlloc';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 3;
+SimParams.nExchangesOTA = 1;
 SimParams.exchangeResetInterval = 10;
 SimParams.nExchangesOBH = 10;
 
-SimParams.nDrops = 10;%200;
+SimParams.nDrops = 200;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
