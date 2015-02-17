@@ -7,10 +7,14 @@ clc;clear all;
 
 saveContents = 'false';
 if strfind(saveContents,'true')
-    updatePath;
+    if isunix
+        addpath(genpath(pwd));
+    else
+        updatePath;
+    end
 end
 
-SimParams.outFile = 'reviewerFile';
+SimParams.outFile = 'reviewerFileB';
 SimParams.saveChannelInfo = 'false';
 SimParams.channelSaveFolder = 'Results';
 
@@ -25,8 +29,8 @@ SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
-SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.ChannelModel = 'IID';
+SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Uniform_25';
 
 SimParams.queueWt = 1;
@@ -35,15 +39,15 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
+SimParams.PrecodingMethod = 'Best_QwtWSRMRTM_Method';
 SimParams.weightedSumRateMethod = 'distBSAlloc';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 1;
-SimParams.exchangeResetInterval = 10;
-SimParams.nExchangesOBH = 10;
+SimParams.nExchangesOTA = 3;
+SimParams.exchangeResetInterval = 1;
+SimParams.nExchangesOBH = 100;
 
-SimParams.nDrops = 200;
+SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -52,16 +56,16 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 3;
+SimParams.nBands = 1;
 SimParams.nBases = 2;
-SimParams.nUsers = 6;
+SimParams.nUsers = 2;
 
-SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 2;
+SimParams.nTxAntenna = 2;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.maxArrival = 8;
-SimParams.groupArrivalFreq = 10;
+SimParams.groupArrivalFreq = 1;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
@@ -103,7 +107,7 @@ for iPkt = 1:length(SimParams.maxArrival)
             [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
             [SimParams,SimStructs] = getScheduledUsers(SimParams,SimStructs);
             
-            if iDrop > 1
+            if and((iDrop > 1),~sum(strcmp(SimParams.plotMode,{'NoDisplay','ND'})))
                 displayQueues(SimParams,SimStructs,iDrop - 1);
             end
             

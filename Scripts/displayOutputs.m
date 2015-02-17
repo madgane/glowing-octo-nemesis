@@ -148,11 +148,14 @@ switch SimParams.plotMode
         zlabel('Total Packets residual Packets');
         plotFigure(struct('Y',mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(:,:,:,2:end)),1)),2),'N',3));
         
+        figStruct.N = 4;
+        figStruct.Y = sum(squeeze(SimParams.QueueInfo.residualPkts),1);        
+        plotFigure(figStruct);
         xlabel('Average packet arrivals in bits');
         ylabel('Slots');
         zlabel('Final Residual Packets in the system');
-        plotFigure(struct('Y',sum(squeeze(SimParams.QueueInfo.residualPkts),1),'N',4));
-               
+
+                       
     otherwise
         
         display('Simulation Completed without any display !');

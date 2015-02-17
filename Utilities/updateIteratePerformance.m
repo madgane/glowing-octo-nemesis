@@ -104,7 +104,9 @@ end
 
 tempSum = sum(cell2mat(SimParams.Debug.tempResource{2,SimParams.iDrop}));
 tempQueue = sum(cell2mat(SimParams.Debug.tempResource{3,SimParams.iDrop}));
-fprintf('(R,Q,|Q - R|) - (%.2f, %.2f, %.2f) \n',tempSum(end),tempQueue(end),norm(qVector,qExponent));
+if ~sum(strcmp(SimParams.plotMode,{'NoDisplay','ND'}))
+    fprintf('(R,Q,|Q - R|) - (%.2f, %.2f, %.2f) \n',tempSum(end),tempQueue(end),norm(qVector,qExponent));
+end
 % saveGlobals(SimParams,SimStructs,'runPrintFile');
 
 SimParams.currentQueue = tempQueue(end);

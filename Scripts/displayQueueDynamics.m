@@ -14,11 +14,14 @@ switch nargin
         randI = varargin{3};
 end
 
-figLineWidth = {1};
+pktIndex = 5;
+figLineWidth = {2};
 figLineType = {'-.'};
-figColor = {'b',[0 0.5 0],'r','m',[0 0.75 0.75],[0.5 0.5 0]};
+figColor = {'b','g','r','m',[0 0.75 0.75],[0.5 0.5 0]};
 figMarker = {'o','v','<','d','s','p','v','^'};
 legendString = cell(1,globalCount + 1);
+
+display(SimParamsCell{1});
 
 for iScheme = 1:globalCount
     
@@ -32,16 +35,29 @@ for iScheme = 1:globalCount
     flwIndex = mod(randI + iScheme - 1,(length(figLineWidth))) + 1;
 
     figure(1);hold on;box on;grid on;
-    yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime),1)),2);
+    yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(:,:,:,2:end)),1)),2);
     plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
     legendString{1,iScheme} = SimParams.weightedSumRateMethod;
     
     figure(2);hold on;box on;grid on;
-    yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime),1)),2);
+    yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime(:,:,:,2:end)),1)),2);
     plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
     legendString{1,iScheme} = SimParams.weightedSumRateMethod;
+
+    figure(3);hold on;box on;grid on;
+    yValues = sum(squeeze(SimParams.QueueInfo.residualPkts),1);
+    plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+        'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex});
+    legendString{1,iScheme} = SimParams.weightedSumRateMethod;
+    
+    figure(4);hold on;box on;grid on;
+    yValues = sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(end,:,pktIndex,:)));
+    plot(yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+        'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',2);
+    legendString{1,iScheme} = SimParams.weightedSumRateMethod;
+
 end
 
 legendString{1,globalCount + 1} = 'Average Arrival Rate';
@@ -51,15 +67,33 @@ yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.packetArrivalsOverTime),1
 plot(SimParams.maxArrival,yValues,'Color','b','LineWidth',2,...
     'LineStyle','-','MarkerFaceColor','b','Marker','o');
 legend(legendString);
-xlabel('Average packet arrivals (bits)');
-ylabel('Average backlogged packets (bits)');
+xlabel('Average packet arrivals (in bits)');
+ylabel('Average backlogged packets (in bits)');
 
 figure(2);
 yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.packetArrivalsOverTime),1)),2);
 plot(SimParams.maxArrival,yValues,'Color','b','LineWidth',2,...
     'LineStyle','-','MarkerFaceColor','b','Marker','o');
 legend(legendString);
-xlabel('Average packet arrivals (bits)');
-ylabel('Average backlogged packets (bits)');
+xlabel('Average packet arrivals (in bits)');
+ylabel('Average backlogged packets (in bits)');
+
+figure(3);
+xlabel('Average packet arrivals (in bits)');
+ylabel('Total residual packets left in the system (in bits)');
+legend(legendString);
+       
+figure(4);
+yValues = sum(squeeze(SimParams.QueueInfo.packetArrivalsOverTime(end,:,pktIndex,:)));
+plot(yValues,'Color',[0 0.6 0],'LineWidth',1,'LineStyle','-','MarkerFaceColor',[0 0.6 0],'Marker','o','MarkerSize',4);
+legendString{1,iScheme} = SimParams.weightedSumRateMethod;
+
+xlabel('Time Slots');
+ylabel('Total number of residual packets in the system (in bits)');
+legend(legendString);
+    
+
+    
+
 
 end
