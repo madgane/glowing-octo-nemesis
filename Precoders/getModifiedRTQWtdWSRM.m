@@ -380,7 +380,7 @@ switch selectionMethod
                             SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                             SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                             SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,:,iBand) = sqrt(SimParams.Debug.dataExchange{5,1}{iBase,SimParams.Debug.resetCounter}(:,:,iBand));
-                            SimParams.Debug.globalExchangeInfo.D{iBase,1} = ones(maxRank,nUsers,nBands,nBases);
+                            SimParams.Debug.globalExchangeInfo.D{iBase,1} = ones(maxRank,nUsers,nBands,nBases) * 10;
                         end
                     end
                     
@@ -392,7 +392,7 @@ switch selectionMethod
             stepFactor = 10;
             for iExchangeBH = 1:maxBackHaulExchanges
                 
-                stepFactor = stepFactor * 0.5;
+%                 stepFactor = stepFactor * 0.5;
                 
                 for iBase = 1:nBases
                     
@@ -417,11 +417,11 @@ switch selectionMethod
                         if jBase ~= iBase
                             vecA = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - I(:,cellUserIndices{iBase,1},:,jBase);
                             vecB = vecA .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase);
-                            augmentedTerms = augmentedTerms + sum(vecB(:)) + sum(pow_abs(vecA(:),2));
+                            augmentedTerms = augmentedTerms + sum(vecB(:)) + stepFactor * 0.5 * sum(pow_abs(vecA(:),2));
                             
                             vecA = SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellNeighbourIndices{iBase,1},:) - I(:,cellNeighbourIndices{iBase,1},:,iBase);
                             vecB = vecA .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase);
-                            augmentedTerms = augmentedTerms + sum(vecB(:)) + sum(pow_abs(vecA(:),2));
+                            augmentedTerms = augmentedTerms + sum(vecB(:)) + stepFactor * 0.5 * sum(pow_abs(vecA(:),2));
                         end                        
                     end
                     
