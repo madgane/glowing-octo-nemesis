@@ -13,7 +13,7 @@ if SimParams.iDrop == 1
     SimParams.Debug.globalExchangeInfo.funcOut = cell(5,nBases);
 end
 
-nPreExchanges = 1;
+nPreExchanges = 15;
 nSlots = SimParams.exchangeResetInterval;
 mdpFactor = 1 - (SimParams.userDoppler / norm(SimParams.userDoppler)^2);
 if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
@@ -411,8 +411,6 @@ switch selectionMethod
                         cUser = cellUserIndices{iBase,1}(iUser,1);
                         userWts(cUser,1) * abs(QueuedPkts(cUser,1) - sum(vec(T(:,iUser,:)))) <= userObjective(iUser,1);
                     end
-                    
-                    
                     
                     augmentedTerms = 0;
                     for jBase = 1:nBases
