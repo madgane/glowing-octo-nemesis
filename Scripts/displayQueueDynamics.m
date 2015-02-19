@@ -91,9 +91,5 @@ legendString{1,iScheme} = SimParams.weightedSumRateMethod;
 xlabel('Time Slots');
 ylabel('Total number of residual packets in the system (in bits)');
 legend(legendString);
-    
-
-    
-
 
 end

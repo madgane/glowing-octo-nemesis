@@ -13,7 +13,7 @@ if SimParams.iDrop == 1
     SimParams.Debug.globalExchangeInfo.funcOut = cell(5,nBases);
 end
 
-nPreExchanges = 15;
+nPreExchanges = 1;
 nSlots = SimParams.exchangeResetInterval;
 mdpFactor = 1 - (SimParams.userDoppler / norm(SimParams.userDoppler)^2);
 if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
@@ -366,7 +366,6 @@ switch selectionMethod
         
     case 'distBSAlloc'
         
-        stepFactor = 0.1;        
         cH = SimStructs.linkChan;
         SimParams.currentQueue = 100;
         SimParams.Debug.resetCounter = SimParams.Debug.resetCounter + 1;
@@ -381,7 +380,7 @@ switch selectionMethod
                             SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                             SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                             SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,:,iBand) = sqrt(SimParams.Debug.dataExchange{5,1}{iBase,SimParams.Debug.resetCounter}(:,:,iBand));
-                            SimParams.Debug.globalExchangeInfo.D{iBase,1} = ones(maxRank,nUsers,nBands,nBases) * 0;
+                            SimParams.Debug.globalExchangeInfo.D{iBase,1} = ones(maxRank,nUsers,nBands,nBases);
                         end
                     end
                     
@@ -389,8 +388,11 @@ switch selectionMethod
                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
                     updateIteratePerformance(SimParams,SimStructs);                    
             end
-
+            
+            stepFactor = 10;
             for iExchangeBH = 1:maxBackHaulExchanges
+                
+                stepFactor = stepFactor * 0.5;
                 
                 for iBase = 1:nBases
                     
@@ -409,39 +411,22 @@ switch selectionMethod
                         cUser = cellUserIndices{iBase,1}(iUser,1);
                         userWts(cUser,1) * abs(QueuedPkts(cUser,1) - sum(vec(T(:,iUser,:)))) <= userObjective(iUser,1);
                     end
-%                     
-%                     % From BS to neighbors ----
-%                     augmentedTerms = (SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellNeighbourIndices{iBase,1},:) - I(:,cellNeighbourIndices{iBase,1},:,iBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellNeighbourIndices{iBase,1},:) + ...
-%                         (stepFactor / 2) * sum(vec((SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellNeighbourIndices{iBase,1},:) - I(:,cellNeighbourIndices{iBase,1},:,iBase)).^2));
-%                     % From neighboringBS to desiredUsers ----
-%                     for jBase = 1:nBases
-%                         if jBase ~= iBase
-%                             augmentedTerms = augmentedTerms + (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - I(:,cellUserIndices{iBase,1},:,jBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:) + ...
-%                                 (stepFactor / 2) * sum(vec((SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - I(:,cellUserIndices{iBase,1},:,jBase)).^2));
-%                         end
-%                     end
-%                     
+                    
+                    
+                    
                     augmentedTerms = 0;
-                    for jBand = 1:nBands
-                        for jUser = 1:nUsers
-                            nCellIndex = SimStructs.userStruct{jUser,1}.baseNode;
-                            if nCellIndex ~= iBase
-                                augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,jUser,jBand,iBase)) ...
-                                    + (stepFactor / 2) * sum(vec(SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)).^2);
-                            end
-                        end
-                        
-                        for jUser = 1:kUsers
-                            cUser = cellUserIndices{iBase,1}(jUser,1);
-                            for jBase = 1:nBases
-                                if jBase ~= iBase
-                                    augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cUser,jBand,jBase)) ...
-                                        + (stepFactor / 2) * sum(vec(SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)).^2);
-                                end
-                            end
-                        end
+                    for jBase = 1:nBases
+                        if jBase ~= iBase
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - I(:,cellUserIndices{iBase,1},:,jBase);
+                            vecB = vecA .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase);
+                            augmentedTerms = augmentedTerms + sum(vecB(:)) + sum(pow_abs(vecA(:),2));
+                            
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellNeighbourIndices{iBase,1},:) - I(:,cellNeighbourIndices{iBase,1},:,iBase);
+                            vecB = vecA .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase);
+                            augmentedTerms = augmentedTerms + sum(vecB(:)) + sum(pow_abs(vecA(:),2));
+                        end                        
                     end
-
+                    
                     epiObjective >= norm(userObjective,qExponent) + augmentedTerms;
                     minimize(epiObjective);
                     
@@ -493,6 +478,8 @@ switch selectionMethod
                     
                     vec(M)' * vec(M) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:));
                     
+                    I >= 0;
+                    
                     cvx_end
                     
                     if strfind(cvx_status,'Solved')
@@ -506,30 +493,30 @@ switch selectionMethod
                         SimStructs.baseStruct{iBase,1}.P{iBand,1} = M0(:,:,:,iBand);
                         SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = M0(:,:,:,iBand);
                     end
-                    SimParams.Debug.globalExchangeInfo.I{iBase,1} = I;
+                    SimParams.Debug.globalExchangeInfo.I{iBase,1} = full(I);
                     
                     SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = M0;
                     SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = B0;
                     SimParams.Debug.globalExchangeInfo.funcOut{5,iBase} = W0;
                 end
                 
-                for jBand = 1:nBands
-                    for iUser = 1:nUsers
-                        dCell = SimStructs.userStruct{iUser,1}.baseNode;
-                        for jBase = 1:nBases
-                            if jBase ~= dCell
-                                SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) = 0.5 * (SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase) + SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase));
-                                SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase)) * stepFactor + SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase);
-                                SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,dCell) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase)) * stepFactor + SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,dCell);
-                                SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase) = max(SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase),0);
-                                SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,dCell) = max(SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,dCell),0);
-                            end
-                        end
-                    end
+                tempTensor = zeros(maxRank,nUsers,nBands,nBases);
+                for iBase = 1:nBases
+                    tempTensor = tempTensor + SimParams.Debug.globalExchangeInfo.I{iBase,1};
+                end
+                for iBase = 1:nBases
+                   SimParams.Debug.globalExchangeInfo.gI{iBase,1} = tempTensor(:,:,:,iBase) / 2;
                 end
                 
-                SimParams.Debug.globalExchangeInfo.D{1,1}
-                SimParams.Debug.globalExchangeInfo.D{2,1}
+                for iBase = 1:nBases
+                    for jBase = 1:nBases
+                        SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) ...
+                            + stepFactor * (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellUserIndices{iBase,1},:,jBase));
+                        SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase) ...
+                            + stepFactor * (SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellNeighbourIndices{iBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase));
+                    end
+                    SimParams.Debug.globalExchangeInfo.D{iBase,1} = max(SimParams.Debug.globalExchangeInfo.D{iBase,1},0);
+                end
                 
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
             end

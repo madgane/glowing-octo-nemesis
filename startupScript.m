@@ -56,9 +56,9 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 1;
+SimParams.nBands = 2;
 SimParams.nBases = 2;
-SimParams.nUsers = 2;
+SimParams.nUsers = 8;
 
 SimParams.nTxAntenna = 2;
 SimParams.nRxAntenna = 1;
