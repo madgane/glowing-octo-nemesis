@@ -39,15 +39,15 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRMRTM_Method';
+SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
 SimParams.weightedSumRateMethod = 'distBSAlloc';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 1;
-SimParams.exchangeResetInterval = 1;
-SimParams.nExchangesOBH = 10;
+SimParams.nExchangesOTA = 10;
+SimParams.exchangeResetInterval = 10;
+SimParams.nExchangesOBH = 5;
 
-SimParams.nDrops = 1;
+SimParams.nDrops = 10;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -56,16 +56,16 @@ SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
-SimParams.nBands = 2;
+SimParams.nBands = 1;
 SimParams.nBases = 2;
-SimParams.nUsers = 8;
+SimParams.nUsers = 6;
 
 SimParams.nTxAntenna = 2;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.maxArrival = 8;
-SimParams.groupArrivalFreq = 1;
+SimParams.groupArrivalFreq = 10;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];

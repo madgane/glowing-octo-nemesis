@@ -119,7 +119,7 @@ switch selectionMethod
     case 'distBSAlloc'
         
         stInstant = 0;
-        stepFactor = 2;
+        stepFactor = 10;
         SimParams.currentQueue = 100;
         for iExchangeOTA = stInstant:SimParams.nExchangesOTA
             
@@ -177,9 +177,7 @@ switch selectionMethod
             end
             
             for iExchangeBH = 1:maxBackHaulExchanges
-                
-                stepIndex = stepFactor^((iExchangeBH - 1) + iExchangeOTA * maxBackHaulExchanges);
-                
+                           
                 for iBase = 1:nBases
                     
                     if iExchangeBH ~= 1
@@ -203,24 +201,16 @@ switch selectionMethod
                     end
                     
                     augmentedTerms = 0;
-                    for jBand = 1:nBands
-                        for jUser = 1:nUsers
-                            nCellIndex = SimStructs.userStruct{jUser,1}.baseNode;
-                            if nCellIndex ~= iBase
-                                augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,jUser,jBand,iBase)) ...
-                                    + (stepIndex / 2) * sum(vec(SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,jUser,jBand) - I(:,jUser,jBand,iBase)).^2);
-                            end
-                        end
-                        
-                        for jUser = 1:kUsers
-                            cUser = cellUserIndices{iBase,1}(jUser,1);
-                            for jBase = 1:nBases
-                                if jBase ~= iBase
-                                    augmentedTerms = augmentedTerms + sum((SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)) .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cUser,jBand,jBase)) ...
-                                        + (stepIndex / 2) * sum(vec(SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,jBand) - I(:,cUser,jBand,jBase)).^2);
-                                end
-                            end
-                        end
+                    for jBase = 1:nBases
+                        if jBase ~= iBase
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - I(:,cellUserIndices{iBase,1},:,jBase);
+                            vecB = vecA .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase);
+                            augmentedTerms = augmentedTerms + sum(vecB(:)) + stepFactor * 0.5 * sum(pow_abs(vecA(:),2));
+                            
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellUserIndices{jBase,1},:) - I(:,cellUserIndices{jBase,1},:,iBase);
+                            vecB = vecA .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{jBase,1},:,iBase);
+                            augmentedTerms = augmentedTerms + sum(vecB(:)) + stepFactor * 0.5 * sum(pow_abs(vecA(:),2));
+                        end                        
                     end
                     
                     epiObjective >= norm(userObjective,qExponent) + augmentedTerms;
@@ -294,15 +284,24 @@ switch selectionMethod
                     SimParams.Debug.globalExchangeInfo.funcOut{5,iBase} = W0;
                 end
                 
-                for jBand = 1:nBands
-                    for iUser = 1:nUsers
-                        dCell = SimStructs.userStruct{iUser,1}.baseNode;
-                        for jBase = 1:nBases
-                            if jBase ~= dCell
-                                SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) = 0.5 * (SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase) + SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase));
-                                SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{dCell,1}(:,iUser,jBand,jBase)) * stepIndex + SimParams.Debug.globalExchangeInfo.D{dCell,1}(:,iUser,jBand,jBase);
-                                SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,jBase) = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,iUser,jBand) - SimParams.Debug.globalExchangeInfo.I{jBase,1}(:,iUser,jBand,jBase)) * stepIndex + SimParams.Debug.globalExchangeInfo.D{jBase,1}(:,iUser,jBand,jBase);
-                            end
+                tempTensor = zeros(maxRank,nUsers,nBands,nBases);
+                for iBase = 1:nBases
+                    tempTensor = tempTensor + SimParams.Debug.globalExchangeInfo.I{iBase,1};
+                end
+                for iBase = 1:nBases
+                   SimParams.Debug.globalExchangeInfo.gI{iBase,1} = tempTensor(:,:,:,iBase) / 2;
+                end
+                
+                for iBase = 1:nBases
+                    for jBase = 1:nBases
+                        if iBase ~= jBase
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellUserIndices{iBase,1},:,jBase);
+                            SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) ...
+                                + stepFactor * vecA;
+                            
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellUserIndices{jBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellUserIndices{jBase,1},:,iBase);
+                            SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{jBase,1},:,iBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{jBase,1},:,iBase) ...
+                                + stepFactor * vecA;
                         end
                     end
                 end

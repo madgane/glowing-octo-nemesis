@@ -207,7 +207,7 @@ if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exc
     end
     
     clear R;
-        
+
 end
 
 switch selectionMethod
@@ -386,7 +386,11 @@ switch selectionMethod
                     
                     maxBackHaulExchanges = SimParams.nExchangesOBH;
                     [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
-                    updateIteratePerformance(SimParams,SimStructs);                    
+                    updateIteratePerformance(SimParams,SimStructs);   
+                    
+                    if SimParams.Debug.resetCounter == 1
+                        break;
+                    end                    
             end
             
             stepFactor = 10;
@@ -523,6 +527,18 @@ switch selectionMethod
             end
             
         end
+        
+    case 'centAlloc'
+        
+        SimParams.Debug.resetCounter = SimParams.Debug.resetCounter + 1;
+        
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
+            end
+        end
+        
+        [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
         
 end
 
