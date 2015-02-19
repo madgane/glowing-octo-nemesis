@@ -43,9 +43,9 @@ SimParams.PrecodingMethod = 'Best_QwtWSRMRTM_Method';
 SimParams.weightedSumRateMethod = 'distBSAlloc';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 3;
+SimParams.nExchangesOTA = 1;
 SimParams.exchangeResetInterval = 1;
-SimParams.nExchangesOBH = 100;
+SimParams.nExchangesOBH = 10;
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];

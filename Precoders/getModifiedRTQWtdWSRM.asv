@@ -13,7 +13,7 @@ if SimParams.iDrop == 1
     SimParams.Debug.globalExchangeInfo.funcOut = cell(5,nBases);
 end
 
-nPreExchanges = 20;
+nPreExchanges = 1;
 nSlots = SimParams.exchangeResetInterval;
 mdpFactor = 1 - (SimParams.userDoppler / norm(SimParams.userDoppler)^2);
 if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
@@ -380,7 +380,7 @@ switch selectionMethod
                             SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                             SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
                             SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,:,iBand) = sqrt(SimParams.Debug.dataExchange{5,1}{iBase,SimParams.Debug.resetCounter}(:,:,iBand));
-                            SimParams.Debug.globalExchangeInfo.D{iBase,1} = ones(maxRank,nUsers,nBands,nBases);
+                            SimParams.Debug.globalExchangeInfo.D{iBase,1} = ones(maxRank,nUsers,nBands,nBases) * 0;
                         end
                     end
                     
@@ -504,15 +504,21 @@ switch selectionMethod
                 for iBase = 1:nBases
                     for jBase = 1:nBases
                         if iBase ~= jBase
-                            vecA = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellUserIndices{iBase,1},:,jBase);
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - I(:,cellUserIndices{iBase,1},:,jBase);
                             SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) ...
                                 + stepFactor * vecA;
                             
-                            vecA = SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellUserIndices{jBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellUserIndices{jBase,1},:,iBase);
+                            vecA = SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellUserIndices{jBase,1},:) - I(:,cellUserIndices{jBase,1},:,iBase);
                             SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{jBase,1},:,iBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{jBase,1},:,iBase) ...
                                 + stepFactor * vecA;
+                            
+%                             SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{iBase,1},:,jBase) ...
+%                                 + stepFactor * (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cellUserIndices{iBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellUserIndices{iBase,1},:,jBase));
+%                             SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase) = SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase) ...
+%                                 + stepFactor * (SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellNeighbourIndices{iBase,1},:) - SimParams.Debug.globalExchangeInfo.I{iBase,1}(:,cellNeighbourIndices{iBase,1},:,iBase));
                         end
                     end
+                    SimParams.Debug.globalExchangeInfo.D{iBase,1} = max(SimParams.Debug.globalExchangeInfo.D{iBase,1},0);
                 end
                 
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
