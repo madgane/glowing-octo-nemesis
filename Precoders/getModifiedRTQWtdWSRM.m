@@ -202,13 +202,18 @@ if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exc
                         SimParams.Debug.dataExchange{5,1}{iBase,iSlot}(iRank,cUser,iBand) = noiseEnergy;
                     end
                 end
+                SimStructs.baseStruct{iBase,1}.P{iBand,1} = M(:,:,cellUserIndices{iBase,1},iBand,1);
             end
         end
     end
     
     clear R;
+    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
+    updateIteratePerformance(SimParams,SimStructs);
 
 end
+
+SimParams.Debug.resetCounter = SimParams.Debug.resetCounter + 1;
 
 switch selectionMethod
     
@@ -220,12 +225,10 @@ switch selectionMethod
         alphaLKN = cell(nBases,1);lambdaLKN = cell(nBases,1);
         
         cH = SimStructs.linkChan;
-        SimParams.Debug.resetCounter = SimParams.Debug.resetCounter + 1;
-        
-        for iExchangeOTA = 1:SimParams.nExchangesOTA
+        for iExchangeOTA = 0:SimParams.nExchangesOTA
             
             switch iExchangeOTA
-                case 1
+                case 0
                     for iBase = 1:nBases
                         for iBand = 1:nBands
                             SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
@@ -368,12 +371,10 @@ switch selectionMethod
         
         cH = SimStructs.linkChan;
         SimParams.currentQueue = 100;
-        SimParams.Debug.resetCounter = SimParams.Debug.resetCounter + 1;
-        
-        for iExchangeOTA = 1:SimParams.nExchangesOTA
+        for iExchangeOTA = 0:SimParams.nExchangesOTA
             
             switch iExchangeOTA
-                case 1
+                case 0
                     for iBase = 1:nBases
                         SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
                         for iBand = 1:nBands
@@ -385,16 +386,16 @@ switch selectionMethod
                     end
                     
                     maxBackHaulExchanges = SimParams.nExchangesOBH;
-                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
-                    updateIteratePerformance(SimParams,SimStructs);   
-                    
                     if SimParams.Debug.resetCounter == 1
                         break;
-                    end                    
+                    end
+                otherwise
+                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
             end
-            
+
             stepFactor = 10;
-            for iExchangeBH = 1:maxBackHaulExchanges                
+            for iExchangeBH = 1:maxBackHaulExchanges     
+                
                 for iBase = 1:nBases
                     
                     kUsers = usersPerCell(iBase,1);
@@ -530,15 +531,11 @@ switch selectionMethod
         
     case 'centAlloc'
         
-        SimParams.Debug.resetCounter = SimParams.Debug.resetCounter + 1;
-        
         for iBase = 1:nBases
             for iBand = 1:nBands
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.dataExchange{1,1}(:,:,cellUserIndices{iBase,1},iBand,SimParams.Debug.resetCounter);
             end
         end
-        
-        [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
         
 end
 
