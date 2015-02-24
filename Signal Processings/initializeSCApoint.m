@@ -5,7 +5,7 @@ nBands = SimParams.nBands;
 maxRank = SimParams.maxRank;
 
 if ~ischar(bsIndex)
-
+    
     stringCell = strsplit(SimStructs.baseStruct{bsIndex,1}.selectionType,'_');
     if length(stringCell) == 1
         cH = SimStructs.linkChan;
@@ -23,9 +23,27 @@ if ~ischar(bsIndex)
     addNoise = zeros(SimParams.maxRank,SimParams.nUsers,nBands);
     M0 = zeros(SimParams.nTxAntenna,SimParams.maxRank,kUsers,nBands);
     
-    for iBand = 1:nBands
-        for iUser = 1:SimParams.nUsers
-            W0{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
+    if and(strcmpi(SimParams.additionalParams,'H-MMSE'),(SimParams.Debug.exchangeIndex ~= 1))
+        for iBand = 1:nBands
+            for iBase = 1:SimParams.nBases
+                if (iBase == bsIndex)
+                    for iUser = 1:length(SimStructs.baseStruct{iBase,1}.linkedUsers)
+                        cUser = SimStructs.baseStruct{iBase,1}.linkedUsers(iUser,1);
+                        W0{cUser,iBand} = SimParams.Debug.globalExchangeInfo.funcOut{6,iBase}{cUser,iBand};
+                    end
+                else
+                    for iUser = 1:length(SimStructs.baseStruct{iBase,1}.linkedUsers)
+                        cUser = SimStructs.baseStruct{iBase,1}.linkedUsers(iUser,1);
+                        W0{cUser,iBand} = SimStructs.userStruct{cUser,1}.pW{iBand,1};
+                    end
+                end
+            end
+        end
+    else        
+        for iBand = 1:nBands
+            for iUser = 1:SimParams.nUsers
+                W0{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
+            end
         end
     end
     
@@ -58,7 +76,7 @@ if ~ischar(bsIndex)
                 totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
                 M0(:,:,:,iBand) = M0(:,:,:,iBand) * totPower;
             end
-                        
+            
         case 'Last'
             for iBand = 1:nBands
                 M0(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
@@ -102,7 +120,7 @@ if ~ischar(bsIndex)
 else
     
     nBases = SimParams.nBases;
-
+    
     linkedUsers = cell(nBases,1);
     usersPerCell = zeros(nBases,1);
     W0 = cell(SimParams.nUsers,nBands);
@@ -113,7 +131,7 @@ else
             W0{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
         end
     end
-
+    
     for iBase = 1:nBases
         linkedUsers{iBase,1} = SimStructs.baseStruct{iBase,1}.linkedUsers;
         usersPerCell(iBase,1) = length(SimStructs.baseStruct{iBase,1}.linkedUsers);

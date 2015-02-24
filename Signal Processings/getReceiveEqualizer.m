@@ -14,6 +14,7 @@ nUsers = SimParams.nUsers;
 maxRank = SimParams.maxRank;
 cellUserIndices = cell(nBases,1);
 usersPerCell = zeros(nBases,1);
+updateHistory = 'true';
 
 if nargin ~= 4
     bsIndices = 1:nBases;
@@ -160,15 +161,62 @@ switch rxType
                 end
             end
         end
+        
+    case 'MMSE-XVAR'
+        
+        updateHistory = 'false';  
+        for iBand = 1:nBands
+            for iUser = 1:SimParams.nUsers
+                SimParams.Debug.globalExchangeInfo.funcOut{6,bsIndices}{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
+            end
+        end
+        
+        for iBand = 1:nBands
+            for iBase = bsIndices
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    for iLayer = 1:maxRank
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        H = cH{iBase,iBand}(:,:,cUser);
+                        
+                        for jUser = 1:usersPerCell(iBase,1)
+                            if jUser ~= iUser
+                                R = R + H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,:,jUser) * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,:,jUser)' * H';
+                            else
+                                R = R + H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,(iLayer ~= 1:maxRank),jUser) * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,(iLayer ~= 1:maxRank),jUser)' * H';
+                            end
+                        end
+                        
+                        for jBase = 1:nBases
+                            if jBase ~= iBase
+                                ifLevel = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(iLayer,cUser,iBand)^2) / norm(SimStructs.userStruct{cUser,1}.pW{iBand,1}(:,iLayer))^2;
+                                R = R + ifLevel * eye(SimParams.nRxAntenna) * sqrt(SimParams.nRxAntenna);
+                            end
+                        end                        
+                        H = cH{iBase,iBand}(:,:,cUser);
+                        W{cUser,iBand}(:,iLayer) = R \ (H * SimStructs.baseStruct{iBase,1}.P{iBand,1}(:,iLayer,iUser)) + pertNoise;
+                    end
+                end
+            end
+        end
+
+        for iBand = 1:nBands
+            for iUser = 1:usersPerCell(bsIndices,1)
+                cUser = cellUserIndices{bsIndices,1}(iUser,1);
+                SimParams.Debug.globalExchangeInfo.funcOut{6,bsIndices}{cUser,iBand} = W{cUser,iBand};
+            end
+        end
+
 end
 
-
-for iBand = 1:nBands
-    for iBase = bsIndices
-        for iUser = 1:usersPerCell(iBase,1);
-            cUser = cellUserIndices{iBase,1}(iUser,1);
-            SimStructs.userStruct{cUser,1}.W{iBand,1} = W{cUser,iBand};
-            SimStructs.userStruct{cUser,1}.pW{iBand,1} = W{cUser,iBand};
+if strcmpi(updateHistory,'true')
+    for iBand = 1:nBands
+        for iBase = bsIndices
+            for iUser = 1:usersPerCell(iBase,1);
+                cUser = cellUserIndices{iBase,1}(iUser,1);
+                SimStructs.userStruct{cUser,1}.W{iBand,1} = W{cUser,iBand};
+                SimStructs.userStruct{cUser,1}.pW{iBand,1} = W{cUser,iBand};
+            end
         end
     end
 end

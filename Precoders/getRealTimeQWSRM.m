@@ -184,11 +184,22 @@ switch selectionMethod
                         SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
                     end
                     
+                    if and(strcmpi(SimParams.additionalParams,'H-MMSE'),(iExchangeBH ~= 1))
+                        [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-XVAR',iBase);
+                        W0 = SimParams.Debug.globalExchangeInfo.funcOut{6,iBase};
+                    else
+                        for iBand = 1:nBands
+                            for iUser = 1:SimParams.nUsers
+                                W0{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
+                            end
+                        end
+                    end
+
                     kUsers = usersPerCell(iBase,1);
+                    SimParams.Debug.exchangeIndex = iExchangeBH + iExchangeOTA;
                     [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
                     M0 = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};B0 = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
-                    W0 = SimParams.Debug.globalExchangeInfo.funcOut{5,iBase};
-                    
+
                     cvx_begin
                     
                     variable M(SimParams.nTxAntenna,maxRank,kUsers,nBands) complex
