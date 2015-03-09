@@ -13,7 +13,7 @@ if SimParams.iDrop == 1
     SimParams.Debug.globalExchangeInfo.funcOut = cell(5,nBases);
 end
 
-nPreExchanges = 20;
+nPreExchanges = 1;
 nSlots = SimParams.exchangeResetInterval;
 mdpFactor = 1 - (SimParams.userDoppler / norm(SimParams.userDoppler)^2);
 if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
@@ -63,9 +63,9 @@ if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exc
         epiObjective >= norm(B(:,nSlots),qExponent);
         
         for iUser = 1:nUsers
-            abs((QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:,1))))) <= B(iUser,1);
+            ((QueuedPkts(iUser,1) - sum(vec(t(:,iUser,:,1))))) <= B(iUser,1);
             for iSlot = 2:nSlots
-                abs((B(iUser,iSlot - 1) - (mdpFactor(iUser,1)^(iSlot - 1)) * sum(vec(t(:,iUser,:,iSlot))))) <= B(iUser,iSlot);
+                ((B(iUser,iSlot - 1) - (mdpFactor(iUser,1)^(iSlot - 1)) * sum(vec(t(:,iUser,:,iSlot))))) <= B(iUser,iSlot);
             end
         end
         
@@ -394,14 +394,20 @@ switch selectionMethod
             end
 
             stepFactor = 10;
-            for iExchangeBH = 1:maxBackHaulExchanges     
+            for iExchangeBH = 1:maxBackHaulExchanges  
                 
                 for iBase = 1:nBases
                     
+                    for iBand = 1:nBands
+                        for iUser = 1:SimParams.nUsers
+                            W0{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
+                        end
+                    end
+
                     kUsers = usersPerCell(iBase,1);
+                    SimParams.Debug.exchangeIndex = iExchangeBH + iExchangeOTA;
                     [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
                     M0 = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};B0 = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
-                    W0 = SimParams.Debug.globalExchangeInfo.funcOut{5,iBase};
                     
                     cvx_begin
                     

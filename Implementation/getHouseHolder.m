@@ -48,8 +48,6 @@ for iCol = 1:min(M,N)-1
     
     normU = norm(V)^2;    
     fproductA = (1 + ((X' * V)/(V' * X))) / normU;
-    fproductA = (1 + (X'*V)*(X'*V)) / normU;
-    
     q(iCol:end,iCol:end) = eye(length(V)) - fproductA * (V * V');
     R = q * R;
     

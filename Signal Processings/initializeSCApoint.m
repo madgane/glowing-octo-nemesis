@@ -23,27 +23,9 @@ if ~ischar(bsIndex)
     addNoise = zeros(SimParams.maxRank,SimParams.nUsers,nBands);
     M0 = zeros(SimParams.nTxAntenna,SimParams.maxRank,kUsers,nBands);
     
-    if and(strcmpi(SimParams.additionalParams,'H-MMSE'),(SimParams.Debug.exchangeIndex ~= 1))
-        for iBand = 1:nBands
-            for iBase = 1:SimParams.nBases
-                if (iBase == bsIndex)
-                    for iUser = 1:length(SimStructs.baseStruct{iBase,1}.linkedUsers)
-                        cUser = SimStructs.baseStruct{iBase,1}.linkedUsers(iUser,1);
-                        W0{cUser,iBand} = SimParams.Debug.globalExchangeInfo.funcOut{6,iBase}{cUser,iBand};
-                    end
-                else
-                    for iUser = 1:length(SimStructs.baseStruct{iBase,1}.linkedUsers)
-                        cUser = SimStructs.baseStruct{iBase,1}.linkedUsers(iUser,1);
-                        W0{cUser,iBand} = SimStructs.userStruct{cUser,1}.pW{iBand,1};
-                    end
-                end
-            end
-        end
-    else        
-        for iBand = 1:nBands
-            for iUser = 1:SimParams.nUsers
-                W0{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
-            end
+    for iBand = 1:nBands
+        for iUser = 1:SimParams.nUsers
+            W0{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
         end
     end
     

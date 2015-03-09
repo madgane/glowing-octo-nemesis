@@ -182,7 +182,7 @@ for xBand = 1:length(xBandIndices)
         end
         
         L = eye(size(I)) + (pinv(I) * (S * S'));
-        xThrpt = real(log2(det(L)));
+        xThrpt = real(log2(det(L))) *  SimParams.BITFactor;
 
         if ~isnan(xThrpt)
             SimParams.Debug.privateExchanges.resAllocation(iBand,iUser) = real(xThrpt);

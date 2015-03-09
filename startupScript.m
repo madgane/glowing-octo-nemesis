@@ -5,7 +5,7 @@
 
 clc;clear all;
 
-saveContents = 'false';
+saveContents = 'true';
 if strfind(saveContents,'true')
     if isunix
         addpath(genpath(pwd));
@@ -14,13 +14,13 @@ if strfind(saveContents,'true')
     end
 end
 
-SimParams.outFile = 'reviewerFileB';
+SimParams.outFile = 'ResultFileB';
 SimParams.saveChannelInfo = 'false';
 SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'QTimePlot';
+SimParams.plotMode = 'NoDisplay';
 
 prelimCheck;
 preConfiguration;
@@ -30,24 +30,25 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.pathLossModel = 'Perturbed_6';
 SimParams.DopplerType = 'Uniform_25';
 
 SimParams.queueWt = 1;
+SimParams.BITFactor = 1;
 SimParams.mdpFactor = 0;
 SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
-SimParams.weightedSumRateMethod = 'distBSAlloc';
-SimParams.additionalParams = 'H-MMSE';
+SimParams.weightedSumRateMethod = 'distMSEAllocB';
+SimParams.additionalParams = 'Optimal';
 
-SimParams.nExchangesOTA = 0;
+SimParams.nExchangesOTA = 10;
 SimParams.exchangeResetInterval = 10;
-SimParams.nExchangesOBH = 20;
+SimParams.nExchangesOBH = 1;
 
-SimParams.nDrops = 50;
+SimParams.nDrops = 250;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -55,16 +56,17 @@ SimParams.SFSymbols = 14;
 SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
+SimParams.nSymbolsBIT = 100;
 
 SimParams.nBands = 4;
 SimParams.nBases = 2;
-SimParams.nUsers = 8;
+SimParams.nUsers = 12;
 
 SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = 8;
+SimParams.maxArrival = linspace(1,10,10);
 SimParams.groupArrivalFreq = 10;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
@@ -159,4 +161,3 @@ if strcmp(saveContents,'true')
     cd ../
     
 end
-

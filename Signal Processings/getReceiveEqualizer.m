@@ -190,7 +190,7 @@ switch rxType
                         for jBase = 1:nBases
                             if jBase ~= iBase
                                 ifLevel = (SimParams.Debug.globalExchangeInfo.gI{jBase,1}(iLayer,cUser,iBand)^2) / norm(SimStructs.userStruct{cUser,1}.pW{iBand,1}(:,iLayer))^2;
-                                R = R + ifLevel * eye(SimParams.nRxAntenna) * sqrt(SimParams.nRxAntenna);
+                                R = R + ifLevel * eye(SimParams.nRxAntenna) / sqrt(SimParams.nRxAntenna);
                             end
                         end                        
                         H = cH{iBase,iBand}(:,:,cUser);

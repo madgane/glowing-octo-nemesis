@@ -63,7 +63,10 @@ SimParams.debugLayout.losArray = losArray;
 SimParams.debugLayout.userRSSI = debugRSSI;
 SimParams.debugLayout.positionArray = positionArray;
 
-% plotDebugLayout(SimParams);
+plotDebugLayout(SimParams);
+cdfplot(debugRSSI);
+
+keyboard;
 
 end
 

@@ -16,7 +16,7 @@ SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
 
 SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = '3GPP_RMa';
+SimParams.pathLossModel = '3GPP_UMi';
 
 SimParams.queueWt = 1;
 SimParams.mdpFactor = 2;
@@ -37,10 +37,10 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 
 SimParams.nBands = 1;
-SimParams.nTiers = 0;
+SimParams.nTiers = 3;
 SimParams.nSectors = 3;
 SimParams.nNeighbors = 2; % Number of neighbors to realize
-SimParams.perCiteUsers = 4;
+SimParams.perCiteUsers = 10;
 
 SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
@@ -55,7 +55,9 @@ SimParams.arrivalDist = 'Constant_10';
 SimParams.maxArrival = 20;
 SimParams.FixedPacketArrivals = [10,10,10,10,10,10,1,1,1,1];
 
-bufferInitializations;
+SimStructs.userStruct = cell(SimParams.nUsers,1);
+SimStructs.baseStruct = cell(SimParams.nBases,1);
+
 if strcmp(SimParams.DebugMode,'true')
     keyboard;
 end
