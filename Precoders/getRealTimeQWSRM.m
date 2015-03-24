@@ -17,7 +17,7 @@ switch selectionMethod
     
     case 'perBSAlloc'
         
-        maxIterations = 50;
+        maxIterations = 25;
         for iBase = 1:nBases
             SimParams.Debug.globalExchangeInfo.gI{iBase,1} = zeros(maxRank,nUsers,nBands);
         end

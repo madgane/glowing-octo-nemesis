@@ -1,64 +1,120 @@
-% function [Q,R] = getHouseHolder(A)
-% % Compute the QR decomposition of an m-by-n matrix A using
-% % Householder transformations.
-% [m,n] = size(A);
-% R = A; % Transformed matrix so far
-% 
-%     for j = 1:min(m,n)-1
-%         
-%         I = eye((m+1-j));
-%         Q(:,:,j) = eye(m); 
-%         
-%         normx = norm(R(j:end,j));
-%         
-%         % u = x + ae1 
-%         % a = -e^(i*argx(k)) * ||x||
-%         u = R(j:end,j);
-%         u(1) = u(1)- exp(i*angle(R(j,j))) * normx;
-%         %v = u/||u||
-%         v = u/norm(u);
-%         
-%         %Q = I -(1 + (x'v)/(v'x))*vv'   
-%         Q(j:end,j:end,j) = I -(1+((u'*v)/(v'*u)))*v*v';
-%         R(j:end,j:end) = Q(j:end,j:end,j)*R(j:end,j:end);
-%     end
-%         Q_tmp = Q(:,:,1);
-%         for j = 2:min(m,n)-1
-%             Q_tmp = Q_tmp * Q(:,:,j);
-%         end
-%         Q=Q_tmp;
-%         R = (Q' * A);          
-% end
 
+function [Q,R] = getHouseHolder(varargin)
 
-function [Q,R] = getHouseHolder(A)
+if nargin == 1
+    A = varargin{1};
+    algoType = 0;
+else
+    A = varargin{1};
+    algoType = varargin{2};
+end
 
-R = A;
-[M,N] = size(A);
-
-for iCol = 1:min(M,N)-1
+if (algoType == 1)
     
-    q = eye(min(M,N));
-    X = R(iCol:end,iCol);
-	U = X;
     
-    normX = norm(X);
-    U(1,1) = U(1,1) - normX;
-    V = U;
+    R = A;
+    [M,N] = size(A);
     
-    normU = norm(V)^2;    
-    fproductA = (1 + ((X' * V)/(V' * X))) / normU;
-    q(iCol:end,iCol:end) = eye(length(V)) - fproductA * (V * V');
-    R = q * R;
-    
-    if iCol == 1
-        Q = q;
-    else
-        Q = q * Q;
-    end
+    for iCol = 1:min(M,N)-1
         
+        q = eye(min(M,N));
+        X = R(iCol:end,iCol);
+        U = X;
+        
+        normX = norm(X);
+        U(1,1) = U(1,1) - normX;
+        V = U;
+        
+        normU = norm(V)^2;
+        fproductA = (1 + ((X' * V)/(V' * X))) / normU;
+        
+        q(iCol:end,iCol:end) = eye(length(V)) - fproductA * (V * V');
+        R = q * R;
+        
+        if iCol == 1
+            Q = q;
+        else
+            Q = q * Q;
+        end
+        
+    end
+    
+else
+    
+    F = 2^12  - 1;
+    QDisp = @(x)(display(x));
+    QDispY = @(x,y)(display(x));
+    
+    [M,N] = size(A);
+    
+    R = A;
+    Q = eye(M,M);
+    pMatrix = zeros(M,M);
+    wVec = zeros(M,1);
+    
+    for iCol = 1:N
+        
+        bProduct = 0;
+        aProduct = abs(R(iCol,iCol))^2;
+        QDisp(aProduct);
+        
+        for iRow = (iCol + 1):M
+            
+            wVec(iRow,1) = R(iRow,iCol);
+            xProduct = abs(R(iRow,iCol))^2;
+            bProduct = bProduct + xProduct;
+            
+        end
+        
+        xProduct = aProduct + bProduct;
+        xProduct = sqrt(xProduct);
+        
+        wVec(iCol,1) = R(iCol,iCol) - xProduct;
+        aProduct = abs(wVec(iCol,1))^2 + bProduct
+        temp = wVec(iCol,1) * conj(R(iCol,iCol)) + bProduct
+        xProduct = real(temp * conj(temp))
+        
+        temp1 = temp * temp;
+        aProduct = xProduct * aProduct
+        
+        temp1 = (temp1 + xProduct);
+        temp = -temp1 / aProduct
+        
+        if iCol == 1
+            xRow = N;
+        else
+            xRow = iCol - 1;
+            pMatrix(xRow,xRow) = 1;
+        end
+        
+        for mRow = iCol:M
+            
+            pMatrix(xRow,mRow) = 0;
+            pMatrix(mRow,xRow) = 0;
+            temp2 = temp * wVec(mRow,1)
+            
+            for mCol = iCol : N
+                
+                temp1 = temp2 * conj(wVec(mCol,1))
+                pMatrix(mRow,mCol) = temp1;
+                
+            end
+            
+            pMatrix(mRow,mRow) = 1 + pMatrix(mRow,mRow);
+            
+        end
+        
+        QDispY(pMatrix,15);
+        
+        if iCol == N
+            R = (pMatrix * R)';
+            Q = pMatrix * Q;
+        else
+            R = pMatrix * R;
+            Q = pMatrix * Q;
+        end
+        
+    end
+    
 end
-
-end
-
 

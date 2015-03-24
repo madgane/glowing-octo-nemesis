@@ -4,7 +4,7 @@ display(processID);
 
 if isunix
     cvx_quiet('true');
-    cvx_solver('SDPT3');
+    cvx_solver('SEDUMI');
     cvx_expert('true');
 else
     cvx_quiet('true');
