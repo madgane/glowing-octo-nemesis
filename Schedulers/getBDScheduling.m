@@ -38,15 +38,19 @@ for iBase = 1:SimParams.nBases
                     end
                     for iRank = 1:SimParams.maxRank
                         iIndex = iIndex + 1;
-                        augE = [augE M(iRank,:).'];
+                        if iRank <= 4
+                            augE = [augE M(iRank,:).'];
+                        else
+                            augE = [augE zeros(SimParams.nTxAntenna,1)];
+                        end
                         xLocs(iIndex,:) = [cUser iRank];
                     end
                 end
                 
                 G = [];X = augE;
                 for iStream = 1:min(SimParams.muxRank,kUsers)
-                    ppVolume = zeros(kUsers,1);
-                    for iUser = 1:kUsers
+                    ppVolume = zeros(kUsers * SimParams.maxRank,1);
+                    for iUser = 1:(kUsers * SimParams.maxRank)
                         if iStream == 1
                             ppVolume(iUser,1) = norm(X(:,iUser));
                         else
@@ -88,7 +92,11 @@ for iBase = 1:SimParams.nBases
                     end
                     for iRank = 1:SimParams.maxRank
                         iIndex = iIndex + 1;
-                        augE = [augE M(iRank,:).'];
+                        if iRank <= 2
+                            augE = [augE M(iRank,:).'];
+                        else
+                            augE = [augE zeros(SimParams.nTxAntenna,1)];
+                        end
                         xLocs(iIndex,:) = [cUser iRank];
                     end
                 end

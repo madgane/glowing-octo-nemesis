@@ -20,7 +20,7 @@ SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'QInfo';
+SimParams.plotMode = 'SRA';
 
 prelimCheck;
 preConfiguration;
@@ -29,8 +29,8 @@ SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
-SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'Perturbed_6';
+SimParams.ChannelModel = 'IID';
+SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Uniform_25';
 
 SimParams.queueWt = 1;
@@ -38,18 +38,18 @@ SimParams.BITFactor = 1;
 SimParams.mdpFactor = 0;
 SimParams.robustNoise = 0;
 
-SimParams.weighingEqual = 'false';
-SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
-SimParams.weightedSumRateMethod = 'GenAlloc_1';
+SimParams.weighingEqual = 'true';
+SimParams.SchedType = 'GreedyScheduling';
+SimParams.PrecodingMethod = 'Best_ZF_Method';
+SimParams.weightedSumRateMethod = 'PreScheduling';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 25;
-SimParams.exchangeResetInterval = 10;
+SimParams.nExchangesOTA = 1;
+SimParams.exchangeResetInterval = 1;
 SimParams.nExchangesOBH = 1;
 
-SimParams.nDrops = 10;
-SimParams.snrIndex = [10];
+SimParams.nDrops = 50;
+SimParams.snrIndex = [-10:10:40];
 
 SimParams.PF_dur = 40;
 SimParams.SFSymbols = 14;
@@ -58,16 +58,16 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 100;
 
-SimParams.nBands = 4;
-SimParams.nBases = 2;
-SimParams.nUsers = 8;
+SimParams.nBands = 1;
+SimParams.nBases = 1;
+SimParams.nUsers = 20;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 1;
+SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = linspace(6,6,1);
-SimParams.groupArrivalFreq = 10;
+SimParams.maxArrival = 20;
+SimParams.groupArrivalFreq = 1;
 SimParams.arrivalDist = 'Uniform';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
@@ -108,10 +108,6 @@ for iPkt = 1:length(SimParams.maxArrival)
             
             [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
             [SimParams,SimStructs] = getScheduledUsers(SimParams,SimStructs);
-            
-            if and((iDrop > 1),~sum(strcmp(SimParams.plotMode,{'NoDisplay','ND'})))
-                displayQueues(SimParams,SimStructs,iDrop - 1);
-            end
             
             if strcmp(SimParams.precoderWithIdealChn,'true')
                 SimStructs.linkChan = SimStructs.actualChannel;

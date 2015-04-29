@@ -51,9 +51,9 @@ for iBand = 1:SimParams.nBands
         if userActive
             if strcmp(SimParams.pathLossModel(1:uscoreIndex(1,1) - 1),'3GPP')
                 RoI = 10^(SimStructs.userStruct{iUser,1}.phyParams.restOfIF / 10);
-                I = (SimParams.N + RoI) * eye(SimParams.nRxAntenna) * (Wmmse' * Wmmse);
+                I = (SimParams.N + RoI) * (Wmmse' * Wmmse);
             else
-                I = SimParams.N * eye(SimParams.nRxAntenna) * (Wmmse' * Wmmse);
+                I = SimParams.N * (Wmmse' * Wmmse);
             end
         else
             I = 1;

@@ -25,7 +25,11 @@ for iBase = 1:SimParams.nBases
             end
             for iRank = 1:SimParams.maxRank
                 iIndex = iIndex + 1;
-                augE = [augE norm(M(iRank,:))];
+                if iRank > 2
+                    augE = [augE 0];
+                else
+                    augE = [augE norm(M(iRank,:))];
+                end
                 xLocs(iIndex,:) = [iUser iRank];
             end
         end
