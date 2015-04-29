@@ -218,9 +218,10 @@ switch selectionMethod
                 SimStructs.baseStruct{iBase,1}.P{iBand,1} = P;
             end
         end
-        
+
+
         [SimParams, SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
-        
+                
     case 'GenBandAlloc'
         
         vW = cell(nUsers,nBands);

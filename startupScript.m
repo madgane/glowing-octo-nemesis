@@ -5,7 +5,7 @@
 
 clc;clear all;
 
-saveContents = 'true';
+saveContents = 'false';
 if strfind(saveContents,'true')
     if isunix
         addpath(genpath(pwd));
@@ -20,7 +20,7 @@ SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'NoDisplay';
+SimParams.plotMode = 'QInfo';
 
 prelimCheck;
 preConfiguration;
@@ -40,15 +40,15 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
-SimParams.weightedSumRateMethod = 'distMSEAllocB';
-SimParams.additionalParams = 'Optimal';
+SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
+SimParams.weightedSumRateMethod = 'GenAlloc_1';
+SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 10;
+SimParams.nExchangesOTA = 25;
 SimParams.exchangeResetInterval = 10;
 SimParams.nExchangesOBH = 1;
 
-SimParams.nDrops = 250;
+SimParams.nDrops = 10;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -60,15 +60,15 @@ SimParams.nSymbolsBIT = 100;
 
 SimParams.nBands = 4;
 SimParams.nBases = 2;
-SimParams.nUsers = 12;
+SimParams.nUsers = 8;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 2;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = linspace(1,10,10);
+SimParams.maxArrival = linspace(6,6,1);
 SimParams.groupArrivalFreq = 10;
-SimParams.arrivalDist = 'Constant';
+SimParams.arrivalDist = 'Uniform';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 

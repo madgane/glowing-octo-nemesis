@@ -5,7 +5,7 @@ iIter = 1;
 [nR,nC] = size(X);
 Q = cell(nIter,1);R = cell(nIter,1);
 
-if 0
+if 1
 
 while iIter <= nIter
     
