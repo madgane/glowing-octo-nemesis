@@ -18,7 +18,7 @@ for iBase = 1:SimParams.nBases
             Q(iUser,1) = SimStructs.userStruct{cUser,1}.trafficStats.backLogPkt;
         end
 
-        eP = (pinv(augH' * augH)) * augH';
+        eP = ((augH' * augH)) \ augH';
         switch SimParams.queueWt
             case 1
                 X = performWFAlgorithm(eP,SimStructs.baseStruct{iBase,1}.sPower(1,iBand));
