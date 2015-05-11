@@ -30,7 +30,7 @@ for iBase = 1:SimParams.nBases
                 
                 for iUser = 1:kUsers
                     cUser = uIndices(iUser,1);
-                    [U,~,~] = svd(eH(:,:,iUser));
+                    [U,~,~] = getIterateSVD(eH(:,:,iUser),SimParams.nIterationsSVD);
                     if SimParams.queueWt
                         M = U' * eH(:,:,iUser) * (SimStructs.userStruct{cUser,1}.weighingFactor);
                     else
@@ -38,11 +38,7 @@ for iBase = 1:SimParams.nBases
                     end
                     for iRank = 1:SimParams.maxRank
                         iIndex = iIndex + 1;
-                        if iRank <= 4
-                            augE = [augE M(iRank,:).'];
-                        else
-                            augE = [augE zeros(SimParams.nTxAntenna,1)];
-                        end
+                        augE = [augE M(iRank,:).'];
                         xLocs(iIndex,:) = [cUser iRank];
                     end
                 end
@@ -71,6 +67,11 @@ for iBase = 1:SimParams.nBases
                     schedUsers(iStream,1) = xLocs(sortI(1,1),1);
                     schedStreams(iStream,1) = xLocs(sortI(1,1),2);
                     
+                    if iStream == 4
+                        N = eye(SimParams.nTxAntenna) - G * pinv(G'*G) * G';
+                        X = N * X;
+                    end                    
+                    
                 end
                 
                 SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1} = schedUsers;
@@ -84,7 +85,7 @@ for iBase = 1:SimParams.nBases
                 
                 for iUser = 1:kUsers
                     cUser = uIndices(iUser,1);
-                    [U,~,~] = svd(eH(:,:,iUser));
+                    [U,~,~] = getIterateSVD(eH(:,:,iUser),SimParams.nIterationsSVD);
                     if SimParams.queueWt
                         M = U' * eH(:,:,iUser) * (SimStructs.userStruct{cUser,1}.weighingFactor);
                     else
@@ -92,11 +93,7 @@ for iBase = 1:SimParams.nBases
                     end
                     for iRank = 1:SimParams.maxRank
                         iIndex = iIndex + 1;
-                        if iRank <= 2
-                            augE = [augE M(iRank,:).'];
-                        else
-                            augE = [augE zeros(SimParams.nTxAntenna,1)];
-                        end
+                        augE = [augE M(iRank,:).'];
                         xLocs(iIndex,:) = [cUser iRank];
                     end
                 end

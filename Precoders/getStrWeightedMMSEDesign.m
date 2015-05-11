@@ -2,7 +2,7 @@
 function [SimParams SimStructs] = getStrWeightedMMSEDesign(SimParams,SimStructs)
 
 iIter = 0;
-maxIter = 1e4;
+maxIter = 50;
 epsilonCheck = min(1e-4,max(SimParams.sPower)^(-2));
 nStreams = min(SimParams.maxRank,SimParams.nRxAntenna);
 
@@ -117,7 +117,7 @@ for iBand = bandRange
             
             if iIter > maxIter
                 continueAgain = 0;
-                display('Lack of Convergence !');
+                %display('Lack of Convergence !');
             end
         end
         
