@@ -71,6 +71,11 @@ for iBase = 1:SimParams.nBases
                     schedUsers(iStream,1) = xLocs(sortI(1,1),1);
                     schedStreams(iStream,1) = xLocs(sortI(1,1),2);
                     
+                    if iStream == 4
+                        N = eye(SimParams.nTxAntenna) - G * pinv(G' * G) * G';
+                        X = N * X;
+                    end
+                    
                 end
                 
                 SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1} = schedUsers;

@@ -1,9 +1,9 @@
 function [mu_star Pwr] = bisectionEstimateMU(X,C,pTotal)
 
-epsilon = 1e-5;
+epsilon = 1e-3;
 
 iIter = 0;
-maxIter = 1e5;
+maxIter = 1e3;
 
 [D L] = eig(X);
 phiX = D' * C * D;
@@ -16,7 +16,7 @@ if sum(Pwr) <= (pTotal + epsilon)
     continueAgain = 0;
 else
     continueAgain = 1;
-    muMax = 1e10; muMin = 0;muK = muMax;
+    muMax = 1e5; muMin = 0;muK = muMax;
 end
 
 while continueAgain

@@ -39,8 +39,8 @@ SimParams.mdpFactor = 0;
 SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'true';
-SimParams.SchedType = 'GreedyScheduling';
-SimParams.PrecodingMethod = 'Best_ZF_Method';
+SimParams.SchedType = 'BDScheduling_RNS';
+SimParams.PrecodingMethod = 'Best_WMMSE_Method';
 SimParams.weightedSumRateMethod = 'PreScheduling';
 SimParams.additionalParams = 'MMSE';
 
@@ -49,7 +49,7 @@ SimParams.exchangeResetInterval = 1;
 SimParams.nExchangesOBH = 1;
 
 SimParams.nDrops = 50;
-SimParams.snrIndex = [-10:10:40];
+SimParams.snrIndex = [-10:10:30];
 
 SimParams.PF_dur = 40;
 SimParams.SFSymbols = 14;
@@ -60,10 +60,10 @@ SimParams.nSymbolsBIT = 100;
 
 SimParams.nBands = 1;
 SimParams.nBases = 1;
-SimParams.nUsers = 20;
+SimParams.nUsers = 40;
 
-SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 2;
+SimParams.nTxAntenna = 8;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.maxArrival = 20;
