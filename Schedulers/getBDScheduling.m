@@ -19,6 +19,12 @@ for iBase = 1:SimParams.nBases
     for iBand = 1:SimParams.nBands
         
         eH = SimStructs.linkChan{iBase,iBand}(:,:,uIndices);
+        weightFactor = zeros(kUsers,1);
+        for iUser = 1:kUsers
+            weightFactor(iUser,1) = SimStructs.userStruct{uIndices(iUser,1),1}.weighingFactor;
+        end
+        
+        weightFactor = weightFactor / norm(weightFactor);
         
         switch (caseStudy)
             
@@ -72,17 +78,17 @@ for iBase = 1:SimParams.nBases
                 SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1} = schedUsers;
                 SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = schedStreams;
                 
-            case 'SP'
+            case 'SP'               
                 
                 iIndex = 0;
                 xLocs = zeros(kUsers * SimParams.maxRank,2);
                 augE = [];
-                
+                                
                 for iUser = 1:kUsers
                     cUser = uIndices(iUser,1);
                     [U,~,~] = svd(eH(:,:,iUser));
                     if SimParams.queueWt
-                        M = U' * eH(:,:,iUser) * (SimStructs.userStruct{cUser,1}.weighingFactor);
+                        M = U' * eH(:,:,iUser) * (weightFactor(iUser,1));
                     else
                         M = U' * eH(:,:,iUser) * sign(SimStructs.userStruct{cUser,1}.weighingFactor);
                     end
@@ -359,5 +365,5 @@ for iBase = 1:SimParams.nBases
         end
         
     end
-    
+            
 end

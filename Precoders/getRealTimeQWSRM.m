@@ -1,5 +1,7 @@
 function [SimParams,SimStructs] = getRealTimeQWSRM(SimParams,SimStructs)
 
+SimParams.Debug.reSchedule = 'true';
+
 proLogue;
 if SimParams.iDrop == 1
     for iUser = 1:nUsers
@@ -714,3 +716,5 @@ end
 
 % Update the receivers upon reception by all users (combined detection)
 [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
+
+

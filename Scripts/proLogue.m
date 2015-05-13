@@ -14,15 +14,14 @@ cellNeighbourIndices = cell(nBases,1);
 % Debug Buffers initialization
 
 rankArray = linspace(1,maxRank,maxRank);
-SimParams.Debug.tempResource{2,SimParams.iDrop} = cell(SimParams.nUsers,1);
-SimParams.Debug.tempResource{3,SimParams.iDrop} = cell(SimParams.nUsers,1);
-SimParams.Debug.tempResource{4,SimParams.iDrop} = cell(SimParams.nUsers,SimParams.nBands);
+if isempty(SimParams.Debug.tempResource{2,SimParams.iDrop})
+    SimParams.Debug.tempResource{2,SimParams.iDrop} = cell(SimParams.nUsers,1);
+    SimParams.Debug.tempResource{3,SimParams.iDrop} = cell(SimParams.nUsers,1);
+    SimParams.Debug.tempResource{4,SimParams.iDrop} = cell(SimParams.nUsers,SimParams.nBands);
+end
 
 for iBase = 1:nBases
-    for iBand = 1:nBands
-        cellUserIndices{iBase,1} = [cellUserIndices{iBase,1} ; SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1}];
-    end
-    cellUserIndices{iBase,1} = unique(cellUserIndices{iBase,1});
+    cellUserIndices{iBase,1} = unique(SimStructs.baseStruct{iBase,1}.linkedUsers);
     usersPerCell(iBase,1) = length(cellUserIndices{iBase,1});
 end
 
@@ -53,3 +52,18 @@ else
     qExponent = str2double(SimParams.weightedSumRateMethod(underscore_location + 1:end));
     selectionMethod = SimParams.weightedSumRateMethod(1:underscore_location-1);
 end
+
+if ~strcmpi(SimParams.SchedType,'SkipScheduling')
+    if strcmpi(SimParams.Debug.reSchedule,'true')
+        SimParams.Debug.schTable = cell(nBases,nBands);
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                SimParams.Debug.schTable{iBase,iBand}.assignedUsers = SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1};
+                SimParams.Debug.schTable{iBase,iBand}.assignedStreams = SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1};
+            end
+        end
+        [SimParams,SimStructs] = getSkipScheduling(SimParams,SimStructs);
+        SimParams.Debug.reSchedule = 'false';
+    end
+end
+

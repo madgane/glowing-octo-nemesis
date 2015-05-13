@@ -3,7 +3,8 @@
 % analysis, NRA - network rate analysis
 % -------------------------------------------------------------------------
 
-clc;clear all;
+clc;
+clear all;
 
 saveContents = 'false';
 if strfind(saveContents,'true')
@@ -20,7 +21,7 @@ SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'QInfo';
+SimParams.plotMode = 'QTimePlot';
 
 prelimCheck;
 preConfiguration;
@@ -30,7 +31,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
-SimParams.pathLossModel = 'Perturbed_6';
+SimParams.pathLossModel = 'Perturbed_0.01';
 SimParams.DopplerType = 'Uniform_25';
 
 SimParams.queueWt = 1;
@@ -40,15 +41,15 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
-SimParams.weightedSumRateMethod = 'GenAlloc_1';
+SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
+SimParams.weightedSumRateMethod = 'distMSEAllocB';
 SimParams.additionalParams = 'MMSE';
 
-SimParams.nExchangesOTA = 25;
+SimParams.nExchangesOTA = 5;
 SimParams.exchangeResetInterval = 10;
 SimParams.nExchangesOBH = 1;
 
-SimParams.nDrops = 10;
+SimParams.nDrops = 50;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -60,13 +61,13 @@ SimParams.nSymbolsBIT = 100;
 
 SimParams.nBands = 4;
 SimParams.nBases = 2;
-SimParams.nUsers = 8;
+SimParams.nUsers = 12;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 1;
+SimParams.nRxAntenna = 4;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = linspace(6,6,1);
+SimParams.maxArrival = 5;
 SimParams.groupArrivalFreq = 10;
 SimParams.arrivalDist = 'Uniform';
 SimParams.FixedPacketArrivals = [6];

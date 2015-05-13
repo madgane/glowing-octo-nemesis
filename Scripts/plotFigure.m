@@ -2,7 +2,7 @@
 function plotFigure(figStruct)
 
 figColor = 'g';
-figMarker = 'v';
+figMarker = '.';
 figLineType = '-.';
 figLineWidth = 1;
 figMarkerSize = 4;

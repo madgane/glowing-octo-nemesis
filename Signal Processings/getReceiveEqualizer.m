@@ -7,25 +7,12 @@ else
     cH = SimStructs.prevChan;
 end
 
+proLogue;
 rxType = stringCells{1};
-nBases = SimParams.nBases;
-nBands = SimParams.nBands;
-nUsers = SimParams.nUsers;
-maxRank = SimParams.maxRank;
-cellUserIndices = cell(nBases,1);
-usersPerCell = zeros(nBases,1);
 updateHistory = 'true';
 
 if nargin ~= 4
     bsIndices = 1:nBases;
-end
-
-for iBase = 1:nBases
-    for iBand = 1:nBands
-        cellUserIndices{iBase,1} = [cellUserIndices{iBase,1} ; SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1}];
-    end
-    cellUserIndices{iBase,1} = unique(cellUserIndices{iBase,1});
-    usersPerCell(iBase,1) = length(cellUserIndices{iBase,1});
 end
 
 pertNoise = 1e-40;
@@ -207,6 +194,30 @@ switch rxType
             end
         end
 
+end
+
+if ~strcmpi(SimParams.SchedType,'SkipScheduling')
+    
+    mW = cell(nUsers,nBands);
+    for iBand = 1:nBands
+        for iBase = bsIndices
+            for iUser = cellUserIndices{iBase,1}'
+                mW{iUser,iBand} = ones(SimParams.nRxAntenna,maxRank) * pertNoise;
+            end
+        end
+    end
+    
+    for iBand = 1:nBands
+        for iBase = bsIndices
+            aUsers = SimParams.Debug.schTable{iBase,iBand}.assignedUsers;
+            aStream = SimParams.Debug.schTable{iBase,iBand}.assignedStreams;
+            for iStream = 1:length(aUsers)
+                mW{aUsers(iStream,1),iBand}(:,aStream(iStream,1)) = W{aUsers(iStream,1),iBand}(:,aStream(iStream,1));
+            end
+        end
+    end
+    
+    W = mW;
 end
 
 if strcmpi(updateHistory,'true')
