@@ -4,7 +4,8 @@ colonLocs = strfind(currentDirectories,';');
 colonLocs = [0 colonLocs];
 xPath = [];
 
-for iLen = 2:length(colonLocs) - 2
+for iLen = 2:length(colonLocs)
+    display(currentDirectories(colonLocs(1,iLen - 1) + 1:colonLocs(1,iLen) - 1));
     if isempty(strfind(currentDirectories(colonLocs(1,iLen - 1) + 1:colonLocs(1,iLen) - 1),'git'))
         xPath = [xPath,currentDirectories(colonLocs(1,iLen - 1) + 1:colonLocs(1,iLen) - 1),';'];
     end

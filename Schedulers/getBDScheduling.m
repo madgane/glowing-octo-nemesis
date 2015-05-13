@@ -18,14 +18,7 @@ for iBase = 1:SimParams.nBases
     
     for iBand = 1:SimParams.nBands
         
-        eH = SimStructs.linkChan{iBase,iBand}(:,:,uIndices);
-        weightFactor = zeros(kUsers,1);
-        for iUser = 1:kUsers
-            weightFactor(iUser,1) = SimStructs.userStruct{uIndices(iUser,1),1}.weighingFactor;
-        end
-        
-        weightFactor = weightFactor / norm(weightFactor);
-        
+        eH = SimStructs.linkChan{iBase,iBand}(:,:,uIndices);        
         switch (caseStudy)
             
             case 'RNS'
@@ -88,7 +81,7 @@ for iBase = 1:SimParams.nBases
                     cUser = uIndices(iUser,1);
                     [U,~,~] = svd(eH(:,:,iUser));
                     if SimParams.queueWt
-                        M = U' * eH(:,:,iUser) * (weightFactor(iUser,1));
+                        M = U' * eH(:,:,iUser) * SimStructs.userStruct{cUser,1}.weighingFactor;
                     else
                         M = U' * eH(:,:,iUser) * sign(SimStructs.userStruct{cUser,1}.weighingFactor);
                     end
@@ -100,7 +93,7 @@ for iBase = 1:SimParams.nBases
                 end
                 
                 [~,~,sortA] = qr(augE,0);
-                for iRank = 1:min(SimParams.muxRank,kUsers)
+                for iRank = 1:min(SimParams.muxRank,kUsers * SimParams.maxRank)
                     schedUsers(iRank,1) = xLocs(sortA(1,iRank),1);
                     schedStreams(iRank,1) = xLocs(sortA(1,iRank),2);
                 end

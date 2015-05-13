@@ -74,6 +74,7 @@ switch rxType
         end
         
     case 'MMSE-BF'        
+
         for iBand = 1:nBands
             for iBase = bsIndices
                 for iUser = 1:usersPerCell(iBase,1)
@@ -199,6 +200,8 @@ end
 if ~strcmpi(SimParams.SchedType,'SkipScheduling')
     
     mW = cell(nUsers,nBands);
+    mWL = cell(nUsers,nBands);
+    
     for iBand = 1:nBands
         for iBase = bsIndices
             for iUser = cellUserIndices{iBase,1}'
@@ -213,11 +216,63 @@ if ~strcmpi(SimParams.SchedType,'SkipScheduling')
             aStream = SimParams.Debug.schTable{iBase,iBand}.assignedStreams;
             for iStream = 1:length(aUsers)
                 mW{aUsers(iStream,1),iBand}(:,aStream(iStream,1)) = W{aUsers(iStream,1),iBand}(:,aStream(iStream,1));
+                %mW{aUsers(iStream,1),iBand}(:,:) = W{aUsers(iStream,1),iBand}(:,:);
             end
         end
     end
     
+    if strcmpi(rxType,'Last')
+        
+        for iBand = 1:nBands
+            for iBase = bsIndices
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    [~,~,V] = svd(cH{iBase,iBand}(:,:,cUser));
+                    M0{iBase,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
+                end
+            end
+        end
+        
+        for iBase = bsIndices
+            totPower = norm(vec(M0{iBase,1}))^2;
+            totPower = sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower) / totPower);
+            M0{iBase,1} = M0{iBase,1} * totPower;
+        end
+
+        for iBand = 1:nBands
+            for iBase = bsIndices
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    for iLayer = 1:maxRank
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        for jBase = bsIndices
+                            H = cH{jBase,iBand}(:,:,cUser);
+                            for jUser = 1:usersPerCell(jBase,1)
+                                R = R + H * M0{jBase,1}(:,:,jUser,iBand) * M0{jBase,1}(:,:,jUser,iBand)' * H';
+                            end
+                        end
+                        H = cH{iBase,iBand}(:,:,cUser);
+                        mWL{cUser,iBand}(:,iLayer) = R \ (H * M0{iBase,1}(:,iLayer,iUser,iBand)) + pertNoise;
+                    end
+                end
+            end
+        end
+        
+        for iBand = 1:nBands
+            for iBase = bsIndices
+                aUsers = SimParams.Debug.schTable{iBase,iBand}.assignedUsers;
+                aStream = SimParams.Debug.schTable{iBase,iBand}.assignedStreams;
+                for iStream = 1:length(aUsers)
+                    mW{aUsers(iStream,1),iBand}(:,aStream(iStream,1)) = mWL{aUsers(iStream,1),iBand}(:,aStream(iStream,1));
+                    %mW{aUsers(iStream,1),iBand}(:,:) = mWL{aUsers(iStream,1),iBand}(:,:);
+                end
+            end
+        end
+      
+    end
+    
     W = mW;
+    
 end
 
 if strcmpi(updateHistory,'true')

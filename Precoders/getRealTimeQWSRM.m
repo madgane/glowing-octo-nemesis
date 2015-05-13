@@ -131,10 +131,15 @@ switch selectionMethod
     case 'distBSAlloc'
         
         stInstant = 0;
-        stepFactor = 10;
         SimParams.currentQueue = 100;
+        
+        if SimParams.nExchangesOTA ~= 0
+            SimParams.BITFactor = 1 - (SimParams.nExchangesOTA / SimParams.nSymbolsBIT);
+        end
+        
         for iExchangeOTA = stInstant:SimParams.nExchangesOTA
             
+            stepFactor = 10;
             switch iExchangeOTA
                 
                 case -1
@@ -214,9 +219,13 @@ switch selectionMethod
 
                     cvx_begin
                     
+                    expression T(maxRank,kUsers,nBands)
+                    
                     variable M(SimParams.nTxAntenna,maxRank,kUsers,nBands) complex
-                    variables T(maxRank,kUsers,nBands) B(maxRank,kUsers,nBands) G(maxRank,kUsers,nBands)
+                    variables Tx(maxRank,kUsers,nBands) B(maxRank,kUsers,nBands) G(maxRank,kUsers,nBands) 
                     variables I(maxRank,nUsers,nBands,nBases) userObjective(kUsers,1) epiObjective
+                    
+                    T = SimParams.BITFactor * Tx;                    
                     
                     for iUser = 1:kUsers
                         cUser = cellUserIndices{iBase,1}(iUser,1);
@@ -243,6 +252,7 @@ switch selectionMethod
                         for iUser = 1:kUsers
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             for iLayer = 1:maxRank
+                                                                
                                 intVector = sqrt(SimParams.N) * W0{cUser,iBand}(:,iLayer)';
                                 for jUser = 1:kUsers
                                     if jUser ~= iUser
@@ -273,11 +283,12 @@ switch selectionMethod
                                         end
                                     end
                                 end
-                                
+
                                 P = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
                                 Q = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
                                 P0 = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
                                 Q0 = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
+
                                 (P0^2 + Q0^2) / B0(iLayer,iUser,iBand) + (2 / B0(iLayer,iUser,iBand)) * (P0 * (P - P0) + Q0 * (Q - Q0)) ...
                                     - ((P0^2 + Q0^2) / (B0(iLayer,iUser,iBand)^2)) * (B(iLayer,iUser,iBand) - B0(iLayer,iUser,iBand)) >= G(iLayer,iUser,iBand);
                                 

@@ -20,7 +20,7 @@ if ~ischar(bsIndex)
     W0 = cell(SimParams.nUsers,nBands);
     B0 = zeros(SimParams.maxRank,kUsers,nBands);
     G0 = zeros(SimParams.maxRank,kUsers,nBands);
-    addNoise = zeros(SimParams.maxRank,SimParams.nUsers,nBands);
+    addNoise = ones(SimParams.maxRank,SimParams.nUsers,nBands) * 1e-10;
     M0 = zeros(SimParams.nTxAntenna,SimParams.maxRank,kUsers,nBands);
     
     for iBand = 1:nBands
