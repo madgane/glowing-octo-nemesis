@@ -34,28 +34,28 @@ for iScheme = 1:globalCount
     fltIndex = mod(randInt(1,3) - 1,(length(figLineType))) + 1;
     flwIndex = mod(randInt(1,4) - 1,(length(figLineWidth))) + 1;
 
-    figure(1);hold on;box on;grid on;
-    yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(:,:,:,2:end)),1)),2);
-    plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
-        'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',6);
+%     figure(1);hold on;box on;grid on;
+%     yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(:,:,:,2:end)),1)),2);
+%     plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+%         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',6);
     
     figure(2);hold on;box on;grid on;
     yValues = mean(squeeze(sum(squeeze(SimParams.QueueInfo.queueBacklogsOverTime(:,:,:,2:end)),1)),2);
     plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',6);
 
-    figure(3);hold on;box on;grid on;
-    yValues = sum(squeeze(SimParams.QueueInfo.residualPkts),1);
-    plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
-        'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',6);
+%     figure(3);hold on;box on;grid on;
+%     yValues = sum(squeeze(SimParams.QueueInfo.residualPkts),1);
+%     plot(SimParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+%         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',6);
 
-    figure(4);hold on;box on;grid on;
-    yValues = sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(end,:,pktIndex,:)));
-    plot(yValues,'Color',figColor{1,fcIndex},'LineWidth',1,...
-        'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',2);
+%     figure(4);hold on;box on;grid on;
+%     yValues = sum(squeeze(SimParams.QueueInfo.queueResiduesOverTime(end,:,pktIndex,:)));
+%     plot(yValues,'Color',figColor{1,fcIndex},'LineWidth',1,...
+%         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',2);
 
 %     legendString{1,runIndex} = SimParams.weightedSumRateMethod;
-    legendString{1,runIndex} = strcat(sprintf('%s-%s',SimParams.weightedSumRateMethod,SimParams.additionalParams));
+    legendString{1,runIndex} = strcat(sprintf('%s-%s-%d-%d',SimParams.weightedSumRateMethod,SimParams.additionalParams,SimParams.queueWt,SimParams.nExchangesOTA));
 
     runIndex = runIndex + 1;
 

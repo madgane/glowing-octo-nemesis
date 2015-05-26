@@ -1,0 +1,3 @@
+function fprintf(varargin)
+
+end

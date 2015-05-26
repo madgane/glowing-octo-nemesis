@@ -98,8 +98,10 @@ switch selectionMethod
                         end
                     end
                     
-                    for iBand = 1:nBands
-                        vec(M(:,:,:,iBand))' * vec(M(:,:,:,iBand)) <= SimStructs.baseStruct{iBase,1}.sPower(1,iBand);
+                    if strcmpi(isTDM,'TDM')
+                        norm(vec(M))  <= sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower(1,:)) * SimParams.nBases);
+                    else
+                        norm(vec(M))  <= sqrt(sum(SimStructs.baseStruct{iBase,1}.sPower(1,:)));
                     end
                     
                     cvx_end
@@ -108,7 +110,9 @@ switch selectionMethod
                         M0 = full(M);
                     else
                         display(cvx_status);
-                        break;
+                        for iBand = 1:nBands
+                            M0(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{iBase,iBand} / sqrt(2);
+                        end
                     end
                     
                     if norm(cvx_objective - cvx_optval,1) <= epsilonT
@@ -304,7 +308,9 @@ switch selectionMethod
                         M0 = full(M);
                     else
                         display(cvx_status);
-                        break;
+                        for iBand = 1:nBands
+                            M0 = SimParams.Debug.globalExchangeInfo.P{iBase,iBand} / sqrt(2);
+                        end
                     end
                     
                     for iBand = 1:nBands
