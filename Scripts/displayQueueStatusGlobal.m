@@ -7,7 +7,7 @@ for iFile = 1:length(listOfFiles)
     if ~(listOfFiles(iFile).isdir)
         stringT = sprintf('%s/%s',folderName,listOfFiles(iFile).name);
         load(stringT);
-        if ~isempty(strfind(stringT,'-'))
+        if ~isempty(strfind(listOfFiles(iFile).name,'-'))
             display(SimParams.LegendName);
             SimParams.Log.Clock
         else

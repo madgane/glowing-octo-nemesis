@@ -1,6 +1,6 @@
 
 clc;
-clear all;
+clear;
 
 tic;
 updatePath;
@@ -10,15 +10,12 @@ preConfiguration;
 xParams = cell(1,1);
 xStructs = cell(1,1);
 
-display(getenv('HOSTNAME'));
-xConfig.HostName = getenv('HOSTNAME');
-
 xConfig.workBook = 'ADMM-WS';
 xConfig.fileName = 'Utilities/systemConfig.xlsx';
 [xConfig.num, xConfig.txt, xConfig.raw] = xlsread(xConfig.fileName,xConfig.workBook);
 xConfig = parseXLFile(xConfig);
 
-xConfig.defaultFolderName = sprintf('Results/MODX/%s',xConfig.workBook);
+xConfig.defaultFolderName = sprintf('Results/26May2015/%s',xConfig.workBook);
 xConfig.defaultFileName = 'GlobalData';
 
 if ~exist(xConfig.defaultFolderName,'dir')
@@ -100,17 +97,13 @@ for xCount = 1:length(xConfig.xStruct)
     
 end
 
-parcluster('local');
+
+pCluster = parcluster('local');
+xConfig.HostName = system('hostname');
 save(outFile,'xParams','xStructs','xConfig');
 
 parfor xCount = 1:length(xParams)
-    
-    display(xCount);
-    inParams = xParams{xCount,1};
-    [tempParams,tempStructs] = fwkScript(inParams);
-    xParams{xCount,1} = tempParams;
-    xStructs{xCount,1} = tempStructs;
-    
+    fwkScript(xParams{xCount,1});
 end
     
 xVal = fix(clock);

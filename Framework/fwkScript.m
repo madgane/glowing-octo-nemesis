@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = fwkScript(SimParams)
+function fwkScript(SimParams)
 
 [SimParams,SimStructs] = initializeBuffers(SimParams);
 
