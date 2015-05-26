@@ -59,7 +59,7 @@ for iPkt = 1:length(SimParams.maxArrival)
             display(squeeze(SimParams.QueueInfo.queueBacklogs(iSNR,:,iPkt)));
         end
         
-        cState = sprintf('SINR completed - %d for Job Index - %d',SimParams.snrIndex(iSNR),SimParams.xCount);
+        cState = sprintf('(PKT,SINR,JobID) - (%d,%d,%d)',SimParams.maxArrival(1,iPkt),SimParams.snrIndex(1,iSNR),SimParams.xCount);
         disp(cState);
     end
     
