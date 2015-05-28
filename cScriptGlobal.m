@@ -15,7 +15,7 @@ xConfig.fileName = 'Utilities/systemConfig.xlsx';
 [xConfig.num, xConfig.txt, xConfig.raw] = xlsread(xConfig.fileName,xConfig.workBook);
 xConfig = parseXLFile(xConfig);
 
-xConfig.defaultFolderName = sprintf('Results/26May2015/%s',xConfig.workBook);
+xConfig.defaultFolderName = sprintf('Results/27May2015/%s',xConfig.workBook);
 xConfig.defaultFileName = 'GlobalData';
 
 if ~exist(xConfig.defaultFolderName,'dir')
@@ -45,7 +45,7 @@ for xCount = 1:length(xConfig.xStruct)
     xParams{xCount,1}.totalPwrDistOverSC = 'true';
     
     xParams{xCount,1}.ChannelModel = 'Jakes';
-    xParams{xCount,1}.pathLossModel = 'Perturbed_3';
+    xParams{xCount,1}.pathLossModel = 'Perturbed_6';
     xParams{xCount,1}.DopplerType = 'Uniform_25';
         
     xParams{xCount,1}.queueWt = 0;
@@ -84,7 +84,7 @@ for xCount = 1:length(xConfig.xStruct)
     
     xParams{xCount,1}.maxArrival = linspace(1,10,10);
     xParams{xCount,1}.groupArrivalFreq = 10;
-    xParams{xCount,1}.arrivalDist = 'Uniform';
+    xParams{xCount,1}.arrivalDist = 'Constant';
     xParams{xCount,1}.FixedPacketArrivals = [6];
     xParams{xCount,1}.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
     

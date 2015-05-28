@@ -1,8 +1,8 @@
 
 function plotFigure(figStruct)
 
-figColor = 'g';
-figMarker = '.';
+figColor = [0.7 0.1 0.1];
+figMarker = 'v';
 figLineType = '-.';
 figLineWidth = 1;
 figMarkerSize = 4;

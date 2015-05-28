@@ -55,6 +55,8 @@ if nargin == 2
             SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1}(SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} ~= 0);
         end
     end
+    
+    [SimParams,SimStructs] = getGScheduling(SimParams,SimStructs);
 
 else
     

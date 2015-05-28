@@ -4,9 +4,9 @@
 % -------------------------------------------------------------------------
 
 clc;
-clear all;
+clear java;
 
-saveContents = 'true';
+saveContents = 'false';
 if strfind(saveContents,'true')
     updatePath;
 end
@@ -17,7 +17,7 @@ SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.plotMode = 'NoDisplay';
+SimParams.plotMode = 'QTimePlot';
 
 prelimCheck;
 preConfiguration;
@@ -39,13 +39,13 @@ SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
 SimParams.weightedSumRateMethod = 'distMSEAllocB';
-SimParams.additionalParams = 'MMSE';
+SimParams.additionalParams = 'BAND_TDM';
 
-SimParams.nExchangesOTA = 50;
-SimParams.exchangeResetInterval = 1;
+SimParams.nExchangesOTA = 5;
+SimParams.exchangeResetInterval = 10;
 SimParams.nExchangesOBH = 1;
 
-SimParams.nDrops = 500;
+SimParams.nDrops = 10;
 SimParams.snrIndex = [10];
 
 SimParams.PF_dur = 40;
@@ -63,9 +63,9 @@ SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = linspace(1,10,10);
+SimParams.maxArrival = 6;
 SimParams.groupArrivalFreq = 10;
-SimParams.arrivalDist = 'Uniform';
+SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
@@ -76,7 +76,6 @@ if strcmp(SimParams.sysMode,'true')
     SimParams.nUsers = 570;
 end
 
-display(SimParams);
 [SimParams,SimStructs] = initializeBuffers(SimParams);
 
 for iPkt = 1:length(SimParams.maxArrival)

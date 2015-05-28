@@ -16,7 +16,8 @@ end
 
 switch queueType
     case 'Uniform'
-        randArrival = randi([maxPktArrival-floor(maxPktArrival/2),maxPktArrival],1,SimParams.nUsers);
+        dRange = floor(maxPktArrival * 0.5);
+        randArrival = randi([(maxPktArrival - dRange),(maxPktArrival + dRange)],1,SimParams.nUsers);
     case 'Constant'
         randArrival = ones(1,SimParams.nUsers) * maxPktArrival;
     case 'Fixed'

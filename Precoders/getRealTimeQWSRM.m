@@ -198,7 +198,7 @@ switch selectionMethod
             end
             
             for iExchangeBH = 1:maxBackHaulExchanges
-                           
+                
                 for iBase = 1:nBases
                     
                     if iExchangeBH ~= 1
@@ -215,21 +215,21 @@ switch selectionMethod
                             end
                         end
                     end
-
+                    
                     kUsers = usersPerCell(iBase,1);
                     SimParams.Debug.exchangeIndex = iExchangeBH + iExchangeOTA;
                     [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,iBase);
                     M0 = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};B0 = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
-
+                    
                     cvx_begin
                     
                     expression T(maxRank,kUsers,nBands)
                     
                     variable M(SimParams.nTxAntenna,maxRank,kUsers,nBands) complex
-                    variables Tx(maxRank,kUsers,nBands) B(maxRank,kUsers,nBands) G(maxRank,kUsers,nBands) 
+                    variables Tx(maxRank,kUsers,nBands) B(maxRank,kUsers,nBands) G(maxRank,kUsers,nBands)
                     variables I(maxRank,nUsers,nBands,nBases) userObjective(kUsers,1) epiObjective
                     
-                    T = SimParams.BITFactor * Tx;                    
+                    T = SimParams.BITFactor * Tx;
                     
                     for iUser = 1:kUsers
                         cUser = cellUserIndices{iBase,1}(iUser,1);
@@ -246,7 +246,7 @@ switch selectionMethod
                             vecA = SimParams.Debug.globalExchangeInfo.gI{iBase,1}(:,cellUserIndices{jBase,1},:) - I(:,cellUserIndices{jBase,1},:,iBase);
                             vecB = vecA .* SimParams.Debug.globalExchangeInfo.D{iBase,1}(:,cellUserIndices{jBase,1},:,iBase);
                             augmentedTerms = augmentedTerms + sum(vecB(:)) + stepFactor * 0.5 * sum(pow_abs(vecA(:),2));
-                        end                        
+                        end
                     end
                     
                     epiObjective >= norm(userObjective,qExponent) + augmentedTerms;
@@ -256,7 +256,7 @@ switch selectionMethod
                         for iUser = 1:kUsers
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             for iLayer = 1:maxRank
-                                                                
+                                
                                 intVector = sqrt(SimParams.N) * W0{cUser,iBand}(:,iLayer)';
                                 for jUser = 1:kUsers
                                     if jUser ~= iUser
@@ -287,12 +287,12 @@ switch selectionMethod
                                         end
                                     end
                                 end
-
+                                
                                 P = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
                                 Q = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M(:,iLayer,iUser,iBand));
                                 P0 = real(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
                                 Q0 = imag(W0{cUser,iBand}(:,iLayer)' * cH{iBase,iBand}(:,:,cUser) * M0(:,iLayer,iUser,iBand));
-
+                                
                                 (P0^2 + Q0^2) / B0(iLayer,iUser,iBand) + (2 / B0(iLayer,iUser,iBand)) * (P0 * (P - P0) + Q0 * (Q - Q0)) ...
                                     - ((P0^2 + Q0^2) / (B0(iLayer,iUser,iBand)^2)) * (B(iLayer,iUser,iBand) - B0(iLayer,iUser,iBand)) >= G(iLayer,iUser,iBand);
                                 
@@ -329,7 +329,7 @@ switch selectionMethod
                     tempTensor = tempTensor + SimParams.Debug.globalExchangeInfo.I{iBase,1};
                 end
                 for iBase = 1:nBases
-                   SimParams.Debug.globalExchangeInfo.gI{iBase,1} = tempTensor(:,:,:,iBase) / 2;
+                    SimParams.Debug.globalExchangeInfo.gI{iBase,1} = tempTensor(:,:,:,iBase) / 2;
                 end
                 
                 for iBase = 1:nBases
@@ -358,7 +358,7 @@ switch selectionMethod
     case 'distMSEAllocA'
         
         stInstant = -1;
-        stepIndex = 0.25;
+        stepIndex = 0.1;
         SimParams.currentQueue = 100;
         M0 = cell(nBases,1);E0 = cell(nBases,1);
         alphaLKN = cell(nBases,1);lambdaLKN = cell(nBases,1);
@@ -727,7 +727,7 @@ switch selectionMethod
                 break;
             end
             
-        end
+        end        
         
 end
 
