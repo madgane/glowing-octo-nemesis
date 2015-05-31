@@ -36,7 +36,7 @@ if ~ischar(bsIndex)
                 for iUser = 1:kUsers
                     cUser = linkedUsers(iUser,1);
                     [~,~,V] = svd(cH{bsIndex,iBand}(:,:,cUser));
-                    M0(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
+                    M0(:,:,iUser,iBand) = V(:,1:SimParams.maxRank) * diag(sum(abs(W0{cUser,iBand}),1) > 1e-20);
                 end
                 totPower = norm(vec(M0(:,:,:,iBand)))^2;
                 totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
@@ -136,7 +136,7 @@ else
                     for iUser = 1:usersPerCell(bsIndex,1)
                         cUser = linkedUsers{bsIndex}(iUser,1);
                         [~,~,V] = svd(cH{bsIndex,iBand}(:,:,cUser));
-                        M0{bsIndex,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank);
+                        M0{bsIndex,1}(:,:,iUser,iBand) = V(:,1:SimParams.maxRank) * diag(sum(abs(W0{cUser,iBand}),1) > 1e-20);
                     end
                 end
                 totPower = norm(vec(M0{bsIndex,1}))^2;

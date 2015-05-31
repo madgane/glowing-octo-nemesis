@@ -73,6 +73,36 @@ switch rxType
             end
         end
         
+    case 'MMSE-X'
+        
+        cM = SimParams.Debug.ExchangeM{bsIndices,1};
+                
+        for iBand = 1:nBands
+            for iBase = bsIndices
+                for iUser = 1:usersPerCell(iBase,1)
+                    cUser = cellUserIndices{iBase,1}(iUser,1);
+                    for iLayer = 1:maxRank
+                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        for jBase = 1:nBases
+                            H = cH{jBase,iBand}(:,:,cUser);
+                            if jBase ~= iBase
+                                for jUser = 1:usersPerCell(jBase,1)
+                                    R = R + H * SimParams.Debug.globalExchangeInfo.funcOut{1,jBase}(:,:,jUser,iBand) * SimParams.Debug.globalExchangeInfo.funcOut{1,jBase}(:,:,jUser,iBand)' * H';
+                                end
+                            else
+                                for jUser = 1:usersPerCell(jBase,1)
+                                    R = R + H * cM(:,:,jUser,iBand) * cM(:,:,jUser,iBand)' * H';
+                                end
+                            end
+                        end
+                        H = cH{iBase,iBand}(:,:,cUser);
+                        SimParams.Debug.ExchangeW{cUser,iBand}(:,iLayer) = R \ (H * cM(:,iLayer,iUser,iBand)) + pertNoise;
+                    end
+                end
+            end
+        end
+
+        
     case 'MMSE-BF'        
 
         for iBand = 1:nBands
@@ -216,7 +246,6 @@ if ~strcmpi(SimParams.SchedType,'SkipScheduling')
             aStream = SimParams.Debug.schTable{iBase,iBand}.assignedStreams;
             for iStream = 1:length(aUsers)
                 mW{aUsers(iStream,1),iBand}(:,aStream(iStream,1)) = W{aUsers(iStream,1),iBand}(:,aStream(iStream,1));
-                %mW{aUsers(iStream,1),iBand}(:,:) = W{aUsers(iStream,1),iBand}(:,:);
             end
         end
     end
@@ -264,7 +293,6 @@ if ~strcmpi(SimParams.SchedType,'SkipScheduling')
                 aStream = SimParams.Debug.schTable{iBase,iBand}.assignedStreams;
                 for iStream = 1:length(aUsers)
                     mW{aUsers(iStream,1),iBand}(:,aStream(iStream,1)) = mWL{aUsers(iStream,1),iBand}(:,aStream(iStream,1));
-                    %mW{aUsers(iStream,1),iBand}(:,:) = mWL{aUsers(iStream,1),iBand}(:,:);
                 end
             end
         end

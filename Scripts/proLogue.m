@@ -43,7 +43,7 @@ for iBase = 1:nBases
     end
 end
 
-userWts = SimParams.userWts;
+userWts = ones(SimParams.nUsers,1);
 underscore_location = strfind(SimParams.weightedSumRateMethod,'_');
 if isempty(underscore_location)
     qExponent = 1;

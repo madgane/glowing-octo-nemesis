@@ -16,11 +16,23 @@ for iBase = 1:nBases
     end
 end
 
-SimParams.userWts = ones(SimParams.nUsers,1);
+charScheduling = char(SimParams.SchedType);
+uscore_index = find(charScheduling == '_');
+caseStudy = charScheduling(uscore_index + 1:end);
+
+switch (caseStudy)
+    
+    case 'SP'        
+        [SimParams,SimStructs] = getBDScheduling(SimParams,SimStructs);
+
+    otherwise
+        [SimParams,SimStructs] = getSkipScheduling(SimParams,SimStructs);
+        
+end
 
 switch (SimParams.additionalParams)
     
-    case 'ICELL'
+    case 'I-CELL'
         
         for iBand = 1:nBands
             for iBase = 1:nBases
@@ -46,7 +58,7 @@ switch (SimParams.additionalParams)
             end
         end
         
-    case 'RGROUP'
+    case 'R-GROUP'
         
         xFrequency = SimParams.groupArrivalFreq / 2;
         if (mod((SimParams.iDrop - 1),xFrequency) == 0)
@@ -65,14 +77,13 @@ switch (SimParams.additionalParams)
                 
                     uIndices = repmat(uIndices',maxRank,1);uIndices = sort(uIndices(:));
                     SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1} = uIndices;
-                    SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = ones(length(uIndices),1);
+                    SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = repmat(linspace(1,maxRank,maxRank)',length(uIndices)/maxRank,1);
                 end
             end
             
             SimParams.Debug.SchedBackup = cell(nBases,1);
             
             for iBase = 1:nBases
-                display(SimStructs.baseStruct{iBase,1}.assignedUsers{1,1});
                 SimParams.Debug.SchedBackup{iBase,1}.assignedUsers = SimStructs.baseStruct{iBase,1}.assignedUsers;
                 SimParams.Debug.SchedBackup{iBase,1}.assignedStreams = SimStructs.baseStruct{iBase,1}.assignedStreams;
             end            
@@ -83,11 +94,16 @@ switch (SimParams.additionalParams)
             end
         end
         
-    case 'BAND_TDM'
+    case 'B-TDM'
 
+        if (mod(SimParams.iDrop - 1,SimParams.groupArrivalFreq) == 0)
+            randShfl = randi(SimParams.nBases,1,1);
+            SimParams.Debug.randShfl = randShfl;
+        end
+        
         for iBand = 1:nBands
             for iBase = 1:nBases
-                if (mod(iBand - 1,nBases) ~= (iBase - 1))
+                if (mod((iBand - 1 + SimParams.Debug.randShfl),nBases) ~= (iBase - 1))
                     SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1} = [];
                     SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = [];
                     SimStructs.baseStruct{iBase,1}.sPower(1,iBand) = SimStructs.baseStruct{iBase,1}.sPower(1,iBand) * 0;
@@ -96,6 +112,9 @@ switch (SimParams.additionalParams)
                 end
             end
         end
+        
+    otherwise
+        
         
 end
     

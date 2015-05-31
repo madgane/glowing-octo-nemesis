@@ -64,8 +64,6 @@ switch SimParams.plotMode
         
     case 'QInfo'
         
-        clc;
-        
         displaySystemDetails;
         displayChannel(SimParams,SimStructs);
         

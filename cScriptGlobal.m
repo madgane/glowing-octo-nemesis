@@ -10,12 +10,12 @@ preConfiguration;
 xParams = cell(1,1);
 xStructs = cell(1,1);
 
-xConfig.workBook = 'ADMM-WS';
+xConfig.workBook = 'GROUP';
 xConfig.fileName = 'Utilities/systemConfig.xlsx';
 [xConfig.num, xConfig.txt, xConfig.raw] = xlsread(xConfig.fileName,xConfig.workBook);
 xConfig = parseXLFile(xConfig);
 
-xConfig.defaultFolderName = sprintf('Results/27May2015/%s',xConfig.workBook);
+xConfig.defaultFolderName = sprintf('Results/29May2015/%s',xConfig.workBook);
 xConfig.defaultFileName = 'GlobalData';
 
 if ~exist(xConfig.defaultFolderName,'dir')

@@ -727,7 +727,230 @@ switch selectionMethod
                 break;
             end
             
-        end        
+        end
+        
+        
+    case 'distMSEAllocC'
+        
+        stepIndex = 0.25;
+        E0 = cell(nBases,1);
+        SimParams.currentQueue = 100;
+        alphaLKN = cell(nBases,1);lambdaLKN = cell(nBases,1);cW = cell(nBases,1);alphaLKN_O = cell(nBases,1);
+        
+        if SimParams.nExchangesOTA ~= 0
+            SimParams.BITFactor = 1 - (SimParams.nExchangesOTA / SimParams.nSymbolsBIT);
+        end
+        
+        for iExchangeOTA = 0:SimParams.nExchangesOTA
+            
+            switch iExchangeOTA
+                case 0
+                    for iBase = 1:nBases
+                        if or((SimParams.distIteration - 1) == 0,mod((SimParams.iDrop - 1),SimParams.exchangeResetInterval) == 0)
+                            fprintf('Resetting History for BS - %d \n',iBase);
+                            SimStructs.baseStruct{iBase,1}.selectionType = 'BF';
+                            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-BF',iBase);
+                            SimParams.Debug.globalExchangeInfo.funcOut{3,iBase} = ones(maxRank,usersPerCell(iBase,1),nBands);
+                            SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = ones(maxRank,usersPerCell(iBase,1),nBands);
+                        else
+                            if iBase == 1
+                                fprintf('Reusing History \n');
+                            end
+                            SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
+                            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'Last',iBase);
+                        end
+                    end
+                    cH = SimStructs.linkChan;
+                    fprintf('OTA Performed - %d \n',iExchangeOTA);
+                otherwise
+                    for iBase = 1:nBases
+                        if iBase == 1
+                            fprintf('OTA Performed - %d \n',iExchangeOTA);
+                        end
+                        SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
+                        [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
+                    end
+                    cH = SimStructs.linkChan;
+            end
+            
+            
+            [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,'MSE');
+            W = SimParams.Debug.globalExchangeInfo.funcOut{5,1};
+            
+            for iBase = 1:nBases
+                cW{iBase,1} = W;
+                E0{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{2,iBase};
+                alphaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{3,iBase};
+                alphaLKN_O{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{3,iBase};
+                lambdaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};
+            end
+            
+            for iBase = 1:nBases
+                
+                kUsers = usersPerCell(iBase,1);
+                for iExchangeOBH = 1:SimParams.nExchangesOBH
+                    
+                    for iBand = 1:nBands
+                        for iUser = 1:kUsers
+                            for iLayer = 1:maxRank
+                                I = zeros(SimParams.nTxAntenna);
+                                for jBase = 1:nBases
+                                    if jBase ~= iBase
+                                        for jUser = 1:usersPerCell(jBase,1)
+                                            jxUser = cellUserIndices{jBase,1}(jUser,1);
+                                            for jLayer = 1:maxRank
+                                                I = I + cH{iBase,iBand}(:,:,jxUser)' * cW{iBase,1}{jxUser,iBand}(:,jLayer) * cW{iBase,1}{jxUser,iBand}(:,jLayer)' * cH{iBase,iBand}(:,:,jxUser) * alphaLKN_O{jBase,1}(jLayer,jUser,iBand);
+                                            end
+                                        end
+                                    else
+                                        for jUser = 1:usersPerCell(jBase,1)
+                                            jxUser = cellUserIndices{jBase,1}(jUser,1);
+                                            for jLayer = 1:maxRank
+                                                I = I + cH{iBase,iBand}(:,:,jxUser)' * cW{iBase,1}{jxUser,iBand}(:,jLayer) * cW{iBase,1}{jxUser,iBand}(:,jLayer)' * cH{iBase,iBand}(:,:,jxUser) * alphaLKN_O{jBase,1}(jLayer,jUser,iBand);
+                                            end
+                                        end
+                                    end
+                                end
+                                R(:,:,iLayer,iUser,iBand) = I;
+                            end
+                        end
+                    end
+                    
+                    muMax = 100000;
+                    muMin = 0;
+                    iterateAgain = 1;
+                    while iterateAgain
+                        totalPower = 0;
+                        currentMu = (muMax + muMin) / 2;
+                        for iBand = 1:nBands
+                            for iUser = 1:kUsers
+                                cUser = cellUserIndices{iBase,1}(iUser,1);
+                                for iLayer = 1:maxRank
+                                    M(:,iLayer,iUser,iBand) = (currentMu * eye(SimParams.nTxAntenna) + R(:,:,iLayer,iUser,iBand)) \ (alphaLKN_O{iBase,1}(iLayer,iUser,iBand) * cH{iBase,iBand}(:,:,cUser)' * cW{iBase,1}{cUser,iBand}(:,iLayer));
+                                    totalPower = totalPower + real(trace(M(:,iLayer,iUser,iBand) * M(:,iLayer,iUser,iBand)'));
+                                end
+                            end
+                        end
+                        
+                        if totalPower > sum(SimStructs.baseStruct{iBase,1}.sPower)
+                            muMin = currentMu;
+                        else
+                            muMax = currentMu;
+                        end
+                        
+                        if abs(muMin - muMax) <= 1e-6
+                            iterateAgain = 0;
+                        end
+                    end
+                    
+                    SimParams.Debug.ExchangeM{iBase,1} = M;
+                    SimParams.Debug.ExchangeW = cW{iBase,1};
+                    [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE-X',iBase);
+                    cW{iBase,1} = SimParams.Debug.ExchangeW;
+                    
+                    for iBand = 1:nBands
+                        for iUser = 1:kUsers
+                            cUser = cellUserIndices{iBase,1}(iUser,1);
+                            currentH = cH{iBase,iBand}(:,:,cUser);
+                            for iLayer = 1:maxRank
+                                E(iLayer,iUser,iBand) = (1 - W{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
+                            end
+                        end
+                    end
+                    
+                    for iBand = 1:nBands
+                        for iUser = 1:kUsers
+                            t(:,iUser,iBand) = -log2(E0{iBase,1}(:,iUser,iBand)) - (E(:,iUser,iBand) - E0{iBase,1}(:,iUser,iBand)) ./ (E0{iBase,1}(:,iUser,iBand) * log(2));
+                        end
+                    end
+                    
+                    for iBand = 1:nBands
+                        for iUser = 1:kUsers
+                            cUser = cellUserIndices{iBase,1}(iUser,1);
+                            for iRank = 1:maxRank
+                                tempT = t(:,iUser,:) * SimParams.BITFactor;
+                                lambdaLKN{iBase,1}(iRank,iUser,iBand) = qExponent * (QueuedPkts(cUser,1) - sum(tempT(:)))^(qExponent - 1) / log(2);
+                                if QueuedPkts(cUser,1) < sum(tempT(:))
+                                    if mod(qExponent,2) ~= 0
+                                        lambdaLKN{iBase,1}(iRank,iUser,iBand) = 0;
+                                    end
+                                end
+                                alphaLKN_O{iBase,1}(iRank,iUser,iBand) = alphaLKN_O{iBase,1}(iRank,iUser,iBand) + stepIndex * (max(lambdaLKN{iBase,1}(iRank,iUser,iBand) / E(iRank,iUser,iBand),0) - alphaLKN_O{iBase,1}(iRank,iUser,iBand));
+                            end
+                        end
+                    end
+                    
+                end
+                
+            end
+
+            for iBase = 1:nBases
+                for iBand = 1:nBands
+                    SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.ExchangeM{iBase,1}(:,:,:,iBand);
+                    SimParams.Debug.globalExchangeInfo.P{iBase,iBand} = SimParams.Debug.ExchangeM{iBase,1}(:,:,:,iBand);
+                end
+                
+                alphaLKN{iBase,1} = alphaLKN_O{iBase,1};
+                SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = SimParams.Debug.ExchangeM{iBase,1};                
+            end
+        
+            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
+            
+            for iBand = 1:nBands
+                for iUser = 1:SimParams.nUsers
+                    W{iUser,iBand} = SimStructs.userStruct{iUser,1}.pW{iBand,1};
+                end
+            end
+            
+            for iBase = 1:nBases
+                
+                P = SimParams.Debug.globalExchangeInfo.funcOut{1,iBase};
+                for iBand = 1:nBands
+                    for iUser = 1:kUsers
+                        cUser = cellUserIndices{iBase,1}(iUser,1);
+                        currentH = cH{iBase,iBand}(:,:,cUser);
+                        for iLayer = 1:maxRank
+                            E(iLayer,iUser,iBand) = (1 - W{cUser,iBand}(:,iLayer)' * currentH * P(:,iLayer,iUser,iBand));
+                        end
+                    end
+                end
+                
+                for iBand = 1:nBands
+                    for iUser = 1:kUsers
+                        t(:,iUser,iBand) = -log2(E0{iBase,1}(:,iUser,iBand)) - (E(:,iUser,iBand) - E0{iBase,1}(:,iUser,iBand)) ./ (E0{iBase,1}(:,iUser,iBand) * log(2));
+                    end
+                end
+                
+                for iBand = 1:nBands
+                    for iUser = 1:kUsers
+                        cUser = cellUserIndices{iBase,1}(iUser,1);
+                        for iRank = 1:maxRank
+                            tempT = t(:,iUser,:) * SimParams.BITFactor;
+                            lambdaLKN{iBase,1}(iRank,iUser,iBand) = qExponent * (QueuedPkts(cUser,1) - sum(tempT(:)))^(qExponent - 1) / log(2);
+                            if QueuedPkts(cUser,1) < sum(tempT(:))
+                                if mod(qExponent,2) ~= 0
+                                    lambdaLKN{iBase,1}(iRank,iUser,iBand) = 0;
+                                end
+                            end
+                            alphaLKN{iBase,1}(iRank,iUser,iBand) = alphaLKN{iBase,1}(iRank,iUser,iBand) + stepIndex * (max(lambdaLKN{iBase,1}(iRank,iUser,iBand) / E(iRank,iUser,iBand),0) - alphaLKN{iBase,1}(iRank,iUser,iBand));
+                        end
+                    end
+                end
+                
+                SimParams.Debug.globalExchangeInfo.funcOut{2,iBase} = E;
+                SimParams.Debug.globalExchangeInfo.funcOut{3,iBase} = alphaLKN{iBase,1};
+                SimParams.Debug.globalExchangeInfo.funcOut{4,iBase} = lambdaLKN{iBase,1};
+                
+            end
+            
+            [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs);
+            
+            if SimParams.currentQueue < epsilonT
+                break;
+            end
+            
+        end
+        
         
 end
 

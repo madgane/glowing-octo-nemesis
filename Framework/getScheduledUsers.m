@@ -45,6 +45,9 @@ if nargin == 2
         case 'SkipScheduling'
             [SimParams,SimStructs] = getSkipScheduling(SimParams,SimStructs);
             
+        case 'GScheduling'
+            [SimParams,SimStructs] = getGScheduling(SimParams,SimStructs);
+            
         otherwise
             display('Unknown Scheduling Type');
     end
@@ -55,8 +58,6 @@ if nargin == 2
             SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1}(SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} ~= 0);
         end
     end
-    
-    [SimParams,SimStructs] = getGScheduling(SimParams,SimStructs);
 
 else
     
