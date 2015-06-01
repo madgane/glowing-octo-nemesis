@@ -728,8 +728,7 @@ switch selectionMethod
             end
             
         end
-        
-        
+                
     case 'distMSEAllocC'
         
         stepIndex = 0.25;
@@ -761,6 +760,7 @@ switch selectionMethod
                         end
                     end
                     cH = SimStructs.linkChan;
+                    maxBHIterations = max(20,SimParams.nExchangesOBH);
                     fprintf('OTA Performed - %d \n',iExchangeOTA);
                 otherwise
                     for iBase = 1:nBases
@@ -771,6 +771,7 @@ switch selectionMethod
                         [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
                     end
                     cH = SimStructs.linkChan;
+                    maxBHIterations = SimParams.nExchangesOBH;
             end
             
             
@@ -783,12 +784,26 @@ switch selectionMethod
                 alphaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{3,iBase};
                 alphaLKN_O{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{3,iBase};
                 lambdaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};
+                
+                
+                if strcmpi(SimParams.additionalParams,'Optimal')
+                    if ~iExchangeOTA
+                        for iBand = 1:nBands
+                            for iUser = 1:SimParams.nUsers
+                                if isempty(find(iUser == cellUserIndices{iBase,1}))
+                                    cW{iBase,1}{iUser,iBand} = zeros(size(W{iUser,iBand}));
+                                end
+                            end
+                        end
+                    end
+                end
+                
             end
             
             for iBase = 1:nBases
                 
                 kUsers = usersPerCell(iBase,1);
-                for iExchangeOBH = 1:SimParams.nExchangesOBH
+                for iExchangeOBH = 1:maxBHIterations
                     
                     for iBand = 1:nBands
                         for iUser = 1:kUsers
@@ -853,7 +868,7 @@ switch selectionMethod
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             currentH = cH{iBase,iBand}(:,:,cUser);
                             for iLayer = 1:maxRank
-                                E(iLayer,iUser,iBand) = (1 - W{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
+                                E(iLayer,iUser,iBand) = (1 - cW{iBase,1}{cUser,iBand}(:,iLayer)' * currentH * M(:,iLayer,iUser,iBand));
                             end
                         end
                     end
@@ -883,7 +898,7 @@ switch selectionMethod
                 end
                 
             end
-
+            
             for iBase = 1:nBases
                 for iBand = 1:nBands
                     SimStructs.baseStruct{iBase,1}.P{iBand,1} = SimParams.Debug.ExchangeM{iBase,1}(:,:,:,iBand);
@@ -891,9 +906,9 @@ switch selectionMethod
                 end
                 
                 alphaLKN{iBase,1} = alphaLKN_O{iBase,1};
-                SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = SimParams.Debug.ExchangeM{iBase,1};                
+                SimParams.Debug.globalExchangeInfo.funcOut{1,iBase} = SimParams.Debug.ExchangeM{iBase,1};
             end
-        
+            
             [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
             
             for iBand = 1:nBands
@@ -950,7 +965,6 @@ switch selectionMethod
             end
             
         end
-        
         
 end
 

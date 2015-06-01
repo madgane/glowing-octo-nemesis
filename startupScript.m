@@ -39,11 +39,11 @@ SimParams.weighingEqual = 'false';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
 SimParams.weightedSumRateMethod = 'distMSEAllocC';
-SimParams.additionalParams = 'MMSE';
+SimParams.additionalParams = 'Optimal';
 
 SimParams.nExchangesOTA = 10;
 SimParams.exchangeResetInterval = 1;
-SimParams.nExchangesOBH = 20;
+SimParams.nExchangesOBH = 10;
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -55,9 +55,9 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 100;
 
-SimParams.nBands = 1;
+SimParams.nBands = 4;
 SimParams.nBases = 2;
-SimParams.nUsers = 6;
+SimParams.nUsers = 16;
 
 SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 2;

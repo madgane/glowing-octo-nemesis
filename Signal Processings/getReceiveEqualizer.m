@@ -227,7 +227,7 @@ switch rxType
 
 end
 
-if ~strcmpi(SimParams.SchedType,'SkipScheduling')
+if and((~strcmpi(SimParams.SchedType,'SkipScheduling')),~(strcmpi(rxType,'MMSE-X')))
     
     mW = cell(nUsers,nBands);
     mWL = cell(nUsers,nBands);
