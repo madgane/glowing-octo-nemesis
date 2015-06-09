@@ -1,21 +1,21 @@
 
-function displayQueueStatusGlobal(folderName)
+function [configParams] = displayQueueStatusGlobal(folderName,configParams)
 
-close all;
 iIndex = 1;
-xSystemConfig = cell(1);
+xSystemConfig = cell(0);
 listOfFiles = dir(folderName);
-rmpath(sprintf('%s/Debug',pwd));
 
 for iFile = 1:length(listOfFiles)
     if ~(listOfFiles(iFile).isdir)
         stringT = sprintf('%s/%s',folderName,listOfFiles(iFile).name);
         load(stringT);
         if ~isempty(strfind(listOfFiles(iFile).name,'-'))
-            display(SimParams.LegendName);
-            SimParams.Log.Clock
-            xSystemConfig{iIndex,1} = SimParams;
-            iIndex = iIndex + 1;
+            if ~isempty(find(SimParams.nExchangesOTA == [3,5,50]))
+                display(SimParams.LegendName);
+                SimParams.Log.Clock
+                xSystemConfig{iIndex,1} = SimParams;
+                iIndex = iIndex + 1;
+            end
         else
             fprintf('Running on System - %s',xConfig.HostName);
             xConfig.Clock
@@ -24,17 +24,20 @@ for iFile = 1:length(listOfFiles)
     end
 end
 
-displayFigures(xSystemConfig);
+if ~isempty(xSystemConfig)
+    configParams = displayFigures(xSystemConfig,configParams);
+end
 
 end
 
-function displayFigures(cParams)
+function configParams = displayFigures(cParams,configParams)
 
-figLineWidth = {1};
-figLineType = {'-.','-'};
+xL = length(configParams.legendString);
+figLineWidth = {configParams.lineWidth};
+figLineType = {configParams.lineType};
 figColor = {'b','r','m',[0,0.6,0],[0,0.75,0.5],[0.3,0.7,0.9]};
 figMarker = {'o','d','s','h','+','*'};
-legendString = cell(1,1);
+legendString = configParams.legendString;
 
 for iParam = 1:length(cParams)
     
@@ -65,7 +68,6 @@ for iParam = 1:length(cParams)
     fltIndex = mod(randInt(1,3) - 1,(length(figLineType))) + 1;
     flwIndex = mod(randInt(1,4) - 1,(length(figLineWidth))) + 1;
     
-    
     figure(1);hold on;box on;grid on;
     xlabel('avg. arrival pkts per user');
     ylabel('avg. transmitted pkts for all users');
@@ -87,11 +89,13 @@ for iParam = 1:length(cParams)
     plot(xConfigParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',4);
     
-    legendString{1,iParam} = xConfigParams.LegendName;
+    legendString{1,(iParam + xL)} = xConfigParams.LegendName;
 end
 
-figure(1);legend(legendString);
-figure(2);legend(legendString);
-figure(3);legend(legendString);
+configParams.legendString = legendString;
+
+figure(1);
+figure(2);
+figure(3);
 
 end

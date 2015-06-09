@@ -10,12 +10,12 @@ preConfiguration;
 xParams = cell(1,1);
 xStructs = cell(1,1);
 
-xConfig.workBook = 'MSE-WM20-20';
+xConfig.workBook = 'MSE-C';
 xConfig.fileName = 'Utilities/systemConfig.xlsx';
 [xConfig.num, xConfig.txt, xConfig.raw] = xlsread(xConfig.fileName,xConfig.workBook);
 xConfig = parseXLFile(xConfig);
 
-xConfig.defaultFolderName = sprintf('Results/01Jun2015/%s',xConfig.workBook);
+xConfig.defaultFolderName = sprintf('Results/05Jun2015/%s',xConfig.workBook);
 xConfig.defaultFileName = 'GlobalData';
 
 if ~exist(xConfig.defaultFolderName,'dir')
@@ -46,7 +46,7 @@ for xCount = 1:length(xConfig.xStruct)
     
     xParams{xCount,1}.ChannelModel = 'Jakes';
     xParams{xCount,1}.pathLossModel = 'Perturbed_6';
-    xParams{xCount,1}.DopplerType = 'Uniform_25';
+    xParams{xCount,1}.DopplerType = 'Uniform_140';
         
     xParams{xCount,1}.queueWt = 0;
     xParams{xCount,1}.mdpFactor = 0;
@@ -97,9 +97,9 @@ for xCount = 1:length(xConfig.xStruct)
     
 end
 
-
 pCluster = parcluster('local');
-xConfig.HostName = system('hostname');
+[~,xConfig.HostName] = system('hostname');
+xConfig.HostName = strtrim(xConfig.HostName);
 save(outFile,'xParams','xStructs','xConfig');
 
 parfor xCount = 1:length(xParams)

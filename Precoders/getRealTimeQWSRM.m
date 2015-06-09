@@ -774,7 +774,6 @@ switch selectionMethod
                     maxBHIterations = SimParams.nExchangesOBH;
             end
             
-            
             [SimParams, SimStructs] = initializeSCApoint(SimParams,SimStructs,'MSE');
             W = SimParams.Debug.globalExchangeInfo.funcOut{5,1};
             
@@ -786,21 +785,40 @@ switch selectionMethod
                 lambdaLKN{iBase,1} = SimParams.Debug.globalExchangeInfo.funcOut{4,iBase};
                 
                 
-                if strcmpi(SimParams.additionalParams,'Optimal')
-                    if ~iExchangeOTA
-                        for iBand = 1:nBands
-                            for iUser = 1:SimParams.nUsers
-                                if isempty(find(iUser == cellUserIndices{iBase,1}))
-                                    cW{iBase,1}{iUser,iBand} = zeros(size(W{iUser,iBand}));
+                switch (SimParams.additionalParams)                    
+                    case 'Optimal'
+                        if ~iExchangeOTA
+                            for iBand = 1:nBands
+                                for iUser = 1:SimParams.nUsers
+                                    if isempty(find(iUser == cellUserIndices{iBase,1}))
+                                        cW{iBase,1}{iUser,iBand} = zeros(size(W{iUser,iBand}));
+                                    end
                                 end
                             end
                         end
-                    end
+                    case 'E-Optimal'
+                        maxBHIterations = iExchangeOTA + 1;
+                        if maxBHIterations >= SimParams.nExchangesOTA
+                            maxBHIterations = SimParams.nExchangesOBH;
+                        end     
                 end
                 
             end
             
             for iBase = 1:nBases
+                
+                if strcmpi(SimParams.additionalParams,'S-Optimal')
+                    switch (iExchangeOTA)
+                        case {0,SimParams.nExchangesOTA}
+                            maxBHIterations = SimParams.nExchangesOBH;
+                        otherwise
+                            if (mod((iExchangeOTA + iBase),nBases) == 0)
+                                maxBHIterations = SimParams.nExchangesOBH;
+                            else
+                                maxBHIterations = 1;
+                            end
+                    end                    
+                end
                 
                 kUsers = usersPerCell(iBase,1);
                 for iExchangeOBH = 1:maxBHIterations
