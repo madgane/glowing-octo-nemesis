@@ -158,7 +158,29 @@ else
             case 'Last'
                 for iBand = 1:nBands
                     M0{bsIndex,1}(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
-                end                
+                end    
+                
+            case 'FrameC'
+                for iBand = 1:nBands
+                    M0{bsIndex,1}(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
+                end
+                
+                for iBand = 1:nBands
+                    for iUser = 1:usersPerCell(bsIndex,1)
+                        cUser = linkedUsers{bsIndex}(iUser,1);
+                        [~,~,V] = svd(cH{bsIndex,iBand}(:,:,cUser));
+                        for iRank = 1:maxRank
+                            if (norm(M0{bsIndex,1}(:,iRank,iUser,iBand)) < 1e-10)
+                                M0{bsIndex,1}(:,iRank,iUser,iBand) = V(:,iRank) * 0.001;
+                            end
+                        end
+                    end
+                end
+                
+                totPower = norm(vec(M0{bsIndex,1}))^2;
+                totPower = sqrt(sum(SimStructs.baseStruct{bsIndex,1}.sPower) / totPower);
+                M0{bsIndex,1} = M0{bsIndex,1} * totPower;
+
         end
         
     end

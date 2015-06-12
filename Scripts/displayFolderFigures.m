@@ -15,7 +15,7 @@ for iFile = 1:length(listOfFiles)
     configParams.lineWidth = figLineWidth(1,fltIndex);
     configParams.lineType = figLineType{1,flwIndex};
     if listOfFiles(iFile).isdir
-        if (sum(strcmpi(listOfFiles(iFile).name,{'.','..','MSE-NM20-20','MSE-WM20-20','MSE-NM20-0','MSE-WM20-0','ADMM-WOS','ADMM-WS','CVX','TDM','MSE-L'})) == 0)
+        if (sum(strcmpi(listOfFiles(iFile).name,{'.','..','MSE-NM20-20','MSE-WM20-20','MSE-NM20-0','MSE-WM20-0','ADMM-WOS1','ADMM-WS1','CVX','TDM','MSE-L'})) == 0)
             cFolder = sprintf('%s/%s',folderName,listOfFiles(iFile).name);
             [configParams] = displayQueueStatusGlobal(cFolder,configParams);
         end

@@ -72,21 +72,21 @@ for iParam = 1:length(cParams)
     xlabel('avg. arrival pkts per user');
     ylabel('avg. transmitted pkts for all users');
     yValues = mean(sum(packetServiceOverTime,2),3);
-    plot(xConfigParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+    semilogy(xConfigParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',4);
     
     figure(2);hold on;box on;grid on;
     xlabel('avg. arrival pkts per user');
     ylabel('avg. backlogged pkts for all users');
     yValues = mean(sum(queueBacklogsOverTime,2),3);
-    plot(xConfigParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+    semilogy(xConfigParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',4);
 
     figure(3);hold on;box on;grid on;
     xlabel('avg. arrival pkts per user');
     ylabel('avg. residual pkts for all users');
     yValues = mean(sum(queueResiduesOverTime,2),3);
-    plot(xConfigParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
+    semilogy(xConfigParams.maxArrival,yValues,'Color',figColor{1,fcIndex},'LineWidth',figLineWidth{1,flwIndex},...
         'LineStyle',figLineType{1,fltIndex},'MarkerFaceColor',figColor{1,fcIndex},'Marker',figMarker{1,fmIndex},'MarkerSize',4);
     
     legendString{1,(iParam + xL)} = xConfigParams.LegendName;

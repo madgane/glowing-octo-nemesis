@@ -755,8 +755,8 @@ switch selectionMethod
                             if iBase == 1
                                 fprintf('Reusing History \n');
                             end
-                            SimStructs.baseStruct{iBase,1}.selectionType = 'Last';
-                            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'Last',iBase);
+                            SimStructs.baseStruct{iBase,1}.selectionType = 'FrameC';
+                            [SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'FrameC',iBase);
                         end
                     end
                     cH = SimStructs.linkChan;

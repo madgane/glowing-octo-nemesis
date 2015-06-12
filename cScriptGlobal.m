@@ -10,12 +10,12 @@ preConfiguration;
 xParams = cell(1,1);
 xStructs = cell(1,1);
 
-xConfig.workBook = 'MSE-C';
+xConfig.workBook = 'MSE-B';
 xConfig.fileName = 'Utilities/systemConfig.xlsx';
 [xConfig.num, xConfig.txt, xConfig.raw] = xlsread(xConfig.fileName,xConfig.workBook);
 xConfig = parseXLFile(xConfig);
 
-xConfig.defaultFolderName = sprintf('Results/05Jun2015/%s',xConfig.workBook);
+xConfig.defaultFolderName = sprintf('Results/12Jun2015/%s',xConfig.workBook);
 xConfig.defaultFileName = 'GlobalData';
 
 if ~exist(xConfig.defaultFolderName,'dir')
