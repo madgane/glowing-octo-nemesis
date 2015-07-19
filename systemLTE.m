@@ -4,56 +4,72 @@
 % analysis, NRA - network rate analysis, SEA - spectral efficiency analysis
 % -------------------------------------------------------------------------
 
-clc;clear all;
+clc;
+clear;
 
+saveContents = 'false';
+if strfind(saveContents,'true')
+    updatePath;
+end
+
+SimParams.multiCasting = 'false';
+SimParams.saveChannelInfo = 'false';
+SimParams.channelSaveFolder = 'Results';
 SimParams.maxDebugCells = 4;
 SimParams.version = version;
-SimParams.outFile = 'outFile_x1.mat';
-SimParams.plotMode = 'SEA';
+SimParams.plotMode = 'STA';
 
 preConfiguration;
+SimParams.sysMode = 'false';
 SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
+SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'Jakes';
 SimParams.pathLossModel = '3GPP_UMi';
 
 SimParams.queueWt = 1;
-SimParams.mdpFactor = 2;
+SimParams.BITFactor = 1;
+SimParams.mdpFactor = 0;
 SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRM_Method';
-SimParams.weightedSumRateMethod = 'JointAlloc';
+SimParams.PrecodingMethod = 'Best_QwtWSRMRT_Method';
+SimParams.weightedSumRateMethod = 'distMSEAllocC';
+SimParams.additionalParams = 'MMSE';
 
-SimParams.nDrops = 1;
-SimParams.snrIndex = [0];
+SimParams.nExchangesOTA = 3;
+SimParams.exchangeResetInterval = 1;
+SimParams.nExchangesOBH = 5;
 
 SimParams.PF_dur = 40;
 SimParams.SFSymbols = 14;
 SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
+SimParams.nSymbolsBIT = 100;
 
 SimParams.nBands = 1;
-SimParams.nTiers = 3;
+SimParams.nTiers = 2;
 SimParams.nSectors = 3;
-SimParams.nNeighbors = 2; % Number of neighbors to realize
-SimParams.perCiteUsers = 10;
+SimParams.perCiteUsers = 6;
 
 SimParams.nTxAntenna = 4;
-SimParams.nRxAntenna = 1;
+SimParams.nRxAntenna = 2;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
 SimParams.nBases = getCellsOverLayout(SimParams.nTiers,SimParams.nSectors);
 SimParams.nUsers = SimParams.nBases * SimParams.perCiteUsers;
+SimParams.nNeighbors = SimParams.nBases - 1;
 
-SimParams.gracePeriod = 0;
-SimParams.arrivalDist = 'Constant_10';
+SimParams.nDrops = 5;
+SimParams.snrIndex = 0;
 
-SimParams.maxArrival = 20;
-SimParams.FixedPacketArrivals = [10,10,10,10,10,10,1,1,1,1];
+SimParams.maxArrival = 5;
+SimParams.groupArrivalFreq = 5;
+SimParams.arrivalDist = 'Uniform';
+SimParams.FixedPacketArrivals = [6];
 
 SimStructs.userStruct = cell(SimParams.nUsers,1);
 SimStructs.baseStruct = cell(SimParams.nBases,1);
@@ -61,6 +77,8 @@ SimStructs.baseStruct = cell(SimParams.nBases,1);
 if strcmp(SimParams.DebugMode,'true')
     keyboard;
 end
+
+[SimParams,SimStructs] = initializeBuffers(SimParams);
 
 for iPkt = 1:length(SimParams.maxArrival)
     
@@ -80,6 +98,7 @@ for iPkt = 1:length(SimParams.maxArrival)
         
         for iDrop = 1:SimParams.nDrops
             SimParams.iDrop = iDrop;
+            SimParams.distIteration = iDrop;
             [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
             [SimParams,SimStructs] = getScheduledUsers(SimParams,SimStructs);
             
@@ -91,21 +110,14 @@ for iPkt = 1:length(SimParams.maxArrival)
             [SimParams,SimStructs] = performReception(SimParams,SimStructs);
             
             for iUser = 1:SimParams.nUsers
-                sumRateInstant(iSNR,iDrop,iPkt) = sumRateInstant(iSNR,iDrop,iPkt) + SimStructs.userStruct{iUser,1}.dropThrpt(iDrop,1);
+                SimParams.sumRateInstant(iSNR,iDrop,iPkt) = SimParams.sumRateInstant(iSNR,iDrop,iPkt) + SimStructs.userStruct{iUser,1}.dropThrpt(iDrop,1);
             end
             
         end
         
-        for iUser = 1:SimParams.nUsers
-            SimParams.PFmetric(iSNR,iUser,iPkt) = SimStructs.userStruct{iUser}.PFmetric;
-            SimParams.fairness(iSNR,iUser,iPkt) = SimStructs.userStruct{iUser}.tAllocation / utilityScale;
-            SimParams.Thrpt(iSNR,iUser,iPkt) = (SimStructs.userStruct{iUser}.crThrpt - 1) / (SimParams.nDrops * SimParams.nBands);
-            queueBacklogs(iSNR,iUser,iPkt) = SimStructs.userStruct{iUser,1}.trafficStats.backLogPkt;
-            queueBacklogsOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficStats.backlogsOverTime;
-        end
-        
+        finalSystemUpdate;        
         if strcmp(SimParams.DebugMode,'true')
-            display(squeeze(queueBacklogs(iSNR,:,iPkt)));
+            display(squeeze(SimParams.QueueInfo.queueBacklogs(iSNR,:,iPkt)));
         end
         
         cState = sprintf('SINR completed - %d',SimParams.snrIndex(iSNR));disp(cState);
@@ -113,75 +125,28 @@ for iPkt = 1:length(SimParams.maxArrival)
     
 end
 
-SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;
+SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;    
+displayOutputs(SimParams,SimStructs);
 
-switch SimParams.plotMode
+if strcmp(saveContents,'true')
+
+    xVal = fix(clock);
+    SimParams.Log.date = date;
+    SimParams.Log.clock = sprintf('%d:%d:%d',xVal(1,4),xVal(1,5),xVal(1,6));
     
-    case 'SRA'
-        
-        SimResults.sumThrpt = sum(SimParams.Thrpt(:,:,end),2);
-        SimResults.thrptFairness = sum(SimParams.fairness(:,:,end),2);
-        SimParams.sumThrpt = SimResults.sumThrpt;
-        
-        plotFigure(SimParams.snrIndex,SimParams.sumThrpt,1,'plot');
-        xlabel('SNR in dB');ylabel('sum rate in bits/sec/Hz');
-        
-        JainMean = mean(SimParams.Thrpt,2).^2;JainVar = var(SimParams.Thrpt,0,2);
-        JainIndex_capacity = JainMean ./ (JainMean + JainVar);
-        
-        plotFigure(SimParams.snrIndex,JainIndex_capacity,2,'plot');
-        xlabel('SNR in dB');ylabel('Rate Deviation across Users in bits/sec/Hz');
-        
-        JainMean = mean(SimParams.fairness,2).^2;JainVar = var(SimParams.fairness,0,2);
-        JainIndex_utility = JainMean ./ (JainMean + JainVar);
-        
-        plotFigure(SimParams.snrIndex,JainIndex_utility,3,'plot');
-        xlabel('SNR in dB');ylabel('Network Utility Deviation across Users');
-        
-        
-    case 'QA'
-                        
-        SimResults.queueBackLogs = queueBacklogs;
-        SimResults.queueBackLogsOverTime = queueBacklogsOverTime;
-        
-        plotFigure(1:SimParams.nDrops,sum(squeeze(SimResults.queueBackLogsOverTime(end,:,end,:)),1),4,'plot');
-        xlabel('Slot Index');ylabel('Queue Backlogs (pkts) over Time');grid on;
-        
-        plotFigure(1:SimParams.nDrops,std(squeeze(SimResults.queueBackLogsOverTime(end,:,end,:)),1),5,'plot');
-        xlabel('Slot Index');ylabel('{\sigma_Q} Queue Backlogs (pkts) over Time');grid on;
-        
-        plotFigure(SimParams.maxArrival,sum(squeeze(SimResults.queueBackLogs(end,:,:)),1),6,'plot');
-        xlabel('Average Arrival Rate');ylabel('Average Queue Size (pkts)');grid on;
-
-        
-    case 'STA'
-        
-        nT = 1e3;nPRB = 50;nREinPRB = 120;nTot = nT * nPRB * nREinPRB * 1e-6;
-        
-        hold all;
-        plotFigure(SimParams.Thrpt(1,:,1) * nTot,1,1,'cdfplot');
-        xlabel('Throughput in Mbps');
-        ylabel('CDF of Throughput in Mbps');
-        
-    case 'NRA'
-        
-        plotFigure(1:SimParams.nDrops,sumRateInstant,1,'plot');
-        
-    case 'SEA'
-        
-        hold all;
-        usableFraction = (120 / 168);
-        actThrpt = SimParams.Thrpt(1,:,1) * usableFraction;
-        plotFigure(actThrpt,1,1,'cdfplot');
-        xlabel('Sum Rate in bits / channel-use');
-        ylabel('CDF of Sum Rate');
-        
-        SimParams.Reports.cellSpectralEfficiency = sum(SimParams.Thrpt) / (SimParams.nBases * SimParams.sysConfig.subChnlBWHz);
-        SimParams.Reports.cellSpectralEfficiency = usableFraction * SimParams.Reports.cellSpectralEfficiency / (SimParams.sampTime / SimParams.SFSymbols);
-        
-    otherwise
-        
-        display('Unknown print options !');        
-
-        
+    cd Results;
+    if exist(sprintf('%s.mat',SimParams.outFile),'file')
+        load(SimParams.outFile);
+        globalCount = globalCount + 1;
+    else
+        globalCount = 1;
+        SimParamsCell = cell(1,1);
+        SimStructsCell = cell(1,1);
+    end
+    
+    SimParamsCell{globalCount,1} = SimParams;
+    SimStructsCell{globalCount,1} = SimStructs;
+    save(SimParams.outFile,'globalCount','SimParamsCell','SimStructsCell');
+    cd ../
+    
 end

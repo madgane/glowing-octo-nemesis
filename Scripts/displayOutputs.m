@@ -49,14 +49,20 @@ switch SimParams.plotMode
         
     case 'STA'
         
-        nT = 1e3;nPRB = 50;nREinPRB = 120;nTot = nT * nPRB * nREinPRB * 1e-6;
-
         figStruct.N = 1;figStruct.P = 'cdfplot';
-        figStruct.Y = SimParams.Thrpt(1,:,1) * nTot;
+        figStruct.Y = SimParams.Thrpt(1,:,1);
         
         plotFigure(figStruct);
-        xlabel('Throughput in Mbps');
-        ylabel('CDF of Throughput in Mbps');
+        xlabel('Spectral Efficiency in bits/RE');
+        ylabel('CDF of Spectral Efficiency');
+        
+        figStruct.N = 2;figStruct.P = 'cdfplot';
+        figStruct.Y = squeeze(SimParams.QueueInfo.queueBacklogs(1,:,1));
+        
+        plotFigure(figStruct);
+        xlabel('Number of Residual Packets in bits');
+        ylabel('CDF of Residual Packets');
+        
         
     case 'NRA'
         
@@ -95,7 +101,7 @@ switch SimParams.plotMode
         
         profile on;
         if ~isfield(SimParams,'distDecompSteps')
-            SimParams.distDecompSteps = 1;
+            SimParams.distDecompSteps = 1;%SimParams.nExchangesOBH;
         end
         
         displaySystemDetails;

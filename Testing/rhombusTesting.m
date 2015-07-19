@@ -7,7 +7,7 @@ X = zeros(nIters,3);
 
 SimStructs = 1;
 SimParams.nTiers = 2;
-SimParams.nSectors = 3;
+SimParams.nSectors = 1;
 SimParams.sysConfig.ISD = 300;
 SimParams.nBases = getCellsOverLayout(SimParams.nTiers,SimParams.nSectors);
 SimParams.nUsers = SimParams.nBases * 10;
@@ -25,9 +25,9 @@ for iIter = 1:nIters
 end
 
 hold all;
-% plot(X(:,1),'r.');
-% plot(X(:,2),'b.');
-% plot(X(:,3),'m.');
+plot(X(:,1),'r.');
+plot(X(:,2),'b.');
+plot(X(:,3),'m.');
 
 plot(SimParams.wrapCellLocArray(:,1),'ro');
 

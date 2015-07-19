@@ -47,6 +47,7 @@ for iCite = 1:nCites
                     SimStructs.userStruct{xUser,1}.losFading{sortI(iNeighbor,1),1} = losMeasures{sortI(iNeighbor,1),maxRSSIindex(sortI(iNeighbor,1))};
                 end
 
+                SimStructs.userStruct{xUser,1}.phyParams.restOfIF_Linear = sum(10.^(sortV((SimParams.nNeighbors + 2):end,1)./10));
                 SimStructs.userStruct{xUser,1}.phyParams.restOfIF = 10 * log10(sum(10.^(sortV((SimParams.nNeighbors + 2):end,1)./10)));
 
                 linRSSI = 10.^(sortV./10);
@@ -63,10 +64,10 @@ SimParams.debugLayout.losArray = losArray;
 SimParams.debugLayout.userRSSI = debugRSSI;
 SimParams.debugLayout.positionArray = positionArray;
 
-plotDebugLayout(SimParams);
-cdfplot(debugRSSI);
-
-keyboard;
+% figure(1);
+% plotDebugLayout(SimParams);
+% figure(2);
+% cdfplot(debugRSSI);
 
 end
 

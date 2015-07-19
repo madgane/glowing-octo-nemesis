@@ -13,6 +13,18 @@ switch selectionMethod
         currentDesign = SimParams.PrecodingMethod;
         currentApproach = SimParams.weightedSumRateMethod;
         
+        bandChannels = zeros(SimParams.nUsers,nBands);
+        for iBand = 1:nBands
+            for iUser = 1:SimParams.nUsers
+                baseID = SimStructs.userStruct{iUser,1}.baseNode;
+                bandChannels(iUser,iBand) = norm(cH{baseID,iBand}(:,:,iUser));% * QueuedPkts(iUser,1);
+            end
+        end
+        
+        xSort = sort(bandChannels,'descend');
+        [~,bandSort] = sort(xSort(1,:));
+
+        bandSort = [4 1 3 2];        
         SimParams.PrecodingMethod = 'Best_WMMSE_Method';
         SimParams.weightedSumRateMethod = 'PerformScheduling';
         
@@ -24,12 +36,12 @@ switch selectionMethod
                 end
             end
             
-            SimParams.Debug.privateExchanges.takeOverBand = iBand;
+            xBand = bandSort(1,iBand);
+            SimParams.Debug.privateExchanges.takeOverBand = xBand;
             [SimParams, SimStructs] = getWeightedMMSEDesign(SimParams,SimStructs);
             
-            [SimParams,SimStructs] = performDummyReception(SimParams,SimStructs,iBand);
-            QueuedPkts = max(QueuedPkts - SimParams.Debug.privateExchanges.resAllocation(iBand,:)',0);
-            
+            [SimParams,SimStructs] = performDummyReception(SimParams,SimStructs,xBand);
+            QueuedPkts = max(QueuedPkts - SimParams.Debug.privateExchanges.resAllocation(xBand,:)',0);            
         end
         
         for iBase = 1:nBases

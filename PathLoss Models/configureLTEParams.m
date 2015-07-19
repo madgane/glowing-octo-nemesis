@@ -119,6 +119,9 @@ switch pathLossModel
         
 end
 
+operatingRange = 100;
+SimParams.sysConfig.BStransmitPwr_dBm = SimParams.sysConfig.BStransmitPwr_dBm + operatingRange;  % Numerical stability
+
 SimParams.sysConfig.cableLoss = 2;
 SimParams.sysConfig.baseTerminalNF = 5;
 SimParams.sysConfig.userTerminalNF = 7;
@@ -129,7 +132,7 @@ SimParams.sysConfig.layoutFeatures.layoutAngleFromEast = 0.00;
 
 SimParams.sysConfig.usableTones = 600;SimParams.sysConfig.subChnlBWHz = 15e3;
 SimParams.sysConfig.systemBWHz = 10e6;SimParams.sysConfig.systemTones = 1024;
-SimParams.sysConfig.NoisePwr_dBm = -174 + 10 * log10(SimParams.sysConfig.subChnlBWHz);
+SimParams.sysConfig.NoisePwr_dBm = -174 + 10 * log10(SimParams.sysConfig.subChnlBWHz) + operatingRange;  % Numerical stability
 
 SimParams.sysConfig.userDoppler = (SimParams.sysConfig.userDoppler * (5 / 18) * (SimParams.sysConfig.carrierFreqGHz * 1e9)) / spLight;
 SimParams.systemNoise = SimParams.sysConfig.NoisePwr_dBm + SimParams.sysConfig.userTerminalNF;

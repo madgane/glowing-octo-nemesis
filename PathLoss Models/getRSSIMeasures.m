@@ -10,7 +10,7 @@ for iWrapMode = 1:wrapModelLayout
         basePosition = SimParams.wrapCellLocArray(iCite,iWrapMode);
         separationM = abs(userPosition - basePosition);
         
-        [xRSSI, tempLOS] = evaluateLTE_PL(SimParams,separationM,'false','false');
+        [xRSSI, tempLOS] = evaluateLTE_PL(SimParams,separationM,'true','false');
         
         for iSector = 1:SimParams.nSectors
             currentSite = (iCite - 1) * SimParams.nSectors + iSector;

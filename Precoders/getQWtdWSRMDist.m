@@ -265,7 +265,7 @@ switch selectionMethod
         if SimParams.distIteration == 1
             for iBase = 1:nBases
                 cellXGlobal(:,:,iBase,:) = zeros(nLayers,nUsers,nBands);
-                currentDual{iBase,1} = ones(nLayers,nUsers,nBases,nBands);
+                currentDual{iBase,1} = zeros(nLayers,nUsers,nBases,nBands);
             end
         else
             cellXGlobal = SimParams.Debug.DataExchange{2,1};
@@ -273,6 +273,7 @@ switch selectionMethod
         end
         
         while scaContinue
+            
             
             yIteration = 0;
             masterContinue = 1;
@@ -282,8 +283,10 @@ switch selectionMethod
                 scaContinue = 0;
             end
             
+            stepSize = alpha;
             while masterContinue
                 
+                stepSize = stepSize * 0.9;
                 yIteration = yIteration + 1;
                 if yIteration >= mIterationsSG
                     masterContinue = 0;
@@ -331,7 +334,7 @@ switch selectionMethod
                         
                     end
                     
-                    epiObjective >= norm(userObjective,qExponent) + tempFirst + tempSecond + tempADMM * (alpha / 2);
+                    epiObjective >= norm(userObjective,qExponent) + tempFirst + tempSecond + tempADMM * (stepSize / 2);
                     
                     for iBand = 1:nBands
                         
@@ -443,13 +446,13 @@ switch selectionMethod
                             cUser = cellUserIndices{iBase,1}(iUser,1);
                             for jBase = 1:nBases
                                 if jBase ~= iBase
-                                    currentDual{iBase,1}(:,cUser,jBase,iBand) = currentDual{iBase,1}(:,cUser,jBase,iBand) + alpha * (cellX{iBase,1}(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand));
+                                    currentDual{iBase,1}(:,cUser,jBase,iBand) = currentDual{iBase,1}(:,cUser,jBase,iBand) + stepSize * (cellX{iBase,1}(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand));
                                 end
                             end
                         end
                         for iUser = 1:length(cellNeighbourIndices{iBase,1})
                             cUser = cellNeighbourIndices{iBase,1}(iUser,1);
-                            currentDual{iBase,1}(:,cUser,iBase,iBand) = currentDual{iBase,1}(:,cUser,iBase,iBand) + alpha * (cellX{iBase,1}(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand));
+                            currentDual{iBase,1}(:,cUser,iBase,iBand) = currentDual{iBase,1}(:,cUser,iBase,iBand) + stepSize * (cellX{iBase,1}(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand));
                         end
                     end
                 end

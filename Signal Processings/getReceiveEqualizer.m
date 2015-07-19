@@ -59,7 +59,11 @@ switch rxType
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     for iLayer = 1:maxRank
-                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        if strcmpi(SimParams.sysMode,'true')
+                            R = (SimParams.N + SimStructs.userStruct{cUser,1}.phyParams.restOfIF_Linear) * eye(SimParams.nRxAntenna);
+                        else
+                            R = SimParams.N * eye(SimParams.nRxAntenna);
+                        end
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)
@@ -82,7 +86,11 @@ switch rxType
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     for iLayer = 1:maxRank
-                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        if strcmpi(SimParams.sysMode,'true')
+                            R = (SimParams.N + SimStructs.userStruct{cUser,1}.phyParams.restOfIF_Linear) * eye(SimParams.nRxAntenna);
+                        else
+                            R = SimParams.N * eye(SimParams.nRxAntenna);
+                        end
                         for jBase = 1:nBases
                             H = cH{jBase,iBand}(:,:,cUser);
                             if jBase ~= iBase
@@ -126,7 +134,11 @@ switch rxType
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     for iLayer = 1:maxRank
-                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        if strcmpi(SimParams.sysMode,'true')
+                            R = (SimParams.N + SimStructs.userStruct{cUser,1}.phyParams.restOfIF_Linear) * eye(SimParams.nRxAntenna);
+                        else
+                            R = SimParams.N * eye(SimParams.nRxAntenna);
+                        end
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)
@@ -156,7 +168,11 @@ switch rxType
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     for iLayer = 1:maxRank
-                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        if strcmpi(SimParams.sysMode,'true')
+                            R = (SimParams.N + SimStructs.userStruct{cUser,1}.phyParams.restOfIF_Linear) * eye(SimParams.nRxAntenna);
+                        else
+                            R = SimParams.N * eye(SimParams.nRxAntenna);
+                        end
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)
@@ -211,7 +227,11 @@ switch rxType
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     for iLayer = 1:maxRank
-                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        if strcmpi(SimParams.sysMode,'true')
+                            R = (SimParams.N + SimStructs.userStruct{cUser,1}.phyParams.restOfIF_Linear) * eye(SimParams.nRxAntenna);
+                        else
+                            R = SimParams.N * eye(SimParams.nRxAntenna);
+                        end
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)
@@ -243,7 +263,11 @@ switch rxType
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     for iLayer = 1:maxRank
-                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        if strcmpi(SimParams.sysMode,'true')
+                            R = (SimParams.N + SimStructs.userStruct{cUser,1}.phyParams.restOfIF_Linear) * eye(SimParams.nRxAntenna);
+                        else
+                            R = SimParams.N * eye(SimParams.nRxAntenna);
+                        end
                         H = cH{iBase,iBand}(:,:,cUser);
                         
                         for jUser = 1:usersPerCell(iBase,1)
@@ -322,7 +346,11 @@ if and((~strcmpi(SimParams.SchedType,'SkipScheduling')),~(strcmpi(rxType,'MMSE-X
                 for iUser = 1:usersPerCell(iBase,1)
                     cUser = cellUserIndices{iBase,1}(iUser,1);
                     for iLayer = 1:maxRank
-                        R = SimParams.N * eye(SimParams.nRxAntenna);
+                        if strcmpi(SimParams.sysMode,'true')
+                            R = (SimParams.N + SimStructs.userStruct{cUser,1}.phyParams.restOfIF_Linear) * eye(SimParams.nRxAntenna);
+                        else
+                            R = SimParams.N * eye(SimParams.nRxAntenna);
+                        end
                         for jBase = bsIndices
                             H = cH{jBase,iBand}(:,:,cUser);
                             for jUser = 1:usersPerCell(jBase,1)

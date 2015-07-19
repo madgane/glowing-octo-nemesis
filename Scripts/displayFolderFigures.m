@@ -1,29 +1,50 @@
 
-function displayFolderFigures(folderName)
+function displayFolderFigures(varargin)
+
+if nargin == 1
+    switchCase = 1;
+    folderName = varargin{1};
+else
+    switchCase = varargin{2};
+    folderName = varargin{1};
+end
+    
 
 close all;
 listOfFiles = dir(folderName);
-rmpath(sprintf('%s/Debug',pwd));
+rmpath(sprintf('%s\\Debug',pwd));
 
-figLineWidth = [0.5:0.5:2];
-figLineType = {'-','-.',':','--'};
+figColor = {'b','r',[0,0.7,0],'m',[0.7,0.7,0],[0.7,0,0.7]};
+figLineType = {'-','-.','--',':'};
 configParams.legendString = {};
 
+fLength = length(figColor);
+fType = length(figLineType);
+
+combTypeA = repmat((1:fLength)',fType,1);
+combTypeB = repmat((1:fType),fLength,1);
+
+cFile = 0;
+combType = [combTypeA, combTypeB(:)];
+
 for iFile = 1:length(listOfFiles)    
-    fltIndex = mod(iFile - 1,(length(figLineType))) + 1;
-    flwIndex = mod(iFile - 1,(length(figLineWidth))) + 1;
-    configParams.lineWidth = figLineWidth(1,fltIndex);
+    
+    cFile = cFile + 1;
+    fltIndex = combType(cFile,1);
+    flwIndex = combType(cFile,2);
+    configParams.figColor = figColor(1,fltIndex);
     configParams.lineType = figLineType{1,flwIndex};
+
     if listOfFiles(iFile).isdir
-        if (sum(strcmpi(listOfFiles(iFile).name,{'.','..','MSE-NM20-20','MSE-WM20-20','MSE-NM20-0','MSE-WM20-0','ADMM-WOS1','ADMM-WS1','CVX','TDM','MSE-L'})) == 0)
+        if (sum(strcmpi(listOfFiles(iFile).name,{'.','..','MSE-C','MSE-L'})) == 0)
             cFolder = sprintf('%s/%s',folderName,listOfFiles(iFile).name);
-            [configParams] = displayQueueStatusGlobal(cFolder,configParams);
+            [configParams] = displayQueueStatusGlobal(cFolder,configParams,switchCase);
         end
-    else
-        [configParams] = displayQueueStatusGlobal(folderName,configParams);
     end
+    
 end
 
 figure(1);legend(configParams.legendString);
 figure(2);legend(configParams.legendString);
 figure(3);legend(configParams.legendString);
+

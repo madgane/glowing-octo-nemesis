@@ -1,11 +1,16 @@
 
 function plotFigure(figStruct)
 
-figColor = [0.0 0.8 0.8];
-figMarker = 's';
+rng('shuffle');
+figMarkerCell = {'s','o','*','v','d','+','p','h','>','^','<','.','x'};
+xMarker = randi(1000,1);xMarker = mod(xMarker - 1,length(figMarkerCell)) + 1;
+
+
+figColor = rand(1,3);
+figMarker = figMarkerCell{1,xMarker};
 figLineType = '-.';
 figLineWidth = 1;
-figMarkerSize = 4;
+figMarkerSize = 2;
     
 if ~isfield(figStruct,'N')
     figStruct.N = 1;

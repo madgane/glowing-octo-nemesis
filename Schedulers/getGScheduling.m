@@ -22,16 +22,6 @@ caseStudy = charScheduling(uscore_index + 1:end);
 
 switch (caseStudy)
     
-    case 'SP'        
-        [SimParams,SimStructs] = getBDScheduling(SimParams,SimStructs);
-
-    otherwise
-        [SimParams,SimStructs] = getSkipScheduling(SimParams,SimStructs);
-        
-end
-
-switch (SimParams.additionalParams)
-    
     case 'I-CELL'
         
         for iBand = 1:nBands
@@ -48,12 +38,18 @@ switch (SimParams.additionalParams)
         
     case 'TDM'
 
+        if strcmpi(SimParams.sysMode,'true')
+            modBases = SimParams.nSectors;
+        else
+            modBases = nBases;
+        end
+
         for iBand = 1:nBands
             for iBase = 1:nBases
-                if (mod(SimParams.iDrop - 1,nBases) ~= (iBase - 1))
-                    SimStructs.baseStruct{iBase,1}.sPower(1,iBand) = SimStructs.baseStruct{iBase,1}.sPower(1,iBand) * 0;
+                if (mod(iBase - 1,modBases) == mod(SimParams.iDrop - 1,modBases))
+                    SimStructs.baseStruct{iBase,1}.sPower(1,iBand) = SimStructs.baseStruct{iBase,1}.sPower(1,iBand) * modBases;
                 else
-                    SimStructs.baseStruct{iBase,1}.sPower(1,iBand) = SimStructs.baseStruct{iBase,1}.sPower(1,iBand) * nBases;
+                    SimStructs.baseStruct{iBase,1}.sPower(1,iBand) = SimStructs.baseStruct{iBase,1}.sPower(1,iBand) * 0;
                 end
             end
         end

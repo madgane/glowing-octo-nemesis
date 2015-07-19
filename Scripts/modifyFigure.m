@@ -16,7 +16,7 @@ figColorCell = {[0,0,0.75],[0,0.75,0],[0.75,0,0],[1,0,1],[0.25,0.25,0.5],[0.15,0
 markerCell = {'o','s','d','h','v','*','^','p','>'};
 
 figMarkerSize = 6;
-figure(H.Parent + 1);
+figure(H.Parent.Number + 1);
 hold all;grid on;box on;
 
 nMarkers = 20;
