@@ -26,8 +26,8 @@ SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
-SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.ChannelModel = 'Jakes';
+SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Constant_140';
 
 SimParams.queueWt = 1;
@@ -37,13 +37,13 @@ SimParams.robustNoise = 0;
 
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingMethod = 'Best_QwtWSRMD_Method';
-SimParams.weightedSumRateMethod = 'ADMMMethod';
+SimParams.PrecodingMethod = 'Best_QwtWSRMKKT_Method';
+SimParams.weightedSumRateMethod = 'AP-GP-Approx';
 SimParams.additionalParams = 'Optimal';
 
-SimParams.nExchangesOTA = 50;
+SimParams.nExchangesOTA = 10;
 SimParams.exchangeResetInterval = 1;
-SimParams.nExchangesOBH = 5;
+SimParams.nExchangesOBH = 20;
 
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -55,15 +55,15 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 1e100;
 
-SimParams.nBands = 4;
-SimParams.nBases = 2;
-SimParams.nUsers = 12;
+SimParams.nBands = 1;
+SimParams.nBases = 1;
+SimParams.nUsers = 4;
 
-SimParams.nTxAntenna = 4;
+SimParams.nTxAntenna = 8;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = 8;
+SimParams.maxArrival = 100;
 SimParams.groupArrivalFreq = 1;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];

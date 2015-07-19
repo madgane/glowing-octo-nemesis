@@ -55,6 +55,9 @@ if nargin == 2
         case 'Best_PerAntPwrConst_Method'
             [SimParams,SimStructs] = getPerAntennaPwrConstraintMethod(SimParams,SimStructs);
             
+        case 'Best_QwtWSRMKKT_Method'
+            [SimParams,SimStructs] = getKKTWSRMPrecoders(SimParams,SimStructs);
+            
         otherwise
             display('Unknown Precoder Design !');
             
