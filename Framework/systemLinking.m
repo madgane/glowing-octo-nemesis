@@ -30,24 +30,13 @@ else
     for iUser = 1:SimParams.nUsers
         
         xCites = SimStructs.userStruct{iUser,1}.phyParams.listedCites;
-             
+        
         SimStructs.userStruct{iUser,1}.baseNode = xCites(1,1);
         SimStructs.userStruct{iUser,1}.neighNode = xCites(2:end,1)';
         SimStructs.baseStruct{xCites(1,1)}.linkedUsers = [SimStructs.baseStruct{xCites(1,1)}.linkedUsers ; iUser];
-                
+        
     end
     
-end
-
-if exist('SimParams.ffrProfile_dB','var')
-    ffrProfile = 10.^(0.1 * SimParams.ffrProfile_dB);
-    SimParams.sPower = SimParams.nBands * SimParams.sPower * ffrProfile;
-else
-    SimParams.sPower = ones(1,SimParams.nBands) * SimParams.sPower;
-end
-
-for iBase = 1:SimParams.nBases
-    SimStructs.baseStruct{iBase,1}.sPower = circshift(SimParams.sPower',(iBase - 1))';
 end
 
 if SimParams.multiCasting

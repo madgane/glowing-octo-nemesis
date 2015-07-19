@@ -32,7 +32,7 @@ end
 
 SimStructs.linkChan = cell(SimParams.nBases,SimParams.nBands);
 SimStructs.actualChannel = cell(SimParams.nBases,SimParams.nBands);
-SimStructs.chanHistory = cell(SimParams.nBases,SimParams.nBands);
+SimStructs.prevChan = cell(SimParams.nBases,SimParams.nBands);
 
 if strcmp(SimParams.ChannelModel,'Jakes')
     for iUser = 1:SimParams.nUsers
@@ -63,7 +63,8 @@ SimParams.Debug.tempResource{2,1} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{3,1} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{4,1} = cell(SimParams.nUsers,SimParams.nBands);
 
-SimParams.Debug.dataExchange = cell(5,1);
+SimParams.currentQueue = 100;
+SimParams.Debug.dataExchange = cell(6,1);
 
 % 1 used for per-antenna-power-constraint work
 % 2 used for queue-weighted precoding scheme

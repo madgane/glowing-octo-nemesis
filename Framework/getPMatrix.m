@@ -2,7 +2,7 @@ function [SimParams,SimStructs,varargout] = getPMatrix(SimParams,SimStructs,vara
 
 if nargin == 2
     
-    switch (SimParams.PrecodingFormat)
+    switch (SimParams.PrecodingMethod)
         
         case 'Best_ZF_Method'
             [SimParams,SimStructs] = getZFMatrix(SimParams,SimStructs);
@@ -47,8 +47,11 @@ if nargin == 2
             [SimParams,SimStructs] = getQWtdWSRMDist(SimParams,SimStructs);
             
         case 'Best_QwtWSRMRT_Method'
-            [SimParams,SimStructs] = getRTDistPrecoders(SimParams,SimStructs);
-
+            [SimParams,SimStructs] = getRealTimeQWSRM(SimParams,SimStructs);
+            
+        case 'Best_QwtWSRMRTM_Method'
+            [SimParams,SimStructs] = getModifiedRTQWtdWSRM(SimParams,SimStructs);
+            
         case 'Best_PerAntPwrConst_Method'
             [SimParams,SimStructs] = getPerAntennaPwrConstraintMethod(SimParams,SimStructs);
             
@@ -62,7 +65,7 @@ if nargin == 2
     
 else
     
-    switch (SimParams.PrecodingFormat)
+    switch (SimParams.PrecodingMethod)
         
         case 'Best_ZF_Method'
             varargout{1,1} = sprintf('%s - %s',varargin{1,1},'ZF');

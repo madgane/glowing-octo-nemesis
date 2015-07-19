@@ -189,7 +189,7 @@ for iBand = 1:SimParams.nBands
         end
         
         L = eye(size(I)) + pinv(I) * (S * S');
-        xThrpt = real(log2(det(L)));
+        xThrpt = real(log2(det(L))) *  SimParams.BITFactor;
 
         if ~isnan(xThrpt)
             SimStructs.userStruct{iUser,1}.crThrpt = SimStructs.userStruct{iUser,1}.crThrpt + real(xThrpt);

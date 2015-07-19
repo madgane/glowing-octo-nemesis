@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = generateUserTrafficArrivals(SimParams,SimStructs)
+function [SimParams,SimStructs] = generateTraffic(SimParams,SimStructs)
 
 enStatToolBox = 'true';
 
@@ -16,7 +16,8 @@ end
 
 switch queueType
     case 'Uniform'
-        randArrival = randi([maxPktArrival-floor(maxPktArrival/2),maxPktArrival],1,SimParams.nUsers);
+        dRange = floor(maxPktArrival * 0.5);
+        randArrival = randi([(maxPktArrival - dRange),(maxPktArrival + dRange)],1,SimParams.nUsers);
     case 'Constant'
         randArrival = ones(1,SimParams.nUsers) * maxPktArrival;
     case 'Fixed'
@@ -28,19 +29,23 @@ switch queueType
 end
 
 SimParams.avgPktValues = randArrival;
+surplusPkts = mod(SimParams.nDrops,SimParams.groupArrivalFreq);
+
+if surplusPkts ~= 0
+    nSamples = SimParams.groupArrivalFreq - surplusPkts;
+else
+    nSamples = 0;
+end
 
 for iUser = 1:SimParams.nUsers
    
-    SimStructs.userStruct{iUser,1}.trafficConfig.avgArrRate = SimParams.avgPktValues(1,iUser);
-    
-    cLambda = SimStructs.userStruct{iUser,1}.trafficConfig.avgArrRate;
+    cLambda = SimParams.avgPktValues(1,iUser);
+    SimStructs.userStruct{iUser,1}.trafficConfig.avgArrRate = cLambda;
 
     if strcmp(enStatToolBox,'true')
-        poissonArrivals = [random('Poisson',cLambda,1,...
-            (SimParams.nDrops - SimParams.gracePeriod)) zeros(1,SimParams.gracePeriod)];
+        poissonArrivals = random('Poisson',cLambda,1,SimParams.nDrops);
     else
-        poissonArrivals = [getPoisson(cLambda,1,...
-            (SimParams.nDrops - SimParams.gracePeriod)) zeros(1,SimParams.gracePeriod)];
+        poissonArrivals = getPoisson(cLambda,1,SimParams.nDrops);
     end
     
     if strcmp(queueType,'ConstFixed')
@@ -51,7 +56,10 @@ for iUser = 1:SimParams.nUsers
     poissonArrivals = SimParams.avgPktValues(1,iUser) * ones(1,length(poissonArrivals));
     end
     
-    SimStructs.userStruct{iUser,1}.trafficHistory.pktArrival = poissonArrivals;
+    poissonArrivals = [poissonArrivals, zeros(1,nSamples)];    
+    xArrivals = reshape(poissonArrivals,SimParams.groupArrivalFreq,length(poissonArrivals) /SimParams.groupArrivalFreq);
+    xArrivals = upsample(sum(xArrivals,1),SimParams.groupArrivalFreq);
+    SimStructs.userStruct{iUser,1}.trafficHistory.pktArrival = reshape(xArrivals(1:SimParams.nDrops),1,SimParams.nDrops);
     
 end
 

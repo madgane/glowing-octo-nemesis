@@ -45,6 +45,9 @@ if nargin == 2
         case 'SkipScheduling'
             [SimParams,SimStructs] = getSkipScheduling(SimParams,SimStructs);
             
+        case 'GScheduling'
+            [SimParams,SimStructs] = getGScheduling(SimParams,SimStructs);
+            
         otherwise
             display('Unknown Scheduling Type');
     end

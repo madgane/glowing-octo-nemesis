@@ -3,10 +3,15 @@
 % analysis, NRA - network rate analysis
 % -------------------------------------------------------------------------
 
-clc;clear all;
+clc;
+clear;
 
 saveContents = 'false';
-SimParams.outFile = 'defaultFile';
+if strfind(saveContents,'true')
+    updatePath;
+end
+
+SimParams.outFile = 'JournalData-1';
 SimParams.saveChannelInfo = 'false';
 SimParams.channelSaveFolder = 'Results';
 
@@ -27,17 +32,21 @@ SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
 SimParams.pathLossModel = 'Perturbed_3';
-SimParams.DopplerType = 'Uniform_10';
+SimParams.DopplerType = 'Constant_140';
 
-SimParams.weighingEqual = 'false';
+SimParams.queueWt = 1;
+SimParams.BITFactor = 1;
+SimParams.mdpFactor = 0;
+SimParams.robustNoise = 0;
+
+SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
-SimParams.PrecodingFormat = 'Best_MultiCastBF_Method';
+SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
 SimParams.DesignType = 'ConicBSMethod';
 
-SimParams.nBands = 2;
-SimParams.nBases = 1;
-SimParams.nDrops = 1;
-SimParams.snrIndex = [10];
+SimParams.nExchangesOTA = 200;
+SimParams.exchangeResetInterval = 1;
+SimParams.nExchangesOBH = 1;
 
 SimParams.maxArrival = [4];
 SimParams.arrivalDist = 'SteadyFlow';
@@ -47,28 +56,28 @@ SimParams.SFSymbols = 14;
 SimParams.sampTime = 1e-3;
 SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
+SimParams.nSymbolsBIT = 1e100;
 
-SimParams.gracePeriod = 0;
-SimParams.FixedPacketArrivals = [4];
+SimParams.nBands = 1;
+SimParams.nBases = 2;
+SimParams.nDrops = 1;
+SimParams.snrIndex = [10];
+
+SimParams.nTxAntenna = 4;
+SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
+
+SimParams.maxArrival = 12;
+SimParams.groupArrivalFreq = 1;
+SimParams.arrivalDist = 'Constant';
+SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
-
-SimParams.queueWt = 1;
-SimParams.mdpFactor = 0;
-SimParams.robustNoise = 0;
-
-if strcmp(SimParams.sysMode,'true')
-    SimParams.snrIndex = [0];
-    SimParams.nBands = 1;
-    SimParams.nBases = 57;
-    SimParams.nUsers = 570;
-end
 
 if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
-    SimParams.usersPerGroup = 2;
+    SimParams.usersPerGroup = 5;
     SimParams.nAntennaArray = 12;
-    SimParams.nTxAntennaEnabled = 5;
+    SimParams.nTxAntennaEnabled = 12;
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
@@ -113,6 +122,7 @@ for iAntennaArray = 1:length(SimParams.nAntennaArray)
                 for iDrop = 1:SimParams.nDrops
                     
                     SimParams.iDrop = iDrop;
+                    SimParams.distIteration = iDrop;
                     
                     if strcmp(SimParams.DebugMode,'true')
                         SimParams.Debug.activeStatus(:,1)'
@@ -160,6 +170,10 @@ SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;
 displayOutputs(SimParams,SimStructs);
 
 if strcmp(saveContents,'true')
+
+    xVal = fix(clock);
+    SimParams.Log.date = date;
+    SimParams.Log.clock = sprintf('%d:%d:%d',xVal(1,4),xVal(1,5),xVal(1,6));
     
     cd Results;
     if exist(sprintf('%s.mat',SimParams.outFile),'file')
