@@ -240,50 +240,47 @@ switch selectionMethod
             
         end
         
-    case 'AP-GP-Approx'
+    case 'KKT'
         
         stInstant = 1;
-        stepInitialize = 1;
         SimParams.currentQueue = 100;
         M = zeros(SimParams.nTxAntenna,nUsers);
         gammaLKN = zeros(nUsers,1);betaLKN = zeros(nUsers,1);
-                
+        
+        incCounter = 1;
         R = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna,nUsers);
-        targetRate = zeros(SimParams.nExchangesOTA,SimParams.nExchangesOBH);
-
+        targetRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,1);
+        
         for iUser = 1:nUsers
             xBase = SimStructs.userStruct{iUser,1}.baseNode;
             M(:,iUser) = cH{xBase,1}(:,:,iUser)' / norm(cH{xBase,1}(:,:,iUser)');
             M(:,iUser) = M(:,iUser) * sqrt(sum(SimStructs.baseStruct{xBase,1}.sPower) / usersPerCell(xBase,1));
-        end   
-
-        for iExchangeOTA = stInstant:SimParams.nExchangesOTA
-            
-            stepSize = stepInitialize;
-
-            for iUser = 1:nUsers
-                betaLKN(iUser,1) = SimParams.N;
-                for jUser = 1:nUsers
-                    if iUser ~= jUser
-                        xBase = SimStructs.userStruct{jUser,1}.baseNode;
-                        betaLKN(iUser,1) = betaLKN(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * M(:,jUser))^2;
-                    end
+        end
+        
+        for iUser = 1:nUsers
+            betaLKN(iUser,1) = SimParams.N;
+            for jUser = 1:nUsers
+                if iUser ~= jUser
+                    xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                    betaLKN(iUser,1) = betaLKN(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * M(:,jUser))^2;
                 end
             end
+        end
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            gammaLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * M(:,iUser))^2 / betaLKN(iUser,1);
+        end
+        
+        for iExchangeOTA = stInstant:SimParams.nExchangesOTA
             
-            for iUser = 1:nUsers
-                xBase = SimStructs.userStruct{iUser,1}.baseNode;
-                gammaLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * M(:,iUser))^2 / betaLKN(iUser,1);
-            end
-
-            phiLKN = sqrt(gammaLKN ./ betaLKN);            
-            alphaLKN = ones(nUsers,1) * 0.1;
-            deltaLKN = 0.5 * sqrt(gammaLKN ./ betaLKN) .* alphaLKN;
+            phiLKN = sqrt(gammaLKN ./ betaLKN);
             
             for iExchangeBH = 1:SimParams.nExchangesOBH
                 
-                stepSize = stepSize * 0.9;
-                                                
+                alphaLKN = log2(exp(1)) * 2 * phiLKN ./ (1 + gammaLKN);
+                deltaLKN = 0.5 * alphaLKN .* phiLKN;
+                
                 for iUser = 1:nUsers
                     R(:,:,iUser) = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna);
                     xBase = SimStructs.userStruct{iUser,1}.baseNode;
@@ -304,8 +301,8 @@ switch selectionMethod
                         for iBand = 1:nBands
                             for iUser = 1:usersPerCell(iBase,1)
                                 cUser = cellUserIndices{iBase,1}(iUser,1);
-                                M(:,cUser) = 0.5 * alphaLKN(cUser,1) * (pinv(currentMu * eye(SimParams.nTxAntenna) + R(:,:,iUser)) * (cH{iBase,1}(:,:,cUser)'));
-                                totalPower = totalPower + real(trace(M(:,iUser) * M(:,iUser)'));
+                                M(:,cUser) = 0.5 * alphaLKN(cUser,1) * (pinv(currentMu * eye(SimParams.nTxAntenna) + R(:,:,cUser)) * (cH{iBase,1}(:,:,cUser)'));
+                                totalPower = totalPower + real(trace(M(:,cUser) * M(:,cUser)'));
                             end
                         end
                         
@@ -315,7 +312,7 @@ switch selectionMethod
                             muMax = currentMu;
                         end
                         
-                        if abs(muMin - muMax) <= 1e-6
+                        if abs(totalPower - sum(SimStructs.baseStruct{iBase,1}.sPower)) <= 1e-6
                             iterateAgain = 0;
                         end
                     end
@@ -330,32 +327,586 @@ switch selectionMethod
                         end
                     end
                 end
-
+                
                 for iUser = 1:nUsers
                     xBase = SimStructs.userStruct{iUser,1}.baseNode;
-                    bracketTerm = (1 / (2 * phiLKN(iUser,1))) * gammaLKN(iUser,1) + 0.5 * phiLKN(iUser,1) * betaLKN(iUser,1) - abs(cH{xBase,1}(:,:,iUser) * M(:,iUser));
-                    alphaLKN(iUser,1) = alphaLKN(iUser,1) + stepSize * bracketTerm;
-                    deltaLKN(iUser,1) = alphaLKN(iUser,1) * phiLKN(iUser,1) * 0.5;
+                    gammaLKN(iUser,1) = (abs(cH{xBase,1}(:,:,iUser) * M(:,iUser)) - phiLKN(iUser,1) * 0.5 * betaLKN(iUser,1)) * 2 * phiLKN(iUser,1);
                 end
                 
-                alphaLKN = (alphaLKN > 0) .* alphaLKN;
-                deltaLKN = (deltaLKN > 0) .* deltaLKN;
+                gammaLKN = real(gammaLKN) .* (real(gammaLKN) > 0);
+                targetRate(incCounter,1) = sum(log2(1 + gammaLKN));
+                incCounter = incCounter + 1;
                 
-            end
-            
-            gammaLKN = (2 * (phiLKN./alphaLKN)) - 1;
-            gammaLKN = (gammaLKN > 0) .* gammaLKN;
-            
-            for iUser = 1:nUsers
-                targetRate(iExchangeOTA,iExchangeBH) = targetRate(iExchangeOTA,iExchangeBH) + (log2(1 + gammaLKN(iUser,1)));
             end
             
         end
         
-
+        
+    case 'KKT-MSE'
+        
+        stInstant = 1;
+        SimParams.currentQueue = 100;
+        M = zeros(SimParams.nTxAntenna,nUsers);
+        etaLKN = zeros(nUsers,1);
+        
+        incCounter = 1;
+        lambdaLKN = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna,nUsers);
+        uLKN = zeros(SimParams.nRxAntenna,SimParams.nRxAntenna,nUsers);
+        targetRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,1);
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            M(:,iUser) = cH{xBase,1}(:,:,iUser)' / norm(cH{xBase,1}(:,:,iUser)');
+            M(:,iUser) = M(:,iUser) * sqrt(sum(SimStructs.baseStruct{xBase,1}.sPower) / usersPerCell(xBase,1));
+        end
+        
+        for iExchangeOTA = stInstant:SimParams.nExchangesOTA
+            
+            for iUser = 1:nUsers
+                R = SimParams.N * eye(SimParams.nRxAntenna);
+                for jUser = 1:nUsers
+                    xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                    R = R + cH{xBase,1}(:,:,iUser) * M(:,jUser) * M(:,jUser)' * cH{xBase,1}(:,:,iUser)';
+                end
+                xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                uLKN(:,:,iUser) = pinv(R) * (cH{xBase,1}(:,:,iUser) * M(:,iUser));
+            end
+            
+            for iUser = 1:nUsers
+                xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                etaLKN(iUser,1) = abs(1 - (uLKN(:,:,iUser)' * cH{xBase,1}(:,:,iUser) * M(:,iUser)))^2;
+                for jUser = 1:nUsers
+                    if iUser ~= jUser
+                        xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                        etaLKN(iUser,1) = etaLKN(iUser,1) + abs((uLKN(:,:,iUser)' * cH{xBase,1}(:,:,iUser) * M(:,jUser)))^2;
+                    end
+                end
+                etaLKN(iUser,1) = etaLKN(iUser,1) + SimParams.N * trace(uLKN(:,:,iUser)' * uLKN(:,:,iUser));
+            end
+            
+            alphaLKN = log2(exp(1)) ./ etaLKN;
+            
+            for iUser = 1:nUsers
+                xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                lambdaLKN(:,:,iUser) = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna);
+                for jUser = 1:nUsers
+                    lambdaLKN(:,:,iUser) = lambdaLKN(:,:,iUser) + alphaLKN(jUser,1) * cH{xBase,1}(:,:,jUser)' * uLKN(:,:,jUser) * uLKN(:,jUser)' * cH{xBase,1}(:,:,jUser);
+                end
+            end
+            
+            for iBase = 1:nBases
+                muMax = 100000;
+                muMin = 0;
+                iterateAgain = 1;
+                while iterateAgain
+                    totalPower = 0;
+                    currentMu = (muMax + muMin) / 2;
+                    for iBand = 1:nBands
+                        for iUser = 1:usersPerCell(iBase,1)
+                            cUser = cellUserIndices{iBase,1}(iUser,1);
+                            M(:,cUser) = alphaLKN(cUser,1) * (pinv(currentMu * eye(SimParams.nTxAntenna) + lambdaLKN(:,:,cUser)) * (uLKN(:,:,cUser)' * cH{iBase,1}(:,:,cUser))');
+                            totalPower = totalPower + real(trace(M(:,cUser) * M(:,cUser)'));
+                        end
+                    end
+                    
+                    if totalPower > sum(SimStructs.baseStruct{iBase,1}.sPower)
+                        muMin = currentMu;
+                    else
+                        muMax = currentMu;
+                    end
+                    
+                    if abs(totalPower - sum(SimStructs.baseStruct{iBase,1}.sPower)) <= 1e-6
+                        iterateAgain = 0;
+                    end
+                end
+            end
+            
+            gammaLKN = real(1 ./ etaLKN) - 1;
+            targetRate(incCounter,1) = sum(log2(1 + gammaLKN));
+            incCounter = incCounter + 1;
+            
+        end
+        
+    case 'KKT-MSE-RC'
+        
+        stInstant = 1;
+        stepFactor = 1;
+        SimParams.currentQueue = 100;
+        M = zeros(SimParams.nTxAntenna,nUsers);
+        etaLKN = zeros(nUsers,1);
+        
+        R0 = 5;
+        incCounter = 1;
+        sigmaLKN = ones(nUsers,1) * 1;
+        lambdaLKN = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna,nUsers);
+        uLKN = zeros(SimParams.nRxAntenna,SimParams.nRxAntenna,nUsers);
+        targetRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,1);
+        userRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,nUsers);
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            M(:,iUser) = cH{xBase,1}(:,:,iUser)' / norm(cH{xBase,1}(:,:,iUser)');
+            M(:,iUser) = M(:,iUser) * sqrt(sum(SimStructs.baseStruct{xBase,1}.sPower) / usersPerCell(xBase,1));
+        end
+        
+        for iUser = 1:nUsers
+            R = SimParams.N * eye(SimParams.nRxAntenna);
+            for jUser = 1:nUsers
+                xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                R = R + cH{xBase,1}(:,:,iUser) * M(:,jUser) * M(:,jUser)' * cH{xBase,1}(:,:,iUser)';
+            end
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            uLKN(:,:,iUser) = pinv(R) * (cH{xBase,1}(:,:,iUser) * M(:,iUser));
+        end
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            etaLKN(iUser,1) = abs(1 - (uLKN(:,:,iUser)' * cH{xBase,1}(:,:,iUser) * M(:,iUser)))^2;
+            for jUser = 1:nUsers
+                if iUser ~= jUser
+                    xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                    etaLKN(iUser,1) = etaLKN(iUser,1) + abs((uLKN(:,:,iUser)' * cH{xBase,1}(:,:,iUser) * M(:,jUser)))^2;
+                end
+            end
+            etaLKN(iUser,1) = etaLKN(iUser,1) + SimParams.N * trace(uLKN(:,:,iUser)' * uLKN(:,:,iUser));
+        end
+        
+        for iExchangeOTA = stInstant:SimParams.nExchangesOTA
+            
+            stepG = stepFactor;
+            etaLKN_X = etaLKN;
+            for iExchangeOBH = stInstant:SimParams.nExchangesOBH
+                
+                stepG = stepG * 0.9;
+                
+                for iUser = 1:nUsers
+                    R = SimParams.N * eye(SimParams.nRxAntenna);
+                    for jUser = 1:nUsers
+                        xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                        R = R + cH{xBase,1}(:,:,iUser) * M(:,jUser) * M(:,jUser)' * cH{xBase,1}(:,:,iUser)';
+                    end
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    uLKN(:,:,iUser) = pinv(R) * (cH{xBase,1}(:,:,iUser) * M(:,iUser));
+                end
+                
+                for iUser = 1:nUsers
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    etaLKN(iUser,1) = abs(1 - (uLKN(:,:,iUser)' * cH{xBase,1}(:,:,iUser) * M(:,iUser)))^2;
+                    for jUser = 1:nUsers
+                        if iUser ~= jUser
+                            xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                            etaLKN(iUser,1) = etaLKN(iUser,1) + abs((uLKN(:,:,iUser)' * cH{xBase,1}(:,:,iUser) * M(:,jUser)))^2;
+                        end
+                    end
+                    etaLKN(iUser,1) = etaLKN(iUser,1) + SimParams.N * trace(uLKN(:,:,iUser)' * uLKN(:,:,iUser));
+                end
+                
+                alphaLKN = (1 + sigmaLKN) ./ etaLKN_X;
+                
+                for iUser = 1:nUsers
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    lambdaLKN(:,:,iUser) = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna);
+                    for jUser = 1:nUsers
+                        lambdaLKN(:,:,iUser) = lambdaLKN(:,:,iUser) + alphaLKN(jUser,1) * cH{xBase,1}(:,:,jUser)' * uLKN(:,:,jUser) * uLKN(:,jUser)' * cH{xBase,1}(:,:,jUser);
+                    end
+                end
+                
+                for iBase = 1:nBases
+                    muMax = 100000;
+                    muMin = 0;
+                    iterateAgain = 1;
+                    while iterateAgain
+                        totalPower = 0;
+                        currentMu = (muMax + muMin) / 2;
+                        for iBand = 1:nBands
+                            for iUser = 1:usersPerCell(iBase,1)
+                                cUser = cellUserIndices{iBase,1}(iUser,1);
+                                M(:,cUser) = alphaLKN(cUser,1) * (pinv(currentMu * eye(SimParams.nTxAntenna) + lambdaLKN(:,:,cUser)) * (uLKN(:,:,cUser)' * cH{iBase,1}(:,:,cUser))');
+                                totalPower = totalPower + real(trace(M(:,cUser) * M(:,cUser)'));
+                            end
+                        end
+                        
+                        if totalPower > sum(SimStructs.baseStruct{iBase,1}.sPower)
+                            muMin = currentMu;
+                        else
+                            muMax = currentMu;
+                        end
+                        
+                        if abs(totalPower - sum(SimStructs.baseStruct{iBase,1}.sPower)) <= 1e-6
+                            iterateAgain = 0;
+                        end
+                    end
+                end
+                
+                gammaLKN = real(1 ./ etaLKN) - 1;
+                targetRate(incCounter,1) = sum(log(1 + gammaLKN));
+                userRate(incCounter,:) = log(1 + gammaLKN.');
+                incCounter = incCounter + 1;
+                
+                sigmaLKN = sigmaLKN + stepG * (R0 + log(etaLKN_X) + etaLKN_X.^(-1) .* (etaLKN - etaLKN_X));
+                sigmaLKN = max(sigmaLKN,0);
+                
+            end
+            
+        end
+        
+    case 'KKT-RC'
+        
+        stInstant = 1;
+        stepFactor = 1;
+        SimParams.currentQueue = 100;
+        M = zeros(SimParams.nTxAntenna,nUsers);
+        gammaLKN = zeros(nUsers,1);betaLKN = zeros(nUsers,1);
+        
+        R0 = 5;
+        incCounter = 1;
+        R = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna,nUsers);
+        targetRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,1);
+        userRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,nUsers);
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            M(:,iUser) = cH{xBase,1}(:,:,iUser)' / norm(cH{xBase,1}(:,:,iUser)');
+            M(:,iUser) = M(:,iUser) * sqrt(sum(SimStructs.baseStruct{xBase,1}.sPower) / usersPerCell(xBase,1));
+        end
+        
+        for iUser = 1:nUsers
+            betaLKN(iUser,1) = SimParams.N;
+            for jUser = 1:nUsers
+                if iUser ~= jUser
+                    xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                    betaLKN(iUser,1) = betaLKN(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * M(:,jUser))^2;
+                end
+            end
+        end
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            gammaLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * M(:,iUser))^2 / betaLKN(iUser,1);
+        end
+        
+        sigmaLKN = R0 - log(1 + gammaLKN);
+        for iExchangeOTA = stInstant:SimParams.nExchangesOTA
+            
+            stepG = stepFactor;
+            phiLKN = sqrt(gammaLKN ./ betaLKN);
+            
+            for iExchangeBH = 1:SimParams.nExchangesOBH
+                
+                stepG = stepG * 0.9;
+                alphaLKN = 2 * phiLKN .* (1 + sigmaLKN) ./ (1 + gammaLKN);
+                deltaLKN = 0.5 * alphaLKN .* phiLKN;
+                
+                for iUser = 1:nUsers
+                    R(:,:,iUser) = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna);
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    for jUser = 1:nUsers
+                        if iUser ~= jUser
+                            R(:,:,iUser) = R(:,:,iUser) + cH{xBase,1}(:,:,jUser)' * cH{xBase,1}(:,:,jUser) * deltaLKN(jUser,1);
+                        end
+                    end
+                end
+                
+                for iBase = 1:nBases
+                    muMax = 100000;
+                    muMin = 0;
+                    iterateAgain = 1;
+                    while iterateAgain
+                        totalPower = 0;
+                        currentMu = (muMax + muMin) / 2;
+                        for iBand = 1:nBands
+                            for iUser = 1:usersPerCell(iBase,1)
+                                cUser = cellUserIndices{iBase,1}(iUser,1);
+                                M(:,cUser) = 0.5 * alphaLKN(cUser,1) * (pinv(currentMu * eye(SimParams.nTxAntenna) + R(:,:,cUser)) * (cH{iBase,1}(:,:,cUser)'));
+                                totalPower = totalPower + real(trace(M(:,cUser) * M(:,cUser)'));
+                            end
+                        end
+                        
+                        if totalPower > sum(SimStructs.baseStruct{iBase,1}.sPower)
+                            muMin = currentMu;
+                        else
+                            muMax = currentMu;
+                        end
+                        
+                        if abs(totalPower - sum(SimStructs.baseStruct{iBase,1}.sPower)) <= 1e-6
+                            iterateAgain = 0;
+                        end
+                    end
+                end
+                
+                for iUser = 1:nUsers
+                    betaLKN(iUser,1) = SimParams.N;
+                    for jUser = 1:nUsers
+                        if iUser ~= jUser
+                            xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                            betaLKN(iUser,1) = betaLKN(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * M(:,jUser))^2;
+                        end
+                    end
+                end
+                
+                for iUser = 1:nUsers
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    prevGamma = (abs(cH{xBase,1}(:,:,iUser) * M(:,iUser)) - phiLKN(iUser,1) * 0.5 * betaLKN(iUser,1)) * 2 * phiLKN(iUser,1);
+                    gammaLKN(iUser,1) = gammaLKN(iUser,1) + prevGamma * 0.1;
+                end
+                
+                gammaLKN = real(gammaLKN) .* (real(gammaLKN) > 0);
+                targetRate(incCounter,1) = sum(log(1 + gammaLKN));
+                userRate(incCounter,:) = log(1 + gammaLKN.');
+                incCounter = incCounter + 1;
+                
+                sigmaLKN = sigmaLKN + stepG * (R0 - log(1 + gammaLKN));
+                sigmaLKN = max(sigmaLKN,0)
+                
+            end
+            
+            plot(userRate(1:incCounter-1,:));
+            
+        end
+        
+    case 'KKT-RC1'
+        
+        stInstant = 1;
+        SimParams.currentQueue = 100;
+        
+        xLKN = zeros(nUsers,1);
+        M = zeros(SimParams.nTxAntenna,nUsers);
+        MP = zeros(SimParams.nTxAntenna,nUsers);
+        gammaLKN = zeros(nUsers,1);betaLKN = zeros(nUsers,1);betaLKNP = zeros(nUsers,1);
+        
+        incCounter = 1;
+        R = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna,nUsers);
+        targetRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,1);
+        userRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,nUsers);
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            MP(:,iUser) = cH{xBase,1}(:,:,iUser)' / norm(cH{xBase,1}(:,:,iUser)');
+            MP(:,iUser) = MP(:,iUser) * sqrt(sum(SimStructs.baseStruct{xBase,1}.sPower) / usersPerCell(xBase,1));
+        end
+        
+        for iUser = 1:nUsers
+            betaLKNP(iUser,1) = SimParams.N;
+            for jUser = 1:nUsers
+                if iUser ~= jUser
+                    xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                    betaLKNP(iUser,1) = betaLKNP(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * MP(:,jUser))^2;
+                end
+            end
+        end
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            gammaLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * MP(:,iUser))^2 / betaLKNP(iUser,1);
+        end
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            xLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * MP(:,iUser))^2 + betaLKN(iUser,1);
+        end
+        
+        for iExchangeOTA = stInstant:SimParams.nExchangesOTA
+            
+            for iExchangeBH = 1:SimParams.nExchangesOBH
+                
+                alphaLKN = (1 ./ (xLKN));
+                deltaLKN = alphaLKN -(1 ./ betaLKNP);
+                
+                for iUser = 1:nUsers
+                    R(:,:,iUser) = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna);
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    for jUser = 1:nUsers
+                        if iUser ~= jUser
+                            R(:,:,iUser) = R(:,:,iUser) + cH{xBase,1}(:,:,jUser)' * cH{xBase,1}(:,:,jUser) * deltaLKN(jUser,1);
+                        end
+                    end
+                end
+                
+                for iBase = 1:nBases
+                    muMax = 100000;
+                    muMin = 0;
+                    iterateAgain = 1;
+                    while iterateAgain
+                        totalPower = 0;
+                        currentMu = (muMax + muMin) / 2;
+                        for iBand = 1:nBands
+                            for iUser = 1:usersPerCell(iBase,1)
+                                cUser = cellUserIndices{iBase,1}(iUser,1);
+                                M(:,cUser) = alphaLKN(cUser,1) * (pinv(currentMu * eye(SimParams.nTxAntenna) + R(:,:,cUser)) * (cH{iBase,1}(:,:,cUser)' * cH{iBase,1}(:,:,cUser) * MP(:,cUser)));
+                                totalPower = totalPower + real(trace(M(:,cUser) * M(:,cUser)'));
+                            end
+                        end
+                        
+                        if totalPower > sum(SimStructs.baseStruct{iBase,1}.sPower)
+                            muMin = currentMu;
+                        else
+                            muMax = currentMu;
+                        end
+                        
+                        if abs(muMax - muMin) <= 1e-6
+                            iterateAgain = 0;
+                        end
+                    end
+                end
+                
+                for iUser = 1:nUsers
+                    betaLKN(iUser,1) = SimParams.N;
+                    for jUser = 1:nUsers
+                        if iUser ~= jUser
+                            xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                            betaLKN(iUser,1) = betaLKN(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * M(:,jUser))^2;
+                        end
+                    end
+                end
+                
+                for iUser = 1:nUsers
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    xLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * MP(:,iUser))^2 + betaLKN(iUser,1) + 2 * (MP(:,iUser)' * cH{xBase,1}(:,:,iUser)' * cH{xBase,1}(:,:,iUser)) * (M(:,iUser) - MP(:,iUser));
+%                     xLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * M(:,iUser))^2 + betaLKN(iUser,1);
+                end
+                
+                gammaLKN = max(real((xLKN ./ betaLKN) - 1),0);
+                targetRate(incCounter,1) = sum(log(1 + gammaLKN));
+                userRate(incCounter,:) = log(1 + gammaLKN.');
+                incCounter = incCounter + 1;
+                
+            end
+            
+            MP = M;
+            betaLKNP = betaLKN;
+            plot(userRate(1:incCounter-1,:));
+            
+        end
+        
+        
+    case 'KKT-RC2'
+        
+        stInstant = 1;
+        stepFactor = 0.5;
+        SimParams.currentQueue = 100;
+        
+        xLKN = zeros(nUsers,1);
+        M = zeros(SimParams.nTxAntenna,nUsers);
+        MP = zeros(SimParams.nTxAntenna,nUsers);
+        gammaLKN = zeros(nUsers,1);betaLKN = zeros(nUsers,1);betaLKNP = zeros(nUsers,1);
+        
+        
+        R0 = 5;
+        incCounter = 1;
+        R = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna,nUsers);
+        targetRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,1);
+        userRate = zeros(SimParams.nExchangesOTA * SimParams.nExchangesOBH,nUsers);
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            MP(:,iUser) = cH{xBase,1}(:,:,iUser)' / norm(cH{xBase,1}(:,:,iUser)');
+            MP(:,iUser) = MP(:,iUser) * sqrt(sum(SimStructs.baseStruct{xBase,1}.sPower) / usersPerCell(xBase,1));
+        end
+        
+        for iUser = 1:nUsers
+            betaLKNP(iUser,1) = SimParams.N;
+            for jUser = 1:nUsers
+                if iUser ~= jUser
+                    xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                    betaLKNP(iUser,1) = betaLKNP(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * MP(:,jUser))^2;
+                end
+            end
+        end
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            gammaLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * MP(:,iUser))^2 / betaLKNP(iUser,1);
+        end
+        
+        for iUser = 1:nUsers
+            xBase = SimStructs.userStruct{iUser,1}.baseNode;
+            xLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * MP(:,iUser))^2 + betaLKN(iUser,1);
+        end
+        
+        G0 = exp(R0) - 1;
+        sigmaLKN = zeros(nUsers,1) * 20;
+        for iExchangeOTA = stInstant:SimParams.nExchangesOTA
+            
+            stepG = stepFactor;
+            
+            for iExchangeBH = 1:SimParams.nExchangesOBH
+                
+                stepG = stepG * 0.95;
+                alphaLKN = sigmaLKN - (1 ./ (xLKN));
+                deltaLKN = sigmaLKN .* (1 + G0) - (1 ./ betaLKNP) - alphaLKN;
+                
+                for iUser = 1:nUsers
+                    R(:,:,iUser) = zeros(SimParams.nTxAntenna,SimParams.nTxAntenna);
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    for jUser = 1:nUsers
+                        if iUser ~= jUser
+                            R(:,:,iUser) = R(:,:,iUser) + cH{xBase,1}(:,:,jUser)' * cH{xBase,1}(:,:,jUser) * deltaLKN(jUser,1);
+                        end
+                    end
+                end
+                
+                for iBase = 1:nBases
+                    muMax = 100000;
+                    muMin = 0;
+                    iterateAgain = 1;
+                    while iterateAgain
+                        totalPower = 0;
+                        currentMu = (muMax + muMin) / 2;
+                        for iBand = 1:nBands
+                            for iUser = 1:usersPerCell(iBase,1)
+                                cUser = cellUserIndices{iBase,1}(iUser,1);
+                                M(:,cUser) = alphaLKN(cUser,1) * (pinv(currentMu * eye(SimParams.nTxAntenna) + R(:,:,cUser)) * (cH{iBase,1}(:,:,cUser)' * cH{iBase,1}(:,:,cUser) * MP(:,cUser)));
+                                totalPower = totalPower + real(trace(M(:,cUser) * M(:,cUser)'));
+                            end
+                        end
+                        
+                        if totalPower > sum(SimStructs.baseStruct{iBase,1}.sPower)
+                            muMin = currentMu;
+                        else
+                            muMax = currentMu;
+                        end
+                        
+                        if abs(muMax - muMin) <= 1e-6
+                            iterateAgain = 0;
+                        end
+                    end
+                end
+                
+                for iUser = 1:nUsers
+                    betaLKN(iUser,1) = SimParams.N;
+                    for jUser = 1:nUsers
+                        if iUser ~= jUser
+                            xBase = SimStructs.userStruct{jUser,1}.baseNode;
+                            betaLKN(iUser,1) = betaLKN(iUser,1) + abs(cH{xBase,1}(:,:,iUser) * M(:,jUser))^2;
+                        end
+                    end
+                end
+                
+                for iUser = 1:nUsers
+                    xBase = SimStructs.userStruct{iUser,1}.baseNode;
+                    xLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * MP(:,iUser))^2 + betaLKN(iUser,1) + 2 * (MP(:,iUser)' * cH{xBase,1}(:,:,iUser)' * cH{xBase,1}(:,:,iUser)) * (M(:,iUser) - MP(:,iUser));
+%                     xLKN(iUser,1) = abs(cH{xBase,1}(:,:,iUser) * M(:,iUser))^2 + betaLKN(iUser,1);
+                end
+                
+                gammaLKN = max(real((xLKN ./ betaLKN) - 1),0);
+                targetRate(incCounter,1) = sum(log(1 + gammaLKN));
+                userRate(incCounter,:) = log(1 + gammaLKN.');
+                incCounter = incCounter + 1;
+                
+                sigmaLKN = sigmaLKN + stepG * (betaLKN .* (1 + G0) - real(xLKN));
+                sigmaLKN = max(sigmaLKN,0);
+                
+            end
+            
+            MP = M;
+            betaLKNP = betaLKN;
+            
+            plot(userRate(1:incCounter-1,:));
+            
+        end
+        
+        
 end
-
-% Update the receivers upon reception by all users (combined detection)
-[SimParams,SimStructs] = getReceiveEqualizer(SimParams,SimStructs,'MMSE');
-
-
+plot(userRate);hold all;
+plot(targetRate);hold all;
+keyboard;
