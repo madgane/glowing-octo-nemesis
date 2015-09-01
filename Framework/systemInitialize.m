@@ -25,7 +25,11 @@ for iBase = 1:SimParams.nBases
     SimStructs.baseStruct{iBase,1}.allocPattern = cell(SimParams.nBands,1);
     SimStructs.baseStruct{iBase,1}.P = cell(SimParams.nBands,1);
     if strcmp(SimParams.multiCasting,'true')
-        SimStructs.baseStruct{iBase,1}.PG = cell(SimParams.nBands,1);
+        if iBase == 1
+            SimParams.rankCap = zeros(SimParams.nBases,1);
+        end
+        SimParams.rankCap = floor(SimParams.nTxAntenna / length(SimParams.mcGroups{iBase,1}));
+        SimStructs.baseStruct{iBase,1}.PG = cell(SimParams.nBands,length(SimParams.mcGroups{iBase,1}));
         SimStructs.baseStruct{iBase,1}.P_SDP = cell(SimParams.nBands,1);
     end
 end

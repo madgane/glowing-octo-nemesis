@@ -4,7 +4,7 @@
 % -------------------------------------------------------------------------
 
 clc;
-clear;
+clear workspace;
 
 saveContents = 'false';
 if strfind(saveContents,'true')
@@ -42,7 +42,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'ConicBSMethod';
+SimParams.DesignType = 'SDPMethod';
 
 SimParams.nExchangesOTA = 200;
 SimParams.exchangeResetInterval = 1;
@@ -59,7 +59,7 @@ SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 1e100;
 
 SimParams.nBands = 1;
-SimParams.nBases = 2;
+SimParams.nBases = 1;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
 
@@ -74,10 +74,10 @@ SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
 if strcmp(SimParams.multiCasting,'true')
-    SimParams.nGroupArray = 2;
-    SimParams.usersPerGroup = 5;
-    SimParams.nAntennaArray = 12;
-    SimParams.nTxAntennaEnabled = 12;
+    SimParams.nGroupArray = 5;
+    SimParams.usersPerGroup = 4;
+    SimParams.nAntennaArray = 20;
+    SimParams.nTxAntennaEnabled = 10;
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));

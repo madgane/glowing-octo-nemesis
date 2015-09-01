@@ -19,6 +19,7 @@ end
 
 while iterateSCA
     for dualIterate = 1:100
+        
         for iBand = 1:nBands
             for iBase = 1:nBases
                 for iGroup = 1:nGroupsPerCell(iBase,1)
