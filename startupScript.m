@@ -31,7 +31,7 @@ SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
 SimParams.ChannelModel = 'IID';
-SimParams.pathLossModel = 'Perturbed_3';
+SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Constant_140';
 
 SimParams.queueWt = 1;
@@ -42,7 +42,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'SDPMethod';
+SimParams.DesignType = 'KKTMethod';
 
 SimParams.nExchangesOTA = 200;
 SimParams.exchangeResetInterval = 1;
@@ -67,17 +67,18 @@ SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = 12;
+SimParams.maxArrival = 8;
 SimParams.groupArrivalFreq = 1;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
 if strcmp(SimParams.multiCasting,'true')
-    SimParams.nGroupArray = 5;
-    SimParams.usersPerGroup = 4;
-    SimParams.nAntennaArray = 20;
-    SimParams.nTxAntennaEnabled = 10;
+    SimParams.nGroupArray = 2;
+    SimParams.usersPerGroup = 1;
+    SimParams.nAntennaArray = 10;
+    SimParams.nTxAntennaEnabled = 20;
+    SimParams.cGroupPrecoders = ones(SimParams.nBases,1);
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));

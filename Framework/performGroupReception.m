@@ -306,17 +306,21 @@ for iBand = 1:SimParams.nBands
         Nacc = 0;
         if userActive
             for iBase = 1:length(baseNode)
+                
                 baseIndex = baseNode(1,iBase);
                 cBase = SimStructs.baseStruct{baseIndex,1};
                 
-                gP = reshape(cell2mat(cBase.PG{iBand,:}),SimParams.nTxAntenna,;
-                P = gP(:,userGroups(iUser,2));
+                gP = cBase.PG{iBand,1};
+                xGroup = userGroups(iUser,2);
+                stIndex = (xGroup - 1) * SimParams.cGroupPrecoders(baseIndex,1) + 1;
+                eIndex = xGroup * SimParams.cGroupPrecoders(baseIndex,1);
+                P = gP(:,stIndex:eIndex);
                 H = linkChannel{baseIndex,iBand}(:,:,iUser);
                 S = Wmmse' * H * P + S;
                 
                 % Intra Group Calculation
                 
-                pIndices = userGroups(iUser,2) ~= (1:length(groupUsers{iBase,1}));
+                pIndices = setxor((stIndex:eIndex),1:size(cBase.PG{iBand,1},2));
                 P = gP(:,pIndices);
                 if ~isempty(P)
                     N = Wmmse' * H * P;

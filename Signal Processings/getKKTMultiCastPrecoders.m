@@ -5,8 +5,7 @@ initMultiCastVariables;
 minPower = -10;
 iterateSCA = 1;
 iIterateSCA = 0;
-iterateSCAMax = 1000;
-dualGroup = zeros(nUsers,nBands);
+iterateSCAMax = 100;
 
 X = cell(nBases,nBands);
 Xt = cell(nBases,nBands);
@@ -17,9 +16,12 @@ for iBand = 1:nBands
     end
 end
 
+dualGroup = zeros(nUsers,nBands);
+
 while iterateSCA
+
+    stepSize = 1e-2;
     for dualIterate = 1:100
-        
         for iBand = 1:nBands
             for iBase = 1:nBases
                 for iGroup = 1:nGroupsPerCell(iBase,1)
@@ -55,7 +57,7 @@ while iterateSCA
                     for iUser = 1:length(groupUsers)
                         cUser = groupUsers(iUser,1);
                         Hsdp = cH{iBase,iBand}(:,:,cUser);
-                        tempExpression = abs(Hsdp * X{iBase,iBand}(:,iGroup))^2;
+                        tempExpression = abs(Hsdp * Xt{iBase,iBand}(:,iGroup))^2 + 2 * real(Xt{iBase,iBand}(:,iGroup)' * Hsdp' * Hsdp * (X{iBase,iBand}(:,iGroup) - Xt{iBase,iBand}(:,iGroup)));
                         tempSum = SimParams.N;
                         for jBase = 1:nBases
                             for jGroup = 1:nGroupsPerCell(jBase,1)
@@ -65,7 +67,7 @@ while iterateSCA
                                 end
                             end
                         end
-                        dualGroup(cUser,iBand) = dualGroup(cUser,iBand) + 1e-5 * (tempSum * reqSINRPerUser(cUser,1) - tempExpression);
+                        dualGroup(cUser,iBand) = dualGroup(cUser,iBand) + stepSize * (tempSum * reqSINRPerUser(cUser,1) - tempExpression);
                         dualGroup(cUser,iBand) = max(0,dualGroup(cUser,iBand));
                     end
                 end
@@ -75,7 +77,7 @@ while iterateSCA
         dX = cell2mat(X);
         totalPower = dX(:)'*dX(:);
         display(totalPower);
-        
+       
     end
     
     Xt = X;

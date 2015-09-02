@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations)
+function [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,cMulticastEnabled,nIterations)
 
 initMultiCastVariables;
 if isfield(SimParams.Debug,'MultiCastSDPExchange')
@@ -58,7 +58,7 @@ for iBand = 1:nBands
 end
 
 options = sdpsettings('verbose',0,'solver','DSDP');
-solverOut = solvesdp(gConstraints,objective,options);
+solverOut = optimize(gConstraints,objective,options);
 SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
 
 if solverOut.problem ~= 0
@@ -71,7 +71,7 @@ if solverOut.problem ~= 0
         end
     end
     return;
-end    
+end
 
 maxPower = 1e20;
 Y = cell(nBases,nBands);
@@ -83,105 +83,112 @@ for iBase = 1:nBases
     end
 end
 
-% SimParams.Debug.SDP_vars.groupRank = cell(nBases,1);
-% for iIterate = 1:nIterations
-%     
-%     reIterate = 1;
-%     while reIterate
-%         for iBase = 1:nBases
-%             SimParams.Debug.SDP_vars.groupRank{iBase,1} = zeros(1,nGroupsPerCell(iBase,1));
-%             for iBand = 1:nBands
-%                 dX = double(X{iBase,iBand});
-%                 Y{iBase,iBand} = zeros(nTxAntenna,nGroupsPerCell(iBase,1));
-%                 for iGroup = 1:nGroupsPerCell(iBase,1)
-%                     [P, D] = eig(dX(:,:,iGroup)); 
-%                     P = P(:,(diag(D) >= epsilonT));
-%                     D = diag(D); D = D(D >= epsilonT);
-%                     SimParams.Debug.SDP_vars.groupRank{iBase,1}(1,iGroup) = length(D);
-%                     randSelection = complex(randn(length(D),1),randn(length(D),1));
-%                     Y{iBase,iBand}(:,iGroup) = P * diag(sqrt(D)) * randSelection;
-%                 end
-%             end
-%         end
-%         
-%         gConstraints = [];
-%         grpPwr = cell(nBases,1);
-%         for iBase = 1:nBases
-%             grpPwr{iBase,1} = sdpvar(nGroupsPerCell(iBase,1),nBands);
-%         end
-%         
-%         for iBand = 1:nBands
-%             for iBase = 1:nBases
-%                 for iGroup = 1:nGroupsPerCell(iBase,1)
-%                     groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
-%                     for iUser = 1:length(groupUsers)
-%                         cUser = groupUsers(iUser,1);
-%                         tempSum = -SimParams.N * reqSINRPerUser(cUser,1);
-%                         for jBase = 1:nBases
-%                             for jGroup = 1:nGroupsPerCell(jBase,1)
-%                                 Hsdp = cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser);
-%                                 if and((iBase == jBase),(iGroup == jGroup))
-%                                     tempSum = tempSum + grpPwr{jBase,1}(jGroup,iBand) * abs(Hsdp * Y{jBase,iBand}(:,jGroup))^2;
-%                                 else
-%                                     tempSum = tempSum - reqSINRPerUser(cUser,1) * grpPwr{jBase,1}(jGroup,iBand) * abs(Hsdp * Y{jBase,iBand}(:,jGroup))^2;
-%                                 end
-%                             end
-%                         end
-%                         gConstraints = [gConstraints, tempSum >= 0];
-%                     end
-%                     gConstraints = [gConstraints, grpPwr{iBase,1}(:,iBand) >= 0];
-%                 end
-%             end
-%         end
-%         
-%         objective = 0;
-%         for iBase = 1:nBases
-%             objective = objective + sum(grpPwr{iBase,1}(:));
-%         end
-%         
-%         options = sdpsettings('verbose',0,'solver','Gurobi');
-%         solverOut = solvesdp(gConstraints,objective,options);
-%         SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
-%         
-%         if ~solverOut.problem
-%             reIterate = 0;
-%         else
-%             display(yalmiperror(solverOut.problem));
-%         end
-%     end
-%     
-%     totalPower = double(objective);
-%     if totalPower < maxPower
-%         for iBase = 1:nBases
-%             grpP = double(grpPwr{iBase,1});
-%             for iBand = 1:nBands
-%                 tempPrecoder = Y{iBase,iBand} * diag(sqrt(grpP(:,iBand)));
-%                 SimStructs.baseStruct{iBase,1}.PG{iBand,1} = zeros(SimParams.nTxAntenna,nGroupsPerCell(iBase,1));
-%                 SimStructs.baseStruct{iBase,1}.PG{iBand,1}(enabledAntenna{iBase,iBand},:) = tempPrecoder;
-%             end
-%         end
-%         maxPower = totalPower;
-%     end
-%     
-%     if (totalPower - basePower) < epsilonT
-%         break;
-%     end
-%     
-% end
-
-rankCap = SimParams.rankCap;
-SimParams.Debug.SDP_vars.groupRank = cell(nBases,1);
-for iIterate = 1:nIterations
+if cMulticastEnabled == 0
     
-    reIterate = 1;
-    while reIterate
+    SimParams.Debug.SDP_vars.groupRank = cell(nBases,1);
+    for iIterate = 1:nIterations
+    
+        reIterate = 1;
+        while reIterate
+            for iBase = 1:nBases
+                SimParams.Debug.SDP_vars.groupRank{iBase,1} = zeros(1,nGroupsPerCell(iBase,1));
+                for iBand = 1:nBands
+                    dX = double(X{iBase,iBand});
+                    Y{iBase,iBand} = zeros(nTxAntenna,nGroupsPerCell(iBase,1));
+                    for iGroup = 1:nGroupsPerCell(iBase,1)
+                        [P, D] = eig(dX(:,:,iGroup));
+                        P = P(:,(diag(D) >= epsilonT));
+                        D = diag(D); D = D(D >= epsilonT);
+                        SimParams.Debug.SDP_vars.groupRank{iBase,1}(1,iGroup) = length(D);
+                        randSelection = complex(randn(length(D),1),randn(length(D),1));
+                        Y{iBase,iBand}(:,iGroup) = P * diag(sqrt(D)) * randSelection;
+                    end
+                end
+            end
+    
+            gConstraints = [];
+            grpPwr = cell(nBases,1);
+            for iBase = 1:nBases
+                grpPwr{iBase,1} = sdpvar(nGroupsPerCell(iBase,1),nBands);
+            end
+    
+            for iBand = 1:nBands
+                for iBase = 1:nBases
+                    for iGroup = 1:nGroupsPerCell(iBase,1)
+                        groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
+                        for iUser = 1:length(groupUsers)
+                            cUser = groupUsers(iUser,1);
+                            tempSum = -SimParams.N * reqSINRPerUser(cUser,1);
+                            for jBase = 1:nBases
+                                for jGroup = 1:nGroupsPerCell(jBase,1)
+                                    Hsdp = cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser);
+                                    if and((iBase == jBase),(iGroup == jGroup))
+                                        tempSum = tempSum + grpPwr{jBase,1}(jGroup,iBand) * abs(Hsdp * Y{jBase,iBand}(:,jGroup))^2;
+                                    else
+                                        tempSum = tempSum - reqSINRPerUser(cUser,1) * grpPwr{jBase,1}(jGroup,iBand) * abs(Hsdp * Y{jBase,iBand}(:,jGroup))^2;
+                                    end
+                                end
+                            end
+                            gConstraints = [gConstraints, tempSum >= 0];
+                        end
+                        gConstraints = [gConstraints, grpPwr{iBase,1}(:,iBand) >= 0];
+                    end
+                end
+            end
+    
+            objective = 0;
+            for iBase = 1:nBases
+                objective = objective + sum(grpPwr{iBase,1}(:));
+            end
+    
+            options = sdpsettings('verbose',0,'solver','Gurobi');
+            solverOut = solvesdp(gConstraints,objective,options);
+            SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+    
+            if ~solverOut.problem
+                reIterate = 0;
+            else
+                display(yalmiperror(solverOut.problem));
+            end
+        end
+    
+        totalPower = double(objective);
+        if totalPower < maxPower
+            for iBase = 1:nBases
+                grpP = double(grpPwr{iBase,1});
+                for iBand = 1:nBands
+                    tempPrecoder = Y{iBase,iBand} * diag(sqrt(grpP(:,iBand)));
+                    SimStructs.baseStruct{iBase,1}.PG{iBand,1} = zeros(SimParams.nTxAntenna,nGroupsPerCell(iBase,1));
+                    SimStructs.baseStruct{iBase,1}.PG{iBand,1}(enabledAntenna{iBase,iBand},:) = tempPrecoder;
+                end
+            end
+            maxPower = totalPower;
+        end
+    
+        if (totalPower - basePower) < epsilonT
+            break;
+        end
+    
+    end
+
+else
+    
+    rankCap = ones(nBases,1);
+    for iBase = 1:nBases
+        rankCap(iBase,1) = floor(SimParams.nTxAntenna / nGroupsPerCell(iBase,1));
+    end
+    SimParams.cGroupPrecoders = rankCap;
+    SimParams.Debug.SDP_vars.groupRank = cell(nBases,1);
+    
+    for iIterate = 1:nIterations
+        
         for iBase = 1:nBases
             SimParams.Debug.SDP_vars.groupRank{iBase,1} = zeros(1,nGroupsPerCell(iBase,1));
             for iBand = 1:nBands
                 dX = double(X{iBase,iBand});
                 Y{iBase,iBand} = zeros(nTxAntenna,rankCap(iBase,1),nGroupsPerCell(iBase,1));
                 for iGroup = 1:nGroupsPerCell(iBase,1)
-                    [P, D] = eig(dX(:,:,iGroup)); 
+                    [P, D] = eig(dX(:,:,iGroup));
                     P = P(:,(diag(D) >= epsilonT));
                     D = diag(D); D = D(D >= epsilonT);
                     SimParams.Debug.SDP_vars.groupRank{iBase,1}(1,iGroup) = length(D);
@@ -190,75 +197,99 @@ for iIterate = 1:nIterations
             end
         end
         
-        gConstraints = [];
-        grpPwr = cell(nBases,1);
-        for iBase = 1:nBases
-            grpPwr{iBase,1} = sdpvar(nGroupsPerCell(iBase,1),nBands);
-        end
-        
-        for iBand = 1:nBands
+        reIterate = 0;
+        while reIterate
+            
+            gConstraints = [];
+            grpPwr = cell(nBases,1);
             for iBase = 1:nBases
-                for iGroup = 1:nGroupsPerCell(iBase,1)
-                    groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
-                    for iUser = 1:length(groupUsers)
-                        cUser = groupUsers(iUser,1);
-                        tempSum = -SimParams.N * reqSINRPerUser(cUser,1);
-                        for jBase = 1:nBases
-                            for jGroup = 1:nGroupsPerCell(jBase,1)
-                                xSum = 0;
-                                Hsdp = cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser);
-                                if and((iBase == jBase),(iGroup == jGroup))
-                                    for iCap = 1:rankCap(jBase,1)
-                                        xSum = xSum + Hsdp * Y{jBase,iBand}(:,iCap,jGroup);
+                grpPwr{iBase,1} = sdpvar(nGroupsPerCell(iBase,1),nBands);
+            end
+            
+            for iBand = 1:nBands
+                for iBase = 1:nBases
+                    for iGroup = 1:nGroupsPerCell(iBase,1)
+                        groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
+                        for iUser = 1:length(groupUsers)
+                            cUser = groupUsers(iUser,1);
+                            tempSum = -SimParams.N * reqSINRPerUser(cUser,1);
+                            for jBase = 1:nBases
+                                for jGroup = 1:nGroupsPerCell(jBase,1)
+                                    xSum = 0;
+                                    Hsdp = cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser);
+                                    if and((iBase == jBase),(iGroup == jGroup))
+                                        for iCap = 1:rankCap(jBase,1)
+                                            xSum = xSum + Hsdp * Y{jBase,iBand}(:,iCap,jGroup);
+                                        end
+                                        tempSum = tempSum + grpPwr{jBase,1}(jGroup,iBand) * abs(xSum)^2;
+                                    else
+                                        for iCap = 1:rankCap(jBase,1)
+                                            tempSum = tempSum - reqSINRPerUser(cUser,1) * grpPwr{jBase,1}(jGroup,iBand) * abs(Hsdp * Y{jBase,iBand}(:,iCap,jGroup))^2;
+                                        end
                                     end
-                                    tempSum = tempSum + grpPwr{jBase,1}(jGroup,iBand) * abs(xSum)^2;
-                                else
-                                    for iCap = 1:rankCap(jBase,1)
-                                        tempSum = tempSum - reqSINRPerUser(cUser,1) * grpPwr{jBase,1}(jGroup,iBand) * abs(Hsdp * Y{jBase,iBand}(:,iCap,jGroup))^2;
-                                    end                                    
                                 end
                             end
+                            gConstraints = [gConstraints, tempSum >= 0];
                         end
-                        gConstraints = [gConstraints, tempSum >= 0];
+                        gConstraints = [gConstraints, grpPwr{iBase,1}(:,iBand) >= 0];
                     end
-                    gConstraints = [gConstraints, grpPwr{iBase,1}(:,iBand) >= 0];
                 end
+            end
+            
+            objective = 0;
+            for iBase = 1:nBases
+                objective = objective + sum(grpPwr{iBase,1}(:));
+            end
+            
+            options = sdpsettings('verbose',0,'solver','Gurobi');
+            solverOut = solvesdp(gConstraints,objective,options);
+            SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+            
+            if ~solverOut.problem
+                reIterate = 0;
+            else
+                display(yalmiperror(solverOut.problem));
             end
         end
         
-        objective = 0;
+        xPrecoder = cell(nBases,nBands);
         for iBase = 1:nBases
-            objective = objective + sum(grpPwr{iBase,1}(:));
-        end
-        
-        options = sdpsettings('verbose',0,'solver','Gurobi');
-        solverOut = solvesdp(gConstraints,objective,options);
-        SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
-        
-        if ~solverOut.problem
-            reIterate = 0;
-        else
-            display(yalmiperror(solverOut.problem));
-        end
-    end
-    
-    totalPower = double(objective);
-    if totalPower < maxPower
-        for iBase = 1:nBases
-            grpP = double(grpPwr{iBase,1});
             for iBand = 1:nBands
+                xPrecoder{iBase,iBand} = zeros(SimParams.nTxAntenna,rankCap(iBase,1) * nGroupsPerCell(iBase,1));
+            end
+        end
+        
+        for iBase = 1:nBases
+            %         grpP = double(grpPwr{iBase,1});
+            for iBand = 1:nBands
+                SimStructs.baseStruct{iBase,1}.PG{iBand,1} = zeros(SimParams.nTxAntenna,rankCap(iBase,1) * nGroupsPerCell(iBase,1));
                 for iGroup = 1:nGroupsPerCell(iBase,1)
-                    tempPrecoder = Y{iBase,iBand}(:,:,iGroup) * sqrt(grpP(iGroup,iBand));
-                    SimStructs.baseStruct{iBase,1}.PG{iBand,iGroup} = zeros(SimParams.nTxAntenna,rankCap(iBase,1));
-                    SimStructs.baseStruct{iBase,1}.PG{iBand,iGroup}(enabledAntenna{iBase,iBand},:) = tempPrecoder;
+                    
+                    eIndex = iGroup * rankCap(iBase,1);
+                    sIndex = (iGroup - 1) * rankCap(iBase,1) + 1;
+                    tempPrecoder = Y{iBase,iBand}(:,:,iGroup);% * sqrt(grpP(iGroup,iBand));
+                    xPrecoder{iBase,iBand}(enabledAntenna{iBase,iBand},sIndex:eIndex) = tempPrecoder;
                 end
             end
         end
-        maxPower = totalPower;
-    end
-    
-    if (totalPower - basePower) < epsilonT
-        break;
+        
+        tX = cell2mat(xPrecoder);
+        totalPower = norm(tX(:))^2;
+        
+        if totalPower < maxPower
+            for iBase = 1:nBases
+                for iBand = 1:nBands
+                    SimStructs.baseStruct{iBase,1}.PG{iBand,1} = xPrecoder{iBase,iBand}
+                end
+            end
+            
+            maxPower = totalPower;
+        end
+        
+        if (maxPower - basePower) < epsilonT
+            break;
+        end
+        
     end
     
 end
