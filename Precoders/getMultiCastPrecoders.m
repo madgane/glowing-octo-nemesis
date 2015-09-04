@@ -25,11 +25,11 @@ switch selectionMethod
     
     case 'SDPMethod'
         
-        [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,0,250);
+        [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,0,50);
         
     case 'ConicMethod'
         
-        searchType = 'SDP';
+        searchType = 'Dual';
         switch searchType
             case 'SDP'
                 [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,0,1);

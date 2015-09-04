@@ -1,4 +1,7 @@
-function displayOutputs(SimParams, SimStructs)
+function displayOutputs(xParams, xStructs)
+
+SimParams = xParams{1,1};
+SimStructs = xStructs{1,1};
 
 switch SimParams.plotMode
     
@@ -115,27 +118,48 @@ switch SimParams.plotMode
 
     case 'DispMCInfo'
         
-        totalBFPower = 0;
-        totalSDPPower = 0;       
-        displayQueues(SimParams,SimStructs);
-        for iBand = 1:SimParams.nBands
-            for iBase = 1:SimParams.nBases
-                sdpPower = 0;
-                for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
-                    if ~isempty(SimStructs.baseStruct{iBase,1}.P_SDP{iBand,1})
-                        sdpPower = sdpPower + real(trace(SimStructs.baseStruct{iBase,1}.P_SDP{iBand,1}(:,:,iGroup)));
+        baseSDP_Power = zeros(1,length(xParams));
+        baseBF_Power = zeros(1,length(xParams));        
+        
+        for iAntennaArray = 1:length(xParams)
+                   
+            SimParams = xParams{iAntennaArray,1};
+            SimStructs = xStructs{iAntennaArray,1};
+            
+            totalBFPower = 0;
+            totalSDPPower = 0;
+            displayQueues(SimParams,SimStructs);
+            for iBand = 1:SimParams.nBands
+                for iBase = 1:SimParams.nBases
+                    sdpPower = 0;
+                    for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
+                        if ~isempty(SimStructs.baseStruct{iBase,1}.P_SDP{iBand,1})
+                            sdpPower = sdpPower + real(trace(SimStructs.baseStruct{iBase,1}.P_SDP{iBand,1}(:,:,iGroup)));
+                        end
                     end
+                    bfPower = real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}'));
+                    fprintf('Transmit Power on SC [%d] from BS [%d] : BF Pwr - %f \t SDP Pwr (LB) - %f \n',iBand,iBase,bfPower,sdpPower);
+                    
+                    totalBFPower = totalBFPower + bfPower;
+                    totalSDPPower = sdpPower + totalSDPPower;
                 end
-                bfPower = real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}'));
-                fprintf('Transmit Power on SC [%d] from BS [%d] : BF Pwr - %f \t SDP Pwr (LB) - %f \n',iBand,iBase,bfPower,sdpPower);
-                
-                totalBFPower = totalBFPower + bfPower;
-                totalSDPPower = sdpPower + totalSDPPower;
+                fprintf('\n');
             end
-            fprintf('\n');
+            
+            fprintf('Total Power SDP (LB) - %f, BF - %f \n',totalSDPPower,totalBFPower);
+            baseSDP_Power(1,iAntennaArray) = totalSDPPower;
+            baseBF_Power(1,iAntennaArray) = totalBFPower;
+            
         end
         
-        fprintf('Total Power SDP (LB) - %f, BF - %f \n',totalSDPPower,totalBFPower);
+        if strcmpi(SimParams.DesignType,'SDPMethod')
+            plotFigure(struct('X',SimParams.nAntennaArray,'Y',baseSDP_Power,'N',1));
+        end
+        plotFigure(struct('X',SimParams.nAntennaArray,'Y',baseBF_Power,'N',1));
+        
+        xlabel('Number of Antenna Elements ({N_T})');
+        ylabel('Power in Watts');
+
         
     otherwise
         

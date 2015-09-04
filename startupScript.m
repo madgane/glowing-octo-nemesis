@@ -42,7 +42,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'KKTMethod';
+SimParams.DesignType = 'SDPMethod';
 
 SimParams.nExchangesOTA = 200;
 SimParams.exchangeResetInterval = 1;
@@ -59,7 +59,7 @@ SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 1e100;
 
 SimParams.nBands = 1;
-SimParams.nBases = 1;
+SimParams.nBases = 2;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
 
@@ -67,16 +67,16 @@ SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = 8;
+SimParams.maxArrival = 5;
 SimParams.groupArrivalFreq = 1;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
 if strcmp(SimParams.multiCasting,'true')
-    SimParams.nGroupArray = 2;
-    SimParams.usersPerGroup = 1;
-    SimParams.nAntennaArray = 10;
+    SimParams.nGroupArray = 4;
+    SimParams.usersPerGroup = 5;
+    SimParams.nAntennaArray = [20:5:50];
     SimParams.nTxAntennaEnabled = 20;
     SimParams.cGroupPrecoders = ones(SimParams.nBases,1);
     
@@ -86,7 +86,11 @@ if strcmp(SimParams.multiCasting,'true')
     SimParams.solverTiming = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));    
 end
 
+gXParams = cell(length(SimParams.nAntennaArray),1);
+gXStructs = cell(length(SimParams.nAntennaArray),1);
+
 for iAntennaArray = 1:length(SimParams.nAntennaArray)
+    
     SimParams.iAntennaArray = iAntennaArray;
     for iGroupArray = 1:length(SimParams.nGroupArray)
         SimParams.iGroupArray = iGroupArray;
@@ -160,15 +164,20 @@ for iAntennaArray = 1:length(SimParams.nAntennaArray)
                     display(squeeze(SimParams.QueueInfo.queueBacklogs(iSNR,:,iPkt)));
                 end
                 
-                cState = sprintf('SINR completed - %d',SimParams.snrIndex(iSNR));disp(cState);
             end
             
         end
     end
+    
+    cState = sprintf('Solved for Total Antenna Elements - %d',SimParams.nTxAntenna);disp(cState);
+    
+    gXParams{iAntennaArray,1} = SimParams;
+    gXStructs{iAntennaArray,1} = SimStructs;    
+    
 end
 
 SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;
-displayOutputs(SimParams,SimStructs);
+displayOutputs(gXParams,gXStructs);
 
 if strcmp(saveContents,'true')
 

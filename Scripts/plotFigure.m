@@ -1,8 +1,11 @@
 
 function plotFigure(figStruct)
 
-figColor = 'm';
-figMarker = 'v';
+ovMarker = {'o','v','d','+','*','p','s'};
+
+
+figColor = rand(1,3);
+figMarker = ovMarker{1,randi(length(ovMarker),1,1)};
 figLineType = '-.';
 figLineWidth = 1;
 figMarkerSize = 3;

@@ -16,12 +16,13 @@ for iBand = 1:nBands
     end
 end
 
-dualGroup = zeros(nUsers,nBands);
-
 while iterateSCA
 
-    stepSize = 1e-2;
-    for dualIterate = 1:100
+    stepSize = 1e-4;
+    dualGroup = ones(nUsers,nBands);
+    for dualIterate = 1:500
+        
+        stepSize = stepSize * 0.7;
         for iBand = 1:nBands
             for iBase = 1:nBases
                 for iGroup = 1:nGroupsPerCell(iBase,1)

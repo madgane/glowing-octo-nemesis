@@ -15,6 +15,7 @@ else
     nTxAntenna = SimParams.nTxAntenna;
 end
 
+SimParams.Debug.groupRank = [];
 
 gConstraints = [];
 X = cell(nBases,nBands);
@@ -57,7 +58,7 @@ for iBand = 1:nBands
     end
 end
 
-options = sdpsettings('verbose',0,'solver','DSDP');
+options = sdpsettings('verbose',0,'solver','CSDP');
 solverOut = optimize(gConstraints,objective,options);
 SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
 
@@ -102,6 +103,11 @@ if cMulticastEnabled == 0
                         SimParams.Debug.SDP_vars.groupRank{iBase,1}(1,iGroup) = length(D);
                         randSelection = complex(randn(length(D),1),randn(length(D),1));
                         Y{iBase,iBand}(:,iGroup) = P * diag(sqrt(D)) * randSelection;
+
+                        if iIterate == 1
+                            SimParams.Debug.groupRank = [SimParams.Debug.groupRank, length(D)];
+                        end
+
                     end
                 end
             end
@@ -151,20 +157,36 @@ if cMulticastEnabled == 0
                 display(yalmiperror(solverOut.problem));
             end
         end
-    
-        totalPower = double(objective);
-        if totalPower < maxPower
-            for iBase = 1:nBases
-                grpP = double(grpPwr{iBase,1});
-                for iBand = 1:nBands
-                    tempPrecoder = Y{iBase,iBand} * diag(sqrt(grpP(:,iBand)));
-                    SimStructs.baseStruct{iBase,1}.PG{iBand,1} = zeros(SimParams.nTxAntenna,nGroupsPerCell(iBase,1));
-                    SimStructs.baseStruct{iBase,1}.PG{iBand,1}(enabledAntenna{iBase,iBand},:) = tempPrecoder;
-                end
+        
+        xPrecoder = cell(nBases,nBands);
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                xPrecoder{iBase,iBand} = zeros(SimParams.nTxAntenna,nGroupsPerCell(iBase,1));
             end
-            maxPower = totalPower;
         end
     
+        for iBase = 1:nBases
+            grpP = double(grpPwr{iBase,1});
+            for iBand = 1:nBands
+                tempPrecoder = Y{iBase,iBand} * diag(sqrt(grpP(:,iBand)));
+                xPrecoder{iBase,iBand}(enabledAntenna{iBase,iBand},:) = tempPrecoder;
+            end
+        end
+    
+        tX = cell2mat(xPrecoder);
+        totalPower = norm(tX(:))^2;
+        
+        if totalPower < maxPower
+            for iBase = 1:nBases
+                for iBand = 1:nBands
+                    SimStructs.baseStruct{iBase,1}.PG{iBand,1} = xPrecoder{iBase,iBand};
+                end
+            end
+            
+            maxPower = totalPower;
+        end
+
+        
         if (totalPower - basePower) < epsilonT
             break;
         end
@@ -279,7 +301,7 @@ else
         if totalPower < maxPower
             for iBase = 1:nBases
                 for iBand = 1:nBands
-                    SimStructs.baseStruct{iBase,1}.PG{iBand,1} = xPrecoder{iBase,iBand}
+                    SimStructs.baseStruct{iBase,1}.PG{iBand,1} = xPrecoder{iBase,iBand};
                 end
             end
             
