@@ -5,11 +5,10 @@ initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 
-maxObj = 1e5;
+maxObj = 1e2;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
-iterateSCAMax = 50;
 
 reqSINRPerUser = 2.^(QueuedPkts / nBands) - 1;
 if isfield(SimParams.Debug,'MultiCastSDPExchange')
@@ -36,12 +35,8 @@ while iterateSCA
     end
     
     switch ObjType
-        case {'FC','Dual'}
+        case 'Dual'
             feasVariable = sdpvar(1,1);
-    end
-    
-    if sum(strcmpi({'FC','Dual'},ObjType))
-        
     end
     
     for iBand = 1:nBands
@@ -71,8 +66,10 @@ while iterateSCA
                     switch ObjType
                         case 'MP'
                             gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression <= 0];
-                        case {'FC','Dual'}
+                        case 'Dual'
                             gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression <= feasVariable];
+                        case 'FC'
+                            gConstraints = [gConstraints , reqSINRPerUser(cUser,1) * (tempVec' * tempVec) - tempExpression <= 0];
                     end
                     
                 end
@@ -82,7 +79,7 @@ while iterateSCA
     
     switch ObjType
         case 'FC'
-            objective = feasVariable * maxObj;            
+            objective = [];
         case 'MP'            
             objective = 0;
             for iBand = 1:nBands
@@ -100,9 +97,9 @@ while iterateSCA
             objective = max(feasVariable) * maxObj + objective;
     end
     
-    options = sdpsettings('verbose',0,'solver','fmincon');
+    options = sdpsettings('verbose',0,'solver','Fmincon');
     solverOut = optimize(gConstraints,objective,options);
-    SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+    SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
     if solverOut.problem == 0
         for iBand = 1:nBands
@@ -129,17 +126,24 @@ while iterateSCA
     end
     
     switch ObjType
-        case {'FC','Dual'}
-            if double(feasVariable) < 0
+        case 'Dual'
+            if (double(feasVariable) < 0)
                 break;
             end
+            
+            fprintf('Setting maxObj - %4.2f, Feasible Variable - %f \n',maxObj,double(feasVariable));
+            
         case 'MP'
             objective = double(objective);
-            if abs(objective - minPower) < epsilonT
+            if (abs(objective - minPower) / abs(minPower)) < epsilonT
                 iterateSCA = 0;
             else
                 minPower = objective;
             end
+            display(double(objective));
+        case 'FC'
+            yalmiperror(solverOut.problem);
+            break;
     end
     
     if iIterateSCA < iterateSCAMax
@@ -147,9 +151,6 @@ while iterateSCA
     else
         iterateSCA = 0;
     end
-    
-    display(objective);
-    
 end
 
 for iBase = 1:nBases

@@ -153,9 +153,9 @@ switch SimParams.plotMode
         end
         
         if strcmpi(SimParams.DesignType,'SDPMethod')
-            plotFigure(struct('X',SimParams.nAntennaArray,'Y',baseSDP_Power,'N',1));
+            plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseSDP_Power,'N',1));
         end
-        plotFigure(struct('X',SimParams.nAntennaArray,'Y',baseBF_Power,'N',1));
+        plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseBF_Power,'N',1));
         
         xlabel('Number of Antenna Elements ({N_T})');
         ylabel('Power in Watts');

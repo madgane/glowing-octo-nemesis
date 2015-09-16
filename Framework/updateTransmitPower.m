@@ -17,5 +17,5 @@ for iBand = 1:SimParams.nBands
     fprintf('\n');
 end
 
-SimParams.totalTXpower_G(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = bfPower + SimParams.totalTXpower_G(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
-SimParams.totalTXpower_SDP(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = sdpPower + SimParams.totalTXpower_SDP(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+SimParams.totalTXpower_G(SimParams.iPkt,SimParams.iAntennaArray) = bfPower + SimParams.totalTXpower_G(SimParams.iPkt,SimParams.iAntennaArray);
+SimParams.totalTXpower_SDP(SimParams.iPkt,SimParams.iAntennaArray) = sdpPower + SimParams.totalTXpower_SDP(SimParams.iPkt,SimParams.iAntennaArray);

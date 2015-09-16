@@ -14,6 +14,17 @@ prevObjective = -100;
 enabledAntenna = cell(nBases,nBands);
 nEnabledAntenna = zeros(nBases,nBands);
 
+if (SimParams.nTxAntennaEnabled == SimParams.nTxAntenna)
+    for iBase = 1:nBases
+        for iBand = 1:nBands
+            enabledAntenna{iBase,iBand} = linspace(1,SimParams.nTxAntenna,SimParams.nTxAntenna)';
+        end
+    end
+    
+    SimParams.Debug.MultiCastSDPExchange = enabledAntenna;
+    [SimParams, SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations);
+end
+
 while weightedDualInf
     
     gConstraints = [];
@@ -67,7 +78,7 @@ while weightedDualInf
     
     options = sdpsettings('verbose',0,'solver','DSDP');
     solverOut = solvesdp(gConstraints,objective,options);
-    SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+    SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
     if solverOut.problem
         display(solverOut);
@@ -83,14 +94,11 @@ while weightedDualInf
         for iBase = 1:nBases
             for iBand = 1:nBands
                 nEnabledAntenna(iBase,iBand) = sum(diag(double(Xtilde{iBase,iBand})) > epsilonT);
-                if nEnabledAntenna(iBase,iBand) >= SimParams.nTxAntennaEnabled
-                    U{iBase,iBand} = 1./(double(Xtilde{iBase,iBand}) + epsilonT);
-                end
+                U{iBase,iBand} = 1./(double(Xtilde{iBase,iBand}) + epsilonT);
             end
         end
     end
     
-    display(nEnabledAntenna);
     objective = double(objective);
     if abs(objective - prevObjective) < epsilonT
         weightedDualInf = 0;
@@ -101,6 +109,8 @@ while weightedDualInf
 end
 
 bisectionBasedDualSearch = 0;
+fprintf('Minumum number of active antenna elements required - %d \n',nEnabledAntenna);
+
 for iBase = 1:nBases
     for iBand = 1:nBands
         if nEnabledAntenna(iBase,iBand) ~= SimParams.nTxAntennaEnabled
@@ -115,12 +125,20 @@ end
 
 if bisectionBasedDualSearch
     
+    dualLambdaMax = 0;
+    for iBase = 1:nBases
+        for iBand = 1:nBands
+            tX = double(X{iBase,iBand});
+            dualLambdaMax = dualLambdaMax + tX(:)' * tX(:);
+        end
+    end
+    
     bisectionSearch = 1;
     dualLambdaMin = zeros(nBases,nBands);
-    dualLambdaMax = 1e5 * ones(nBases,nBands);
+    dualLambdaMax = dualLambdaMax * ones(nBases,nBands);
     
-    while bisectionSearch        
-               
+    while bisectionSearch
+        
         gConstraints = [];
         X = cell(nBases,nBands);
         Xtilde = cell(nBases,nBands);
@@ -175,9 +193,9 @@ if bisectionBasedDualSearch
             end
         end
         
-        options = sdpsettings('verbose',0,'solver','Mosek');
+        options = sdpsettings('verbose',0,'solver','DSDP');
         solverOut = solvesdp(gConstraints,objective,options);
-        SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+        SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
         
         if solverOut.problem == 0
             for iBase = 1:nBases
@@ -193,15 +211,17 @@ if bisectionBasedDualSearch
                 end
             end
         else
+            display(yalmiperror(solverOut.problem));
             for iBase = 1:nBases
                 for iBand = 1:nBands
-                    dualLambdaMax(iBase,iBand) = dualLambdaMax(iBase,iBand) * 2;
+                    dualLambdaMax(iBase,iBand) = dualLambdaMax(iBase,iBand) / 2;
                 end
             end
         end
         
         conditionMet = 0;
-        display(nEnabledAntenna);
+        fprintf('Current number of active antenna elements - %d \n',nEnabledAntenna);
+        
         for iBand = 1:nBands
             for iBase = 1:nBases
                 if nEnabledAntenna(iBase,iBand) == SimParams.nTxAntennaEnabled
@@ -225,7 +245,7 @@ end
 
 if reducedSDPMultiCasting
     SimParams.Debug.MultiCastSDPExchange = enabledAntenna;
-    [SimParams, SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations);    
+    [SimParams, SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations);
 end
 
 end

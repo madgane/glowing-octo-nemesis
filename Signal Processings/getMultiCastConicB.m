@@ -5,12 +5,10 @@ initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 bX = SimParams.Debug.tempResource{4,1}{1,1};
-gX = SimParams.Debug.tempResource{4,1}{2,1};
 
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
-iterateSCAMax = 50;
 
 if isfield(SimParams.Debug,'MultiCastSDPExchange')
     nTxAntenna = SimParams.nTxAntennaEnabled;
@@ -37,8 +35,10 @@ while iterateSCA
     
     Beta = sdpvar(nUsers,nBands,'full');
     Gamma = sdpvar(nUsers,nBands,'full');
-    if sum(strcmpi({'FC','Dual'},ObjType))
-        feasVariable = sdpvar(nUsers,1,'full');
+
+    switch ObjType
+        case 'Dual'
+            feasVariable = sdpvar(1,1);
     end
     
     for iBase = 1:nBases
@@ -46,16 +46,15 @@ while iterateSCA
             groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
             for iUser = 1:length(groupUsers)
                 cUser = groupUsers(iUser,1);
-                feasConstraint = 0;
                 for iBand = 1:nBands
                     
-                    Hsdp = cH{iBase,iBand}(:,enabledAntenna{iBase,iBand},cUser);
-                    
                     tempVec = [sqrt(SimParams.N)];
+                    Hsdp = cH{iBase,iBand}(:,enabledAntenna{iBase,iBand},cUser);                    
+                    
                     riX = real(Hsdp * X{iBase,iBand}(:,iGroup));
                     iiX = imag(Hsdp * X{iBase,iBand}(:,iGroup));
                     fixedPoint = (rX(cUser,iBand)^2 + iX(cUser,iBand)^2) / bX(cUser,iBand);
-                    tempExpression = fixedPoint + 2 * (rX(cUser,iBand) * (riX - rX(cUser,iBand)) + iX(cUser,iBand) * (iiX - iX(cUser,iBand))) ...
+                    tempExpression = fixedPoint + (2 / bX(cUser,iBand)) * (rX(cUser,iBand) * (riX - rX(cUser,iBand)) + iX(cUser,iBand) * (iiX - iX(cUser,iBand))) ...
                         - (fixedPoint / bX(cUser,iBand)) * (Beta(cUser,iBand) - bX(cUser,iBand));
                     
                     for jBase = 1:nBases
@@ -69,24 +68,28 @@ while iterateSCA
                         end
                     end
                     
-                    fixedPoint = 1 + gX(cUser,iBand);
-                    feasConstraint = feasConstraint + log(fixedPoint) + (1 / fixedPoint) * (Gamma(cUser,iBand) - gX(cUser,iBand))...
-                        - (1 / (2 * fixedPoint^2)) * (Gamma(cUser,iBand) - gX(cUser,iBand))^2;
                     gConstraints = [gConstraints, Gamma(cUser,iBand) - tempExpression <= 0];
-                    gConstraints = [gConstraints, (tempVec' * tempVec) - Beta(cUser,iBand) <= 0];
+                    gConstraints = [gConstraints, (tempVec' * tempVec) - Beta(cUser,iBand) <= 0];                    
                 end
-                if sum(strcmpi({'FC','Dual'},ObjType))
-                    gConstraints = [gConstraints , QueuedNats(cUser,1) - feasConstraint <= feasVariable(cUser,1)];
-                else
-                    gConstraints = [gConstraints, QueuedNats(cUser,1) - feasConstraint <= 0];
+                
+                cGamma = Gamma(cUser,:) + 1;
+
+                switch ObjType
+                    case 'MP'                        
+                        gConstraints = [gConstraints , gReqSINRPerUser(cUser,1) - geomean(cGamma(:)) <= 0];
+                    case 'Dual'
+                        gConstraints = [gConstraints , gReqSINRPerUser(cUser,1) - geomean(cGamma(:)) <= feasVariable];
+                    case 'FC'
+                        gConstraints = [gConstraints , gReqSINRPerUser(cUser,1) - geomean(cGamma(:)) <= 0];
                 end
+
             end
         end
     end
     
     switch ObjType
         case 'FC'
-            objective = sum(max(feasVariable(:),0));
+            objective = [];
         case 'MP'
             objective = 0;
             for iBand = 1:nBands
@@ -101,14 +104,14 @@ while iterateSCA
                     objective = objective + (X{iBase,iBand}(:)' * X{iBase,iBand}(:));
                 end
             end
-            objective = sum(max(feasVariable(:),0)) + objective * 1e-4;
+            objective = maxObj * feasVariable + objective;
     end
     
-    options = sdpsettings('verbose',0,'solver','mosek');
-    solverOut = solvesdp(gConstraints,objective,options);
-    SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray,SimParams.iGroupArray);
+    options = sdpsettings('verbose',0,'solver','Mosek');
+    solverOut = optimize(gConstraints,objective,options);
+    SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
-    if solverOut.problem == 0
+    if ((solverOut.problem == 0) || (solverOut.problem == 3) || (solverOut.problem == 4))
         for iBand = 1:nBands
             for iBase = 1:nBases
                 for iGroup = 1:nGroupsPerCell(iBase,1)
@@ -122,22 +125,39 @@ while iterateSCA
                 end
             end
         end
-        gX = full(double(Gamma));bX = full(double(Beta));
+        bX = full(double(Beta));
     else
         display(solverOut);
         if sum(strcmpi({'FC','Dual'},ObjType))
             rX = zeros(size(rX));iX = zeros(size(iX));
         else
             display(solverOut);
-            break;
+            continue;
         end
     end
     
-    if sum(strcmpi({'FC','Dual'},ObjType))
-        display(double(feasVariable(:))');
-        if sum(double(feasVariable) <= 0) == nUsers
-            break;
-        end
+    switch ObjType
+        case 'Dual'
+            if (double(feasVariable) < 0)
+                break;
+            end
+            
+            fprintf('Feasible Variable - %f \n',double(feasVariable));
+            
+        case 'MP'
+            objective = double(objective);
+            if (abs(objective - minPower) / abs(minPower)) < epsilonT
+                iterateSCA = 0;
+            else
+                minPower = objective;
+            end
+            display(double(objective));
+        case 'FC'
+            if solverOut.problem == 0
+                break;
+            else
+                yalmiperror(solverOut.problem);
+            end
     end
     
     if iIterateSCA < iterateSCAMax
@@ -145,16 +165,7 @@ while iterateSCA
     else
         iterateSCA = 0;
     end
-    
-    objective = double(objective);
-    if abs(objective - minPower) < epsilonT
-        iterateSCA = 0;
-    else
-        minPower = objective;
-    end
-    
-    display(objective);
-    
+   
 end
 
 for iBase = 1:nBases
@@ -166,6 +177,5 @@ for iBase = 1:nBases
 end
 
 SimParams.Debug.tempResource{4,1}{1,1} = bX;
-SimParams.Debug.tempResource{4,1}{2,1} = gX;
 
 end

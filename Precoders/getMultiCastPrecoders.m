@@ -14,29 +14,35 @@ if isempty(underscore_location)
     selectionMethod = SimParams.DesignType;
 else
     selectionMethod = SimParams.DesignType(1:underscore_location-1);
+    designType = SimParams.DesignType(underscore_location+1:end);
 end
 
 SimParams.Debug.tempResource{2,1}{1,1} = randn(nUsers,nBands);
 SimParams.Debug.tempResource{3,1}{1,1} = randn(nUsers,nBands);
 SimParams.Debug.tempResource{4,1}{1,1} = rand(nUsers,nBands) + 1;
-SimParams.Debug.tempResource{4,1}{2,1} = zeros(nUsers,nBands);
+
+if isfield(SimParams.Debug,'MultiCastSDPExchange')
+    SimParams.Debug = rmfield(SimParams.Debug,'MultiCastSDPExchange');
+end
 
 switch selectionMethod
     
     case 'SDPMethod'
         
-        [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,0,50);
+        [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,200);
         
     case 'ConicMethod'
         
         searchType = 'Dual';
         switch searchType
             case 'SDP'
-                [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,0,1);
+                [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,1);
             case 'FC'
                 [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
             case 'Dual'
                 [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
+            case 'KKT'
+                [SimParams,SimStructs] = getKKTMCPrecodersInitialization(SimParams,SimStructs);
             otherwise
                 for iBase = 1:nBases
                     for iBand = 1:nBands
@@ -69,11 +75,11 @@ switch selectionMethod
         
     case 'SDPASMethod'
         
-        [SimParams,SimStructs] = getMultiCastSDPAS(SimParams,SimStructs,50);
+        [SimParams,SimStructs] = getMultiCastSDPAS(SimParams,SimStructs,10);
         
     case 'ConicASMethod'
         
-        searchType = 'FC';
+        searchType = 'Dual';
         switch searchType
             case 'SDP'
                 [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,0,1);
@@ -81,6 +87,8 @@ switch selectionMethod
                 [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
             case 'Dual'
                 [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
+            case 'KKT'
+                [SimParams,SimStructs] = getKKTMCPrecodersInitialization(SimParams,SimStructs);
             otherwise
                 for iBase = 1:nBases
                     for iBand = 1:nBands
@@ -105,13 +113,25 @@ switch selectionMethod
         end
         
         display('Initialization point found !');
-        [SimParams,SimStructs] = getMultiCastConicAS(SimParams,SimStructs);
+        
+        switch designType
+            
+            case 'A'
+                [SimParams,SimStructs] = getMultiCastConicAS_A(SimParams,SimStructs);
+            case 'B'
+                [SimParams,SimStructs] = getMultiCastConicAS_B(SimParams,SimStructs);
+            case 'C'
+                [SimParams,SimStructs] = getMultiCastConicAS_C(SimParams,SimStructs);
+                
+        end
+        
         display('Antenna subset selected !');
+        
         [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,'MP');
         
     case 'ConicMethodB'
         
-        searchType = 'FC';
+        searchType = 'Dual';
         switch searchType
             case 'FC'
                 [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,searchType);
@@ -145,6 +165,19 @@ switch selectionMethod
         
     case 'ConicBSMethod'
         
+%         if SimParams.iAntennaArray == 1
+%             [SimParams,SimStructs] = getMultiCastConicS(SimParams,SimStructs);
+%         end
+%         
+%         if (SimParams.Debug.maxActiveAntenna > SimParams.nTxAntennaEnabled)
+%             for iBase = 1:nBases
+%                 for iBand = 1:nBands
+%                     SimStructs.baseStruct{iBase,1}.PG{iBand,1} = complex(randn(SimParams.nTxAntenna,nGroupsPerCell(iBase,1)),randn(SimParams.nTxAntenna,nGroupsPerCell(iBase,1)));
+%                 end
+%             end
+%             return;
+%         end
+        
         searchType = 'Dual';
         switch searchType
             case 'FC'
@@ -175,10 +208,20 @@ switch selectionMethod
         end
         
         display('Initialization point found !');
-        [SimParams,SimStructs] = getMultiCastConicBS(SimParams,SimStructs);
+        switch designType
+            
+            case 'A'
+                [SimParams,SimStructs] = getMultiCastConicBS_A(SimParams,SimStructs);
+            case 'B'
+                [SimParams,SimStructs] = getMultiCastConicBS_B(SimParams,SimStructs);
+            case 'C'
+                [SimParams,SimStructs] = getMultiCastConicBS_C(SimParams,SimStructs);
+                
+        end
+
         display('Antenna subset selected !');
         [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
-        
+                        
     otherwise
         display('Unknown Precoding Method !');
         

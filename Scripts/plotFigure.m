@@ -1,8 +1,8 @@
 
 function plotFigure(figStruct)
 
+rng('shuffle');
 ovMarker = {'o','v','d','+','*','p','s'};
-
 
 figColor = rand(1,3);
 figMarker = ovMarker{1,randi(length(ovMarker),1,1)};

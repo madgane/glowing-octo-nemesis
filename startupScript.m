@@ -4,7 +4,7 @@
 % -------------------------------------------------------------------------
 
 clc;
-clear workspace;
+clear all;
 
 saveContents = 'false';
 if strfind(saveContents,'true')
@@ -42,9 +42,9 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'SDPMethod';
+SimParams.DesignType = 'ConicBSMethod_B';
 
-SimParams.nExchangesOTA = 200;
+SimParams.nExchangesOTA = 50;
 SimParams.exchangeResetInterval = 1;
 SimParams.nExchangesOBH = 1;
 
@@ -58,8 +58,8 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 1e100;
 
-SimParams.nBands = 1;
-SimParams.nBases = 2;
+SimParams.nBands = 3;
+SimParams.nBases = 1;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
 
@@ -67,112 +67,108 @@ SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = 5;
+SimParams.maxArrival = 12;
 SimParams.groupArrivalFreq = 1;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
 SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-20];
 
 if strcmp(SimParams.multiCasting,'true')
-    SimParams.nGroupArray = 4;
-    SimParams.usersPerGroup = 5;
-    SimParams.nAntennaArray = [20:5:50];
-    SimParams.nTxAntennaEnabled = 20;
-    SimParams.cGroupPrecoders = ones(SimParams.nBases,1);
+    SimParams.nGroupArray = 2;
+    SimParams.usersPerGroup = 4;
+    SimParams.nAntennaArray = 10;
+    SimParams.nTxAntennaEnabledArray = [8:10];
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
-    SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
-    SimParams.totalTXpower_SDP = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));
-    SimParams.solverTiming = zeros(length(SimParams.maxArrival),length(SimParams.nAntennaArray),length(SimParams.nGroupArray));    
+    SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));
+    SimParams.totalTXpower_SDP = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));
+    SimParams.solverTiming = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));
 end
 
-gXParams = cell(length(SimParams.nAntennaArray),1);
-gXStructs = cell(length(SimParams.nAntennaArray),1);
+gXParams = cell(length(SimParams.nTxAntennaEnabledArray),1);
+gXStructs = cell(length(SimParams.nTxAntennaEnabledArray),1);
 
-for iAntennaArray = 1:length(SimParams.nAntennaArray)
+for iAntennaArray = 1:length(SimParams.nTxAntennaEnabledArray)
     
     SimParams.iAntennaArray = iAntennaArray;
-    for iGroupArray = 1:length(SimParams.nGroupArray)
-        SimParams.iGroupArray = iGroupArray;
-        nGroupsPerCell = SimParams.nGroupArray(1,iGroupArray);
-        for iBase = 1:SimParams.nBases
-            SimParams.mcGroups{iBase,1} = [];
-            for iGroup = 1:nGroupsPerCell
-                SimParams.mcGroups{iBase,1} = [SimParams.mcGroups{iBase,1}, SimParams.usersPerGroup];
-            end
+    nGroupsPerCell = SimParams.nGroupArray;
+    for iBase = 1:SimParams.nBases
+        SimParams.mcGroups{iBase,1} = [];
+        for iGroup = 1:nGroupsPerCell
+            SimParams.mcGroups{iBase,1} = [SimParams.mcGroups{iBase,1}, SimParams.usersPerGroup];
         end
+    end
+    
+    SimParams.nRxAntenna = 1;
+    SimParams.nTxAntenna = SimParams.nAntennaArray;
+    SimParams.nUsers = SimParams.usersPerGroup * SimParams.nBases * nGroupsPerCell;
+    SimParams.nTxAntennaEnabled = SimParams.nTxAntennaEnabledArray(1,SimParams.iAntennaArray);
+    
+    [SimParams,SimStructs] = initializeBuffers(SimParams);
+    
+    for iPkt = 1:length(SimParams.maxArrival)
         
-        SimParams.nRxAntenna = 1;
-        SimParams.nTxAntenna = SimParams.nAntennaArray(1,iAntennaArray);
-        SimParams.nUsers = SimParams.usersPerGroup * SimParams.nBases * nGroupsPerCell;
-                
-        [SimParams,SimStructs] = initializeBuffers(SimParams);
+        SimParams.iPkt = iPkt;
+        [SimParams,SimStructs] = fwkInitialization(SimParams,SimStructs);
         
-        for iPkt = 1:length(SimParams.maxArrival)
+        for iSNR = 1:length(SimParams.snrIndex)
             
-            SimParams.iPkt = iPkt;
-            [SimParams,SimStructs] = fwkInitialization(SimParams,SimStructs);
+            SimParams.N = 1;
+            SimParams.iSNR = iSNR;
+            SimParams.sPower = 10.^(SimParams.snrIndex(iSNR)/10);
+            [SimParams,SimStructs] = systemInitialize(SimParams,SimStructs);
+            [SimParams,SimStructs] = systemLinking(SimParams,SimStructs);
             
-            for iSNR = 1:length(SimParams.snrIndex)
+            % Resetting for every SNRs
+            resetRandomness;
+            
+            for iDrop = 1:SimParams.nDrops
                 
-                SimParams.N = 1;
-                SimParams.iSNR = iSNR;
-                SimParams.sPower = 10.^(SimParams.snrIndex(iSNR)/10);
-                [SimParams,SimStructs] = systemInitialize(SimParams,SimStructs);
-                [SimParams,SimStructs] = systemLinking(SimParams,SimStructs);
+                SimParams.iDrop = iDrop;
+                SimParams.distIteration = iDrop;
                 
-                % Resetting for every SNRs
-                resetRandomness;
-                
-                for iDrop = 1:SimParams.nDrops
-                    
-                    SimParams.iDrop = iDrop;
-                    SimParams.distIteration = iDrop;
-                    
-                    if strcmp(SimParams.DebugMode,'true')
-                        SimParams.Debug.activeStatus(:,1)'
-                    end
-                    
-                    [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
-                    [SimParams,SimStructs] = getScheduledUsers(SimParams,SimStructs);
-                    
-                    if iDrop > 1
-                        displayQueues(SimParams,SimStructs,iDrop - 1);
-                    end
-                    
-                    if strcmp(SimParams.precoderWithIdealChn,'true')
-                        SimStructs.linkChan = SimStructs.actualChannel;
-                    end
-                    
-                    [SimParams,SimStructs] = getPMatrix(SimParams,SimStructs);
-                    if strcmp(SimParams.multiCasting,'true')
-                        [SimParams,SimStructs] = performGroupReception(SimParams,SimStructs);
-                    else
-                        [SimParams,SimStructs] = performReception(SimParams,SimStructs);
-                    end
-                    
-                    for iUser = 1:SimParams.nUsers
-                        SimParams.sumRateInstant(iSNR,iDrop,iPkt) = SimParams.sumRateInstant(iSNR,iDrop,iPkt) + SimStructs.userStruct{iUser,1}.dropThrpt(iDrop,1);
-                    end
-                    
-                    [SimParams,SimStructs] = updateTransmitPower(SimParams,SimStructs);
-                    
-                end
-                
-                finalSystemUpdate;
                 if strcmp(SimParams.DebugMode,'true')
-                    display(squeeze(SimParams.QueueInfo.queueBacklogs(iSNR,:,iPkt)));
+                    SimParams.Debug.activeStatus(:,1);
                 end
                 
+                [SimParams,SimStructs] = dropInitialize(SimParams,SimStructs);
+                [SimParams,SimStructs] = getScheduledUsers(SimParams,SimStructs);
+                
+                if iDrop > 1
+                    displayQueues(SimParams,SimStructs,iDrop - 1);
+                end
+                
+                if strcmp(SimParams.precoderWithIdealChn,'true')
+                    SimStructs.linkChan = SimStructs.actualChannel;
+                end
+                
+                [SimParams,SimStructs] = getPMatrix(SimParams,SimStructs);
+                if strcmp(SimParams.multiCasting,'true')
+                    [SimParams,SimStructs] = performGroupReception(SimParams,SimStructs);
+                else
+                    [SimParams,SimStructs] = performReception(SimParams,SimStructs);
+                end
+                
+                for iUser = 1:SimParams.nUsers
+                    SimParams.sumRateInstant(iSNR,iDrop,iPkt) = SimParams.sumRateInstant(iSNR,iDrop,iPkt) + SimStructs.userStruct{iUser,1}.dropThrpt(iDrop,1);
+                end
+                
+                [SimParams,SimStructs] = updateTransmitPower(SimParams,SimStructs);
+                
+            end
+            
+            finalSystemUpdate;
+            if strcmp(SimParams.DebugMode,'true')
+                display(squeeze(SimParams.QueueInfo.queueBacklogs(iSNR,:,iPkt)));
             end
             
         end
     end
     
-    cState = sprintf('Solved for Total Antenna Elements - %d',SimParams.nTxAntenna);disp(cState);
+    cState = sprintf('Solved for - [%d] - Active Transmit Antenna Elements ',SimParams.nTxAntennaEnabled);disp(cState);
     
     gXParams{iAntennaArray,1} = SimParams;
-    gXStructs{iAntennaArray,1} = SimStructs;    
+    gXStructs{iAntennaArray,1} = SimStructs;
     
 end
 
@@ -180,7 +176,7 @@ SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;
 displayOutputs(gXParams,gXStructs);
 
 if strcmp(saveContents,'true')
-
+    
     xVal = fix(clock);
     SimParams.Log.date = date;
     SimParams.Log.clock = sprintf('%d:%d:%d',xVal(1,4),xVal(1,5),xVal(1,6));
