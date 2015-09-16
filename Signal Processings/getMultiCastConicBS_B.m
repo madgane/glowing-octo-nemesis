@@ -74,7 +74,6 @@ while iterateSCA
         end
     end
     
-    tempSum = 0;
     for iBase = 1:nBases
         for iAntenna = 1:SimParams.nTxAntenna
             tVec = [];
@@ -87,7 +86,6 @@ while iterateSCA
         end
         gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
         gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled];
-%         gConstraints = [gConstraints, tempSum <= SimParams.nTxAntennaEnabled];
     end
     
     objective = 0;
