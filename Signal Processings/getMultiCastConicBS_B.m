@@ -81,6 +81,7 @@ while iterateSCA
             for iBand = 1:nBands                
                 tVec = [tVec , X{iBase,iBand}(iAntenna,:)];
             end
+            
             tempVector = [2 * tVec, (aPowVar{iBase,1}(iAntenna,1) - tempRHS)];
             gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,1}(iAntenna,1) + tempRHS))];
         end

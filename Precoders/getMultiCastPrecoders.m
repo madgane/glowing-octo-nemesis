@@ -122,7 +122,6 @@ switch selectionMethod
                 [SimParams,SimStructs] = getMultiCastConicAS_B(SimParams,SimStructs);
             case 'C'
                 [SimParams,SimStructs] = getMultiCastConicAS_C(SimParams,SimStructs);
-                
         end
         
         display('Antenna subset selected !');

@@ -10,9 +10,9 @@ iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
 
-binVar_P = cell(nBases,1);
+invVariable = cell(nBases,1);
 for iBase = 1:nBases
-    binVar_P{iBase,1} = rand(SimParams.nTxAntenna,1);
+    invVariable{iBase,1} = ones(SimParams.nTxAntenna,1);    
 end
 
 if SimParams.nTxAntennaEnabled == SimParams.nAntennaArray
@@ -24,12 +24,12 @@ while iterateSCA
     gConstraints = [];
     X = cell(nBases,nBands);
     binVar = cell(nBases,1);
-    aPowVar = cell(nBases,nBands);
+    aPowVar = cell(nBases,1);
     
     for iBase = 1:nBases
         binVar{iBase,1} = sdpvar(SimParams.nTxAntenna,1,'full');
-        for iBand = 1:nBands
-            aPowVar{iBase,iBand} = sdpvar(SimParams.nTxAntenna,1,'full');
+        aPowVar{iBase,1} = sdpvar(SimParams.nTxAntenna,1,'full');
+        for iBand = 1:nBands            
             X{iBase,iBand} = sdpvar(SimParams.nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
         end
     end
@@ -74,22 +74,24 @@ while iterateSCA
     end
     
     for iBase = 1:nBases
-        for iBand = 1:nBands
-            for iAntenna = 1:SimParams.nTxAntenna
-                tempVector = [2 * X{iBase,iBand}(iAntenna,:), (aPowVar{iBase,iBand}(iAntenna,1) - binVar{iBase,1}(iAntenna,1))];
-                gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,iBand}(iAntenna,1) + binVar{iBase,1}(iAntenna,1)))];
+        for iAntenna = 1:SimParams.nTxAntenna
+            tVec = [];
+            for iBand = 1:nBands
+                tVec = [tVec , X{iBase,iBand}(iAntenna,:)];
             end
-        end        
-        gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
-    end
-    
-    objective = 0;
-    for iBand = 1:nBands
-        for iBase = 1:nBases
-            objective = objective + aPowVar{iBase,iBand}' * aPowVar{iBase,iBand};
+            
+            tempVector = [2 * tVec, (aPowVar{iBase,1}(iAntenna,1) - binVar{iBase,1}(iAntenna,1))];
+            gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,1}(iAntenna,1) + binVar{iBase,1}(iAntenna,1)))];
         end
-        objective = objective + abs(SimParams.nTxAntennaEnabled - sum(binVar{iBase,1})) * 1e5;
+        gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
+        gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled];
     end
+
+    objective = 0;
+    for iBase = 1:nBases
+        objective = objective + aPowVar{iBase,1}' * aPowVar{iBase,1};
+    end
+    objective = objective + abs(SimParams.nTxAntennaEnabled - sum(binVar{iBase,1} .* invVariable{iBase,1})) * 1e5 ;
     
     options = sdpsettings('verbose',0,'solver','Mosek');
     solverOut = optimize(gConstraints,objective,options);
@@ -110,8 +112,10 @@ while iterateSCA
                 end
             end
             nEnabledAntenna = sum(double(binVar{iBase,1}));
+            invVariable{iBase,1} = 1./(value(binVar{iBase,1}) + epsilonT);
         end
         bX = full(double(Beta));
+        
     else
         display(solverOut);
         break;
