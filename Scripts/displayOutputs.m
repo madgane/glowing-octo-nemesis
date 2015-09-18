@@ -150,7 +150,7 @@ switch SimParams.plotMode
             baseSDP_Power(1,iAntennaArray) = totalSDPPower;
             baseBF_Power(1,iAntennaArray) = totalBFPower;
             
-            if ((strcmpi(SimParams.DesignType,'ConicBSMethodS')) || (iAntennaArray == 1))
+            if ((strcmpi(SimParams.DesignType,'ConicBSMethodS')) && (iAntennaArray == 1))
                 SimParams.nTxAntennaEnabledArray = SimParams.nTxAntennaEnabled:SimParams.nAntennaArray;
                 baseBF_Power = totalBFPower * ones(1,length(SimParams.nTxAntennaEnabledArray));
                 break;
