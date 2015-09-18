@@ -9,22 +9,16 @@ bX = SimParams.Debug.tempResource{4,1}{1,1};
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
-iterateSCAMax = 50;
 
 invVariable = cell(nBases,1);
 for iBase = 1:nBases
     invVariable{iBase,1} = ones(SimParams.nTxAntenna,1);    
 end
 
-if SimParams.nTxAntennaEnabled == SimParams.nAntennaArray
-    return;
-end
-
 while iterateSCA
     
     gConstraints = [];
     X = cell(nBases,nBands);
-    binVar = cell(nBases,1);
     aPowVar = cell(nBases,1);
     
     for iBase = 1:nBases
@@ -81,7 +75,6 @@ while iterateSCA
             end
             gConstraints = [gConstraints, cone(2 * tVec,aPowVar{iBase,1}(iAntenna,1))];
         end
-        gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
     end
     
     objective = 0;
@@ -130,15 +123,27 @@ while iterateSCA
         iterateSCA = 0;
     end
     
-    display(round(double(aPowVar{iBase,1}))');
-    fprintf('Using [%d] Active Transmit Elements, Total power required is - %f \n',sum(value(aPowVar{iBase,1}) >= epsilonT),objective);
+    fprintf('Antenna Powers - \t');
+    fprintf('%4.3f \t',value(aPowVar{iBase,1}));
+    fprintf('\nUsing [%2.2f] Active Transmit Elements, Total power required is - %f \n',sum(value(aPowVar{iBase,1}) >= epsilonT),objective);
     
 end
 
-SimParams.Debug.maxActiveAntenna = SimParams.nTxAntenna;
-
 for iBase = 1:nBases
-    SimParams.Debug.maxActiveAntenna = min(sum(value(aPowVar{iBase,1}) >= epsilonT),SimParams.Debug.maxActiveAntenna);
+    SimParams.nTxAntennaEnabled = min(sum(value(aPowVar{iBase,1}) >= epsilonT),SimParams.nTxAntennaEnabled);
 end
+
+SimParams.Debug.tempResource{2,1}{1,1} = rX;
+SimParams.Debug.tempResource{3,1}{1,1} = iX;
+SimParams.Debug.tempResource{4,1}{1,1} = bX;
+
+SimParams.Debug.MultiCastSDPExchange = cell(nBases,nBands);
+for iBase = 1:nBases
+    for iBand = 1:nBands
+        SimParams.Debug.MultiCastSDPExchange{iBase,iBand} = logical(int8(double(aPowVar{iBase,1})));
+    end
+end
+
+SimParams.nTxAntennaEnabled = sum(SimParams.Debug.MultiCastSDPExchange{1,1});
 
 end

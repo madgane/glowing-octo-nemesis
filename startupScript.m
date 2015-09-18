@@ -46,7 +46,7 @@ SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
 SimParams.DesignType = 'ConicBSMethod_C';
 
-SimParams.nExchangesOTA = 50;
+SimParams.nExchangesOTA = 20;
 SimParams.exchangeResetInterval = 1;
 SimParams.nExchangesOBH = 1;
 
@@ -60,7 +60,7 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 1e100;
 
-SimParams.nBands = 2;
+SimParams.nBands = 1;
 SimParams.nBases = 1;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -79,7 +79,7 @@ if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
     SimParams.usersPerGroup = 4;
     SimParams.nAntennaArray = 10;
-    SimParams.nTxAntennaEnabledArray = [6:10];
+    SimParams.nTxAntennaEnabledArray = [5:10];
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));

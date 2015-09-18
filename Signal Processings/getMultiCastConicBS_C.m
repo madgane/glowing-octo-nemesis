@@ -10,8 +10,10 @@ iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
 
+binVariable = cell(nBases,1);
 invVariable = cell(nBases,1);
 for iBase = 1:nBases
+    binVariable{iBase,1} = ones(SimParams.nTxAntenna,1);    
     invVariable{iBase,1} = ones(SimParams.nTxAntenna,1);    
 end
 
@@ -80,9 +82,10 @@ while iterateSCA
                 tVec = [tVec , X{iBase,iBand}(iAntenna,:)];
             end
             
-            tempVector = [2 * tVec, (aPowVar{iBase,1}(iAntenna,1) - binVar{iBase,1}(iAntenna,1))];
-            gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,1}(iAntenna,1) + binVar{iBase,1}(iAntenna,1)))];
+            tempVector = [2 * tVec, (aPowVar{iBase,1}(iAntenna,1) - binVar{iBase,1}(iAntenna,1) * binVariable{iBase,1}(iAntenna,1))];
+            gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,1}(iAntenna,1) + binVar{iBase,1}(iAntenna,1) * binVariable{iBase,1}(iAntenna,1)))];
         end
+        
         gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
         gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled];
     end
@@ -91,7 +94,8 @@ while iterateSCA
     for iBase = 1:nBases
         objective = objective + aPowVar{iBase,1}' * aPowVar{iBase,1};
     end
-    objective = objective + abs(SimParams.nTxAntennaEnabled - sum(binVar{iBase,1} .* invVariable{iBase,1})) * 1e5 ;
+%     objective = objective * epsilonT + abs(SimParams.nTxAntennaEnabled - sum(binVar{iBase,1} .* invVariable{iBase,1})) * maxObj;
+    objective = objective * epsilonT - maxObj * sum((1 + log(binVariable{iBase,1})) .* binVar{iBase,1});
     
     options = sdpsettings('verbose',0,'solver','Mosek');
     solverOut = optimize(gConstraints,objective,options);
@@ -111,8 +115,11 @@ while iterateSCA
                     end
                 end
             end
+            
+            binVariable{iBase,1} = abs(value(binVar{iBase,1}));
             nEnabledAntenna = sum(double(binVar{iBase,1}));
-            invVariable{iBase,1} = 1./(value(binVar{iBase,1}) + epsilonT);
+            invVariable{iBase,1} = (1./(value(binVar{iBase,1}) + epsilonT));
+            
         end
         bX = full(double(Beta));
         
@@ -134,8 +141,9 @@ while iterateSCA
         iterateSCA = 0;
     end
     
-    display(double(binVar{iBase,1})');
-    fprintf('Using [%d] Active Transmit Elements, Total power required is - %f \n',nEnabledAntenna,objective);
+    fprintf('Enabled Antennas - \t');
+    fprintf('%2.3f \t',value(binVar{iBase,1}));
+    fprintf('\nUsing [%2.2f] Active Transmit Elements, Total power required is - %f \n',nEnabledAntenna,objective);    
     
 end
 
@@ -148,7 +156,6 @@ for iBase = 1:nBases
     for iBand = 1:nBands
         SimParams.Debug.MultiCastSDPExchange{iBase,iBand} = logical(int8(double(binVar{iBase,1})));
     end
-    display(double(binVar{iBase,1}));
 end
 
 end

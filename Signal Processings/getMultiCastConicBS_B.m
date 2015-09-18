@@ -13,7 +13,7 @@ minPower = 1e20;
 
 binVar_P = cell(nBases,1);
 for iBase = 1:nBases
-    binVar_P{iBase,1} = rand(SimParams.nTxAntenna,1);
+    binVar_P{iBase,1} = ones(SimParams.nTxAntenna,1);
 end
 
 if SimParams.nTxAntennaEnabled == SimParams.nAntennaArray
@@ -134,8 +134,9 @@ while iterateSCA
         iterateSCA = 0;
     end
     
-    display(double(binVar{iBase,1})');
-    fprintf('Using [%d] Active Transmit Elements, Total power required is - %f \n',nEnabledAntenna,objective);    
+    fprintf('Enabled Antennas - \t');
+    fprintf('%2.3f \t',value(binVar{iBase,1}));
+    fprintf('\nUsing [%2.2f] Active Transmit Elements, Total power required is - %f \n',nEnabledAntenna,objective);    
     
 end
 
@@ -148,7 +149,6 @@ for iBase = 1:nBases
     for iBand = 1:nBands
         SimParams.Debug.MultiCastSDPExchange{iBase,iBand} = logical(int8(double(binVar{iBase,1})));
     end
-    display(double(binVar{iBase,1})');
 end
 
 end

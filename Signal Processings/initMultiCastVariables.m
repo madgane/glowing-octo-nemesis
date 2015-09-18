@@ -1,5 +1,5 @@
 
-maxObj = 1e4;
+maxObj = 1e5;
 epsilonT = 1e-5;
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;

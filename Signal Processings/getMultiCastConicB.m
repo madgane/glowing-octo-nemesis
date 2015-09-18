@@ -104,7 +104,7 @@ while iterateSCA
                     objective = objective + (X{iBase,iBand}(:)' * X{iBase,iBand}(:));
                 end
             end
-            objective = maxObj * feasVariable + objective;
+            objective = max(maxObj * feasVariable,0) + objective;
     end
     
     options = sdpsettings('verbose',0,'solver','Mosek');
@@ -138,7 +138,7 @@ while iterateSCA
     
     switch ObjType
         case 'Dual'
-            if (double(feasVariable) < 0)
+            if (double(feasVariable) < epsilonT)
                 break;
             end
             
