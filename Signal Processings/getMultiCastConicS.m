@@ -79,7 +79,7 @@ while iterateSCA
     
     objective = 0;
     for iBase = 1:nBases
-        objective = abs(sum(aPowVar{iBase,1} .* invVariable{iBase,1})) + objective;
+        objective = sum(aPowVar{iBase,1} .* invVariable{iBase,1}) + objective;
     end
     
     
@@ -125,7 +125,7 @@ while iterateSCA
     
     fprintf('Antenna Powers - \t');
     fprintf('%4.3f \t',value(aPowVar{iBase,1}));
-    fprintf('\nUsing [%2.2f] Active Transmit Elements, Total power required is - %f \n',sum(value(aPowVar{iBase,1}) >= epsilonT),objective);
+    fprintf('\nUsing [%2.2f] Active Transmit Elements, Total power required is - %f \n',sum(value(aPowVar{iBase,1}) >= epsilonT),sum(value(aPowVar{iBase,1})));
     
 end
 

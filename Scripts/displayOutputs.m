@@ -147,24 +147,24 @@ switch SimParams.plotMode
             end
             
             fprintf('Total Power SDP (LB) - %f, BF - %f \n',totalSDPPower,totalBFPower);
-            baseSDP_Power(1,iAntennaArray) = totalSDPPower;
-            baseBF_Power(1,iAntennaArray) = totalBFPower;
+            baseSDP_Power(1,iAntennaArray) = db(totalSDPPower,'power');
+            baseBF_Power(1,iAntennaArray) = db(totalBFPower,'power');
             
             if ((strcmpi(SimParams.DesignType,'ConicBSMethodS')) && (iAntennaArray == 1))
                 SimParams.nTxAntennaEnabledArray = SimParams.nTxAntennaEnabled:SimParams.nAntennaArray;
-                baseBF_Power = totalBFPower * ones(1,length(SimParams.nTxAntennaEnabledArray));
+                baseBF_Power = db(totalBFPower,'power') * ones(1,length(SimParams.nTxAntennaEnabledArray));
                 break;
             end
             
         end
         
-        if strcmpi(SimParams.DesignType,'SDPMethod')
+        if sum(strcmpi(SimParams.DesignType,{'SDPMethod','SDP-SCA-Method'}))
             plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseSDP_Power,'N',1));
         end
         plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseBF_Power,'N',1));
         
         xlabel('Number of Antenna Elements ({N_T})');
-        ylabel('Power in Watts');
+        ylabel('Power in dB');
 
         
     otherwise

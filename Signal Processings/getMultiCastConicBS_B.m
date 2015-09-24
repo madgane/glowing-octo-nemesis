@@ -6,7 +6,7 @@ rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 bX = SimParams.Debug.tempResource{4,1}{1,1};
 
-qExponent = 2;
+qExponent = 5;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
@@ -23,16 +23,14 @@ end
 while iterateSCA
     
     gConstraints = [];
-    X = cell(nBases,nBands);
+    X = cell(nBases,1);
     binVar = cell(nBases,1);
     aPowVar = cell(nBases,1);
     
     for iBase = 1:nBases
         binVar{iBase,1} = sdpvar(SimParams.nTxAntenna,1,'full');
         aPowVar{iBase,1} = sdpvar(SimParams.nTxAntenna,1,'full');
-        for iBand = 1:nBands            
-            X{iBase,iBand} = sdpvar(SimParams.nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
-        end
+        X{iBase,1} = sdpvar(SimParams.nTxAntenna,nGroupsPerCell(iBase,1),nBands,'full','complex');
     end
     
     Beta = sdpvar(nUsers,nBands,'full');
@@ -47,8 +45,8 @@ while iterateSCA
                     Hsdp = cH{iBase,iBand}(:,:,cUser);
                     
                     tempVec = [sqrt(SimParams.N)];
-                    riX = real(Hsdp * X{iBase,iBand}(:,iGroup));
-                    iiX = imag(Hsdp * X{iBase,iBand}(:,iGroup));
+                    riX = real(Hsdp * X{iBase,1}(:,iGroup,iBand));
+                    iiX = imag(Hsdp * X{iBase,1}(:,iGroup,iBand));
                     fixedPoint = (rX(cUser,iBand)^2 + iX(cUser,iBand)^2) / bX(cUser,iBand);
                     tempExpression = fixedPoint + (2 / bX(cUser,iBand)) * (rX(cUser,iBand) * (riX - rX(cUser,iBand)) + iX(cUser,iBand) * (iiX - iX(cUser,iBand))) ...
                         - (fixedPoint / bX(cUser,iBand)) * (Beta(cUser,iBand) - bX(cUser,iBand));
@@ -57,8 +55,8 @@ while iterateSCA
                         for jGroup = 1:nGroupsPerCell(jBase,1)
                             Hsdp = cH{jBase,iBand}(:,:,cUser);
                             if ~and((iBase == jBase),(iGroup == jGroup))
-                                riX = real(Hsdp * X{jBase,iBand}(:,jGroup));
-                                iiX = imag(Hsdp * X{jBase,iBand}(:,jGroup));
+                                riX = real(Hsdp * X{jBase,1}(:,jGroup,iBand));
+                                iiX = imag(Hsdp * X{jBase,1}(:,jGroup,iBand));
                                 tempVec = [tempVec; riX; iiX];
                             end
                         end
@@ -67,31 +65,31 @@ while iterateSCA
                     gConstraints = [gConstraints, Gamma(cUser,iBand) - tempExpression <= 0];
                     gConstraints = [gConstraints, (tempVec' * tempVec) - Beta(cUser,iBand) <= 0];
                 end
-                
-                cGamma = Gamma(cUser,:) + 1;
-                gConstraints = [gConstraints, gReqSINRPerUser(cUser,1) - geomean(cGamma(:)) <= 0];
             end
         end
     end
     
+    cGamma = Gamma + 1;
+    for iUser = 1:nUsers
+        gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
+    end
+
     for iBase = 1:nBases
+        tempRHS = binVar_P{iBase,1}.^(qExponent - 1) .* binVar{iBase,1};
         for iAntenna = 1:SimParams.nTxAntenna
-            tVec = [];
-            tempRHS = binVar_P{iBase,1}(iAntenna,1)^qExponent + qExponent * (binVar{iBase,1}(iAntenna,1) - binVar_P{iBase,1}(iAntenna,1)) * binVar_P{iBase,1}(iAntenna,1)^(qExponent - 1);
-            for iBand = 1:nBands                
-                tVec = [tVec , X{iBase,iBand}(iAntenna,:)];
-            end
-            
-            tempVector = [2 * tVec, (aPowVar{iBase,1}(iAntenna,1) - tempRHS)];
-            gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,1}(iAntenna,1) + tempRHS))];
+            tVec = X{iBase,1}(iAntenna,:,:);
+            tVec = [tVec(:) ; 0.5 * (tempRHS(iAntenna,1) - aPowVar{iBase,1}(iAntenna,1))];
+            gConstraints = [gConstraints, cone(tVec,0.5 * (tempRHS(iAntenna,1) + aPowVar{iBase,1}(iAntenna,1)))];
         end
+        
         gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
         gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled];
+
     end
     
     objective = 0;
     for iBase = 1:nBases
-            objective = objective + aPowVar{iBase,1}' * aPowVar{iBase,1};
+        objective = objective + sum(aPowVar{iBase,1});
     end
     
     options = sdpsettings('verbose',0,'solver','Mosek');
@@ -107,13 +105,13 @@ while iterateSCA
                     cUser = groupUsers(iUser,1);
                     for iBand = 1:nBands
                         Hsdp = cH{iBase,iBand}(:,:,cUser);
-                        rX(cUser,iBand) = real(Hsdp * double(X{iBase,iBand}(:,iGroup)));
-                        iX(cUser,iBand) = imag(Hsdp * double(X{iBase,iBand}(:,iGroup)));
+                        rX(cUser,iBand) = real(Hsdp * double(X{iBase,1}(:,iGroup,iBand)));
+                        iX(cUser,iBand) = imag(Hsdp * double(X{iBase,1}(:,iGroup,iBand)));
                     end
                 end
             end
-            binVar_P{iBase,1} = double(binVar{iBase,1});          
-            nEnabledAntenna = sum(double(binVar{iBase,1}));
+            binVar_P{iBase,1} = value(binVar{iBase,1});          
+            nEnabledAntenna = sum(value(binVar{iBase,1}));
         end
         bX = full(double(Beta));
     else

@@ -104,7 +104,7 @@ while iterateSCA
                     objective = objective + (X{iBase,iBand}(:)' * X{iBase,iBand}(:));
                 end
             end
-            objective = max(maxObj * feasVariable,0) + objective;
+            objective = feasVariable + objective * epsilonT;
     end
     
     options = sdpsettings('verbose',0,'solver','Mosek');
@@ -129,16 +129,15 @@ while iterateSCA
     else
         display(solverOut);
         if sum(strcmpi({'FC','Dual'},ObjType))
-            rX = zeros(size(rX));iX = zeros(size(iX));
+            rX = rand(size(rX));iX = rand(size(iX));
         else
-            display(solverOut);
             continue;
         end
     end
     
     switch ObjType
         case 'Dual'
-            if (double(feasVariable) < epsilonT)
+            if (double(feasVariable) < 0)
                 break;
             end
             

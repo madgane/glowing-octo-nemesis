@@ -17,8 +17,8 @@ else
     designType = SimParams.DesignType(underscore_location+1:end);
 end
 
-SimParams.Debug.tempResource{2,1}{1,1} = randn(nUsers,nBands);
-SimParams.Debug.tempResource{3,1}{1,1} = randn(nUsers,nBands);
+SimParams.Debug.tempResource{2,1}{1,1} = rand(nUsers,nBands);
+SimParams.Debug.tempResource{3,1}{1,1} = rand(nUsers,nBands);
 SimParams.Debug.tempResource{4,1}{1,1} = rand(nUsers,nBands) + 1;
 
 if isfield(SimParams.Debug,'MultiCastSDPExchange')
@@ -202,12 +202,13 @@ switch selectionMethod
                 [SimParams,SimStructs] = getMultiCastConicBS_B(SimParams,SimStructs);
             case 'C'
                 [SimParams,SimStructs] = getMultiCastConicBS_C(SimParams,SimStructs);
-                
+            case 'D'
+                [SimParams,SimStructs] = getMultiCastConicBS_D(SimParams,SimStructs);
         end
 
         display('Antenna subset selected !');
         [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
-                
+
     case 'ConicBSMethodS'
         
         if (SimParams.iAntennaArray == 1)
@@ -243,6 +244,14 @@ switch selectionMethod
             end
             
         end
+        
+    case 'ConicExhaustive'
+        
+        [SimParams,SimStructs] = getMultiCastConicExhaustive(SimParams,SimStructs);
+        
+    case 'SDP-SCA-Method'
+        
+        [SimParams,SimStructs] = getMultiCastSDP_MC(SimParams,SimStructs);
         
     otherwise
         display('Unknown Precoding Method !');

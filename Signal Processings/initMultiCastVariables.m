@@ -25,3 +25,4 @@ for iBase = 1:nBases
 end
 
 gReqSINRPerUser = (reqSINRPerUser + 1).^(1 / nBands);
+gxReqSINRPerUser = (reqSINRPerUser + 1);
