@@ -27,11 +27,11 @@ end
 
 switch selectionMethod
     
-    case 'SDPMethod'
+    case 'SB-SDP'
         
         [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,200);
         
-    case 'ConicMethod'
+    case 'SB-SCA'
         
         searchType = 'Dual';
         switch searchType
@@ -73,11 +73,11 @@ switch selectionMethod
         
         [SimParams,SimStructs] = getKKTMultiCastPrecoders(SimParams,SimStructs);
         
-    case 'SDPASMethod'
+    case 'SB-SDPA'
         
         [SimParams,SimStructs] = getMultiCastSDPAS(SimParams,SimStructs,10);
         
-    case 'ConicASMethod'
+    case 'SB-SCAA'
         
         searchType = 'Dual';
         switch searchType
@@ -128,7 +128,7 @@ switch selectionMethod
         
         [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,'MP');
         
-    case 'ConicMethodB'
+    case 'MB-SCA'
         
         searchType = 'Dual';
         switch searchType
@@ -162,7 +162,7 @@ switch selectionMethod
         display('Initialization point found !');
         [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
         
-    case 'ConicBSMethod'
+    case 'MB-SCAA'
         
         searchType = 'Dual';
         switch searchType
@@ -209,7 +209,7 @@ switch selectionMethod
         display('Antenna subset selected !');
         [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
 
-    case 'ConicBSMethodS'
+    case 'MB-SCAS'
         
         if (SimParams.iAntennaArray == 1)
 
@@ -245,13 +245,19 @@ switch selectionMethod
             
         end
         
-    case 'ConicExhaustive'
+    case 'MB-SCAE'
         
         [SimParams,SimStructs] = getMultiCastConicExhaustive(SimParams,SimStructs);
         
-    case 'SDP-SCA-Method'
+    case 'MB-SDP'
         
         [SimParams,SimStructs] = getMultiCastSDP_MC(SimParams,SimStructs);
+        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,250);
+        
+    case 'MB-SDPA'
+        
+        [SimParams,SimStructs] = getMultiCastSDP_MCAS(SimParams,SimStructs);
+        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,250);
         
     otherwise
         display('Unknown Precoding Method !');

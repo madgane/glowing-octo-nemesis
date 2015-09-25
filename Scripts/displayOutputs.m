@@ -150,7 +150,7 @@ switch SimParams.plotMode
             baseSDP_Power(1,iAntennaArray) = db(totalSDPPower,'power');
             baseBF_Power(1,iAntennaArray) = db(totalBFPower,'power');
             
-            if ((strcmpi(SimParams.DesignType,'ConicBSMethodS')) && (iAntennaArray == 1))
+            if ((strcmpi(SimParams.DesignType,'MB-SCAS')) && (iAntennaArray == 1))
                 SimParams.nTxAntennaEnabledArray = SimParams.nTxAntennaEnabled:SimParams.nAntennaArray;
                 baseBF_Power = db(totalBFPower,'power') * ones(1,length(SimParams.nTxAntennaEnabledArray));
                 break;
@@ -158,7 +158,7 @@ switch SimParams.plotMode
             
         end
         
-        if sum(strcmpi(SimParams.DesignType,{'SDPMethod','SDP-SCA-Method'}))
+        if ~isempty(strfind(SimParams.DesignType,{'SDP'}))
             plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseSDP_Power,'N',1));
         end
         plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseBF_Power,'N',1));
