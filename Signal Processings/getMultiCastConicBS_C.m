@@ -10,7 +10,7 @@ iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
 
-cObj = 1e4;
+cObj = 0.5e4;
 binVariable = cell(nBases,1);
 for iBase = 1:nBases
     binVariable{iBase,1} = ones(SimParams.nTxAntenna,1);    
@@ -148,7 +148,7 @@ while iterateSCA
     end
     
     if txPower > cObj
-        cObj = cObj * 2;
+%         cObj = cObj * 2;
     end
     
     fprintf('Enabled Antennas with cObj - [%2.2f] - \t',cObj);

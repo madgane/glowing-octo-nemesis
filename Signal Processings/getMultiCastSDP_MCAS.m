@@ -3,12 +3,11 @@ function [SimParams,SimStructs] = getMultiCastSDP_MCAS(SimParams,SimStructs)
 
 initMultiCastVariables;
 
+cObj = 0.5e4;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
-nIterations = 250;
 
-qExponent = 0;
 if isfield(SimParams.Debug,'MultiCastSDPExchange')
     nTxAntenna = SimParams.nTxAntennaEnabled;
     enabledAntenna = SimParams.Debug.MultiCastSDPExchange;
@@ -95,9 +94,7 @@ while iterateSCA
         
     end
     
-%     gConstraints = [gConstraints, -(sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1}))) <= sum(binVar_P{iBase,1}.*log(binVar_P{iBase,1}))];
-        
-    objective = (-sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) - entropy(binVar_P{iBase,1})) * maxObj;
+    objective = (-sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) - entropy(binVar_P{iBase,1})) * cObj;
     
     for iBand = 1:nBands
         for iBase = 1:nBases

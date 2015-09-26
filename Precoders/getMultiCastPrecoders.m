@@ -5,6 +5,7 @@ initMultiCastVariables;
 
 % Debug Buffers initialization
 
+xIterations = 10;
 SimParams.Debug.tempResource{2,SimParams.iDrop} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{3,SimParams.iDrop} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{4,SimParams.iDrop} = cell(SimParams.nUsers,SimParams.nBands);
@@ -252,12 +253,12 @@ switch selectionMethod
     case 'MB-SDP'
         
         [SimParams,SimStructs] = getMultiCastSDP_MC(SimParams,SimStructs);
-        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,250);
+        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,xIterations);
         
     case 'MB-SDPA'
         
         [SimParams,SimStructs] = getMultiCastSDP_MCAS(SimParams,SimStructs);
-        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,250);
+        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,xIterations);
         
     otherwise
         display('Unknown Precoding Method !');

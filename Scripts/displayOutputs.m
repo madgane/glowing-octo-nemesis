@@ -158,7 +158,7 @@ switch SimParams.plotMode
             
         end
         
-        if ~isempty(strfind(SimParams.DesignType,{'SDP'}))
+        if ~isempty(strfind(SimParams.DesignType,'SDP'))
             plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseSDP_Power,'N',1));
         end
         plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseBF_Power,'N',1));
