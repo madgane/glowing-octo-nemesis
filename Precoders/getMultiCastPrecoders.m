@@ -5,7 +5,6 @@ initMultiCastVariables;
 
 % Debug Buffers initialization
 
-xIterations = 10;
 SimParams.Debug.tempResource{2,SimParams.iDrop} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{3,SimParams.iDrop} = cell(SimParams.nUsers,1);
 SimParams.Debug.tempResource{4,SimParams.iDrop} = cell(SimParams.nUsers,SimParams.nBands);
@@ -18,8 +17,8 @@ else
     designType = SimParams.DesignType(underscore_location+1:end);
 end
 
-SimParams.Debug.tempResource{2,1}{1,1} = rand(nUsers,nBands);
-SimParams.Debug.tempResource{3,1}{1,1} = rand(nUsers,nBands);
+SimParams.Debug.tempResource{2,1}{1,1} = randn(nUsers,nBands);
+SimParams.Debug.tempResource{3,1}{1,1} = randn(nUsers,nBands);
 SimParams.Debug.tempResource{4,1}{1,1} = rand(nUsers,nBands) + 1;
 
 if isfield(SimParams.Debug,'MultiCastSDPExchange')
@@ -30,18 +29,17 @@ switch selectionMethod
     
     case 'SB-SDP'
         
-        [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,200);
+        [SimParams,SimStructs] = getSingleBandSDP(SimParams,SimStructs,xRandIterations);
         
     case 'SB-SCA'
         
-        searchType = 'Dual';
         switch searchType
             case 'SDP'
-                [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,1);
+                [SimParams,SimStructs] = getSingleBandSCA(SimParams,SimStructs,1);
             case 'FC'
-                [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getSingleBandSCA(SimParams,SimStructs,searchType);
             case 'Dual'
-                [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getSingleBandSCA(SimParams,SimStructs,searchType);
             case 'KKT'
                 [SimParams,SimStructs] = getKKTMCPrecodersInitialization(SimParams,SimStructs);
             otherwise
@@ -68,7 +66,7 @@ switch selectionMethod
         end
         
         display('Initialization point found !');
-        [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,'MP');
+        [SimParams,SimStructs] = getSingleBandSCA(SimParams,SimStructs,'MP');
         
     case 'KKTMethod'
         
@@ -76,18 +74,17 @@ switch selectionMethod
         
     case 'SB-SDPA'
         
-        [SimParams,SimStructs] = getMultiCastSDPAS(SimParams,SimStructs,10);
+        [SimParams,SimStructs] = getSingleBandSDPA(SimParams,SimStructs,xRandIterations);
         
     case 'SB-SCAA'
         
-        searchType = 'Dual';
         switch searchType
             case 'SDP'
-                [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,0,1);
+                [SimParams,SimStructs] = getSingleBandSDP(SimParams,SimStructs,xRandIterations);
             case 'FC'
-                [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getSingleBandSCA(SimParams,SimStructs,searchType);
             case 'Dual'
-                [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getSingleBandSCA(SimParams,SimStructs,searchType);
             case 'KKT'
                 [SimParams,SimStructs] = getKKTMCPrecodersInitialization(SimParams,SimStructs);
             otherwise
@@ -118,25 +115,34 @@ switch selectionMethod
         switch designType
             
             case 'A'
-                [SimParams,SimStructs] = getMultiCastConicAS_A(SimParams,SimStructs);
+                [SimParams,SimStructs] = getSingleBandSCAA_A(SimParams,SimStructs);
             case 'B'
-                [SimParams,SimStructs] = getMultiCastConicAS_B(SimParams,SimStructs);
+                [SimParams,SimStructs] = getSingleBandSCAA_B(SimParams,SimStructs);
             case 'C'
-                [SimParams,SimStructs] = getMultiCastConicAS_C(SimParams,SimStructs);
+                [SimParams,SimStructs] = getSingleBandSCAA_C(SimParams,SimStructs);
         end
         
         display('Antenna subset selected !');
+        [SimParams,SimStructs] = getSingleBandSCA(SimParams,SimStructs,'MP');
         
-        [SimParams,SimStructs] = getMultiCastConicA(SimParams,SimStructs,'MP');
+    case 'MB-SDP'
+        
+        [SimParams,SimStructs] = getMultiBandSDP(SimParams,SimStructs);
+        [SimParams,SimStructs] = getMultiBandSDP_SB(SimParams,SimStructs,xRandIterations);
+        
+    case 'MB-SDPA'
+        
+        [SimParams,SimStructs] = getMultiBandSDPA(SimParams,SimStructs);
+        [SimParams,SimStructs] = getMultiBandSDP_SB(SimParams,SimStructs,xRandIterations);
+
         
     case 'MB-SCA'
         
-        searchType = 'Dual';
         switch searchType
             case 'FC'
-                [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,searchType);
             case 'Dual'
-                [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,searchType);
             otherwise
                 for iBase = 1:nBases
                     for iBand = 1:nBands
@@ -161,16 +167,16 @@ switch selectionMethod
         end
         
         display('Initialization point found !');
-        [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
+        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
         
     case 'MB-SCAA'
         
         searchType = 'Dual';
         switch searchType
             case 'FC'
-                [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,searchType);
             case 'Dual'
-                [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,searchType);
+                [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,searchType);
             otherwise
                 for iBase = 1:nBases
                     for iBand = 1:nBands
@@ -198,23 +204,23 @@ switch selectionMethod
         switch designType
             
             case 'A'
-                [SimParams,SimStructs] = getMultiCastConicBS_A(SimParams,SimStructs);
+                [SimParams,SimStructs] = getMultiBandSCAA_A(SimParams,SimStructs);
             case 'B'
-                [SimParams,SimStructs] = getMultiCastConicBS_B(SimParams,SimStructs);
+                [SimParams,SimStructs] = getMultiBandSCAA_B(SimParams,SimStructs);
             case 'C'
-                [SimParams,SimStructs] = getMultiCastConicBS_C(SimParams,SimStructs);
+                [SimParams,SimStructs] = getMultiBandSCAA_C(SimParams,SimStructs);
             case 'D'
-                [SimParams,SimStructs] = getMultiCastConicBS_D(SimParams,SimStructs);
+                [SimParams,SimStructs] = getMultiBandSCAA_D(SimParams,SimStructs);
         end
 
         display('Antenna subset selected !');
-        [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
+        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
 
     case 'MB-SCAS'
         
         if (SimParams.iAntennaArray == 1)
 
-            [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'Dual');
+            [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'Dual');
             
             for iBase = 1:nBases
                 for iBand = 1:nBands
@@ -231,10 +237,10 @@ switch selectionMethod
             end
 
             display('Initialization point found !');
-            [SimParams,SimStructs] = getMultiCastConicS(SimParams,SimStructs);
+            [SimParams,SimStructs] = getMultiBandSCAS(SimParams,SimStructs);
             
             display('Antenna subset selected !');
-            [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
+            [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
             
         else
             
@@ -248,18 +254,8 @@ switch selectionMethod
         
     case 'MB-SCAE'
         
-        [SimParams,SimStructs] = getMultiCastConicExhaustive(SimParams,SimStructs);
-        
-    case 'MB-SDP'
-        
-        [SimParams,SimStructs] = getMultiCastSDP_MC(SimParams,SimStructs);
-        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,xIterations);
-        
-    case 'MB-SDPA'
-        
-        [SimParams,SimStructs] = getMultiCastSDP_MCAS(SimParams,SimStructs);
-        [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,xIterations);
-        
+        [SimParams,SimStructs] = getMultiBandSCAE(SimParams,SimStructs);
+       
     otherwise
         display('Unknown Precoding Method !');
         

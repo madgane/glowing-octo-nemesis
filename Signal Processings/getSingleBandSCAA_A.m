@@ -1,25 +1,17 @@
 
-function [SimParams,SimStructs] = getMultiCastConicAS_B(SimParams,SimStructs)
+function [SimParams,SimStructs] = getSingleBandSCAA_A(SimParams,SimStructs)
 
 initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 reqSINRPerUser = 2.^(QueuedPkts / nBands) - 1;
 
-qExponent = 4;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
 
 if SimParams.nTxAntennaEnabled == SimParams.nTxAntenna
     return;
-end
-
-binVar_P = cell(nBases,nBands);
-for iBand = 1:nBands
-    for iBase = 1:nBases
-        binVar_P{iBase,iBand} = rand(SimParams.nTxAntenna,1);
-    end
 end
 
 while iterateSCA
@@ -30,7 +22,7 @@ while iterateSCA
     aPowVar = cell(nBases,nBands);
     for iBand = 1:nBands
         for iBase = 1:nBases
-            binVar{iBase,iBand} = sdpvar(SimParams.nTxAntenna,1,'full');
+            binVar{iBase,iBand} = binvar(SimParams.nTxAntenna,1,'full');
             aPowVar{iBase,iBand} = sdpvar(SimParams.nTxAntenna,1,'full');
             X{iBase,iBand} = sdpvar(SimParams.nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
         end
@@ -69,10 +61,9 @@ while iterateSCA
     for iBase = 1:nBases
         for iBand = 1:nBands
             for iAntenna = 1:SimParams.nTxAntenna
-                tempRHS = binVar_P{iBase,iBand}(iAntenna,1)^qExponent + qExponent * (binVar{iBase,iBand}(iAntenna,1) - binVar_P{iBase,iBand}(iAntenna,1)) * binVar_P{iBase,iBand}(iAntenna,1)^(qExponent - 1);
-                gConstraints = [gConstraints, rcone(X{iBase,iBand}(iAntenna,:),aPowVar{iBase,iBand}(iAntenna,1),tempRHS * 0.5)];
+                tempVector = [2 * X{iBase,iBand}(iAntenna,:), (aPowVar{iBase,iBand}(iAntenna,1) - binVar{iBase,iBand}(iAntenna,1))];
+                gConstraints = [gConstraints, cone(tempVector,(aPowVar{iBase,iBand}(iAntenna,1) + binVar{iBase,iBand}(iAntenna,1)))];
             end
-            gConstraints = [gConstraints, 0 <= binVar{iBase,iBand} <= 1];
             gConstraints = [gConstraints, norm(binVar{iBase,iBand},1) <= SimParams.nTxAntennaEnabled];
         end
     end
@@ -84,8 +75,8 @@ while iterateSCA
         end
     end
     
-    options = sdpsettings('verbose',0,'solver','fmincon');
-    solverOut = solvesdp(gConstraints,objective,options);
+    options = sdpsettings('verbose',0,'solver','Gurobi');
+    solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
     if solverOut.problem == 0
@@ -100,8 +91,6 @@ while iterateSCA
                         iX(cUser,iBand) = imag(Hsdp * double(X{iBase,iBand}(:,iGroup)));
                     end
                 end
-                
-                binVar_P{iBase,iBand} = double(binVar{iBase,iBand});                
                 nEnabledAntenna = sum(double(binVar{iBase,iBand}));
             end
         end        

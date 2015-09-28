@@ -9,6 +9,9 @@ QueuedPkts = zeros(nUsers,1);
 reqSINRPerUser = zeros(nUsers,1);
 iterateSCAMax = SimParams.nExchangesOTA;
 
+searchType = 'Dual';
+xRandIterations = 10;
+
 for iBase = 1:nBases
     linkedUsers = SimStructs.baseStruct{iBase,1}.linkedUsers;
     for iUser = 1:length(linkedUsers)

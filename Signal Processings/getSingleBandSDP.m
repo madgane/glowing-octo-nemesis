@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations)
+function [SimParams,SimStructs] = getSingleBandSDP(SimParams,SimStructs,nIterations)
 
 initMultiCastVariables;
 if isfield(SimParams.Debug,'MultiCastSDPExchange')

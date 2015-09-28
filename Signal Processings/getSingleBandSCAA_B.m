@@ -1,22 +1,21 @@
 
-function [SimParams,SimStructs] = getMultiCastConicAS_C(SimParams,SimStructs)
+function [SimParams,SimStructs] = getSingleBandSCAA_B(SimParams,SimStructs)
 
 initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 reqSINRPerUser = 2.^(QueuedPkts / nBands) - 1;
 
+qExponent = 4;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
-iterateSCAMax = 50;
 
 if SimParams.nTxAntennaEnabled == SimParams.nTxAntenna
     return;
 end
 
 binVar_P = cell(nBases,nBands);
-
 for iBand = 1:nBands
     for iBase = 1:nBases
         binVar_P{iBase,iBand} = rand(SimParams.nTxAntenna,1);
@@ -28,7 +27,6 @@ while iterateSCA
     gConstraints = [];
     X = cell(nBases,nBands);
     binVar = cell(nBases,nBands);
-    epiVar = cell(nBases,nBands);
     aPowVar = cell(nBases,nBands);
     for iBand = 1:nBands
         for iBase = 1:nBases
@@ -70,13 +68,12 @@ while iterateSCA
     
     for iBase = 1:nBases
         for iBand = 1:nBands
-            tempRH = 0;
             for iAntenna = 1:SimParams.nTxAntenna
-                gConstraints = [gConstraints, rcone(X{iBase,iBand}(iAntenna,:),aPowVar{iBase,iBand}(iAntenna,1),binVar{iBase,iBand}(iAntenna,1) * 0.5)];
+                tempRHS = binVar_P{iBase,iBand}(iAntenna,1)^qExponent + qExponent * (binVar{iBase,iBand}(iAntenna,1) - binVar_P{iBase,iBand}(iAntenna,1)) * binVar_P{iBase,iBand}(iAntenna,1)^(qExponent - 1);
+                gConstraints = [gConstraints, rcone(X{iBase,iBand}(iAntenna,:),aPowVar{iBase,iBand}(iAntenna,1),tempRHS * 0.5)];
             end
             gConstraints = [gConstraints, 0 <= binVar{iBase,iBand} <= 1];
-            gConstraints = [gConstraints, norm(binVar{iBase,1},2)^2 - sum(binVar{iBase,1}) <= 0];
-            gConstraints = [gConstraints, norm(binVar{iBase,1},1) <= SimParams.nTxAntennaEnabled];
+            gConstraints = [gConstraints, norm(binVar{iBase,iBand},1) <= SimParams.nTxAntennaEnabled];
         end
     end
     
@@ -87,7 +84,7 @@ while iterateSCA
         end
     end
     
-    options = sdpsettings('verbose',0,'solver','Fmincon');
+    options = sdpsettings('verbose',0,'solver','fmincon');
     solverOut = solvesdp(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
@@ -127,7 +124,7 @@ while iterateSCA
     end
     
     fprintf('Using [%d] Active Transmit Elements, Total power required is - %f \n',nEnabledAntenna,objective);
-
+    
 end
 
 SimParams.Debug.tempResource{2,1}{1,1} = rX;

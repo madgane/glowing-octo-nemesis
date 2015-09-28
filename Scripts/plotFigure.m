@@ -8,7 +8,7 @@ figColor = rand(1,3);
 figMarker = ovMarker{1,randi(length(ovMarker),1,1)};
 figLineType = '-.';
 figLineWidth = 1;
-figMarkerSize = 3;
+figMarkerSize = 6;
     
 if ~isfield(figStruct,'N')
     figStruct.N = 1;

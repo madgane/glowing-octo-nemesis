@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = getMultiCastSDPAfterAS(SimParams,SimStructs,nIterations)
+function [SimParams,SimStructs] = getMultiBandSDP_SB(SimParams,SimStructs,nIterations)
 
 initMultiCastVariables;
 enabledAntenna = cell(nBases,nBands);

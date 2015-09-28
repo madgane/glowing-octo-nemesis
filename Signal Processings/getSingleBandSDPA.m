@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = getMultiCastSDPAS(SimParams,SimStructs,nIterations)
+function [SimParams,SimStructs] = getSingleBandSDPA(SimParams,SimStructs,nIterations)
 
 initMultiCastVariables;
 U = cell(nBases,nBands);
@@ -245,7 +245,7 @@ end
 
 if reducedSDPMultiCasting
     SimParams.Debug.MultiCastSDPExchange = enabledAntenna;
-    [SimParams, SimStructs] = getMultiCastSDP(SimParams,SimStructs,nIterations);
+    [SimParams, SimStructs] = getSingleBandSDP(SimParams,SimStructs,nIterations);
 end
 
 end

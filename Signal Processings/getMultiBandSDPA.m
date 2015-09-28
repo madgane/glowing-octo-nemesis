@@ -1,8 +1,9 @@
 
-function [SimParams,SimStructs] = getMultiCastSDP_MC(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiBandSDPA(SimParams,SimStructs)
 
 initMultiCastVariables;
 
+cObj = 1e4;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
@@ -20,17 +21,26 @@ else
     nTxAntenna = SimParams.nTxAntenna;
 end
 
+binVar_P = cell(nBases,1);
 SimParams.Debug.groupRank = [];
 
-gX = zeros(nUsers,nBands);
+gX = ones(nUsers,nBands);
 bX = ones(nUsers,nBands);
+
+for iBase = 1:nBases
+    binVar_P{iBase,1} = ones(nTxAntenna,1);
+end
 
 while iterateSCA
     
     gConstraints = [];
+    xTilde = cell(nBases,1);
     X = cell(nBases,nBands);
-    for iBand = 1:nBands
-        for iBase = 1:nBases
+    binVar = cell(nBases,1);
+    for iBase = 1:nBases
+        xTilde{iBase,1} = sdpvar(nTxAntenna,1,'full');
+        binVar{iBase,1} = sdpvar(nTxAntenna,1,'full');
+        for iBand = 1:nBands
             X{iBase,iBand} = sdpvar(nTxAntenna,nTxAntenna,nGroupsPerCell(iBase,1),'hermitian','complex');
         end
     end
@@ -67,25 +77,38 @@ while iterateSCA
     cGamma = Gamma + 1;
     for iUser = 1:nUsers
         gConstraints = [gConstraints , gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
-%         gConstraints = [gConstraints , reqSINRPerUser(iUser,1) - Gamma(iUser,2) <= 0];
     end
     
     gConstraints = [gConstraints, Gamma >= 0];
+    
+    for iBase = 1:nBases
+        for iAntenna = 1:nTxAntenna
+            xVector = [];
+            for iBand = 1:nBands
+                xVector = [xVector, X{iBase,iBand}(iAntenna,:)];
+            end
+            gConstraints = [gConstraints, rcone(xVector.',xTilde{iBase,1}(iAntenna,1),0.5 * binVar{iBase,1}(iAntenna,1) * binVar_P{iBase,1}(iAntenna,1)^4)];
+        end
+        gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled, 0 <= binVar{iBase,1} <= 1];
+        
+    end
+       
+%     objective = (-sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) - entropy(binVar_P{iBase,1})) * cObj;
     
     objective = 0;
     for iBand = 1:nBands
         for iBase = 1:nBases
             for iGroup = 1:nGroupsPerCell(iBase,1)
-                objective = objective + real(trace(X{iBase,iBand}(:,:,iGroup)));
+                objective = objective + sum(xTilde{iBase,1});
             end
         end
     end
     
-    options = sdpsettings('verbose',0,'solver','Sedumi');
+    options = sdpsettings('verbose',0,'solver','DSDP');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
-    if solverOut.problem ~= 0
+    if ~((solverOut.problem == 0) || (solverOut.problem == 3) || (solverOut.problem == 4))
         display(yalmiperror(solverOut.problem));
         display('SDP Failed !');
         for iBase = 1:nBases
@@ -94,6 +117,7 @@ while iterateSCA
                 SimStructs.baseStruct{iBase,1}.PG{iBand,1} = zeros(nTxAntenna,nGroupsPerCell(iBase,1));
             end
         end
+        
         gX = rand(nUsers,nBands);
         bX = ones(nUsers,nBands) + rand(nUsers,nBands);
     end
@@ -113,18 +137,20 @@ while iterateSCA
             txPower = txPower + trace(double(X{iBase,iBand}(:,:,iGroup)));
         end
     end    
-    
+
     if (abs(txPower - minPower) / abs(txPower)) < epsilonT
         iterateSCA = 0;
     else
         minPower = txPower;
     end
 
+    binVar_P{iBase,1} = abs(value(binVar{iBase,1}));
+    fprintf('Total Transmit Elements - %2.2f \n',sum(binVar_P{iBase,1}));
+    fprintf('%2.2f \t',binVar_P{iBase,1});fprintf('\n');
     fprintf('Transmit Power Required for Tx - %2.2f \n',txPower);
-    
 end
 
 SimParams.Debug.SDP_ReqSINR_Band = value(Gamma);
-SimParams.Debug.MultiCastSDPExchange = linspace(1,SimParams.nTxAntenna,SimParams.nTxAntenna);
+SimParams.Debug.MultiCastSDPExchange = logical(int8(value(binVar{iBase,1})));
 
 end

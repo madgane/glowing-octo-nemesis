@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = getMultiCastConicS(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiBandSCAS(SimParams,SimStructs)
 
 initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};

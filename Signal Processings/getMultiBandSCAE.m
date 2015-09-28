@@ -1,5 +1,5 @@
 
-function [SimParams,SimStructs] = getMultiCastConicExhaustive(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiBandSCAE(SimParams,SimStructs)
 
 exMinPower = Inf;
 initMultiCastVariables;
@@ -30,7 +30,7 @@ for iCombination = 1:nCombinations
     display('Antenna subset selected as - ');
     display(logical(xAntennasEnabled));
     
-    [SimParams,SimStructs] = getMultiCastConicB(SimParams,SimStructs,'Dual');
+    [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'Dual');
     for iBase = 1:nBases
         for iBand = 1:nBands
             for iGroup = 1:nGroupsPerCell(iBase,1)
@@ -46,7 +46,7 @@ for iCombination = 1:nCombinations
     end
     display('Initialization point found !');
     
-    [xParams,xStructs] = getMultiCastConicB(SimParams,SimStructs,'MP');
+    [xParams,xStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
     
     txPower = 0;
     for iBase = 1:nBases
