@@ -163,8 +163,8 @@ switch SimParams.plotMode
         end
         plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',baseBF_Power,'N',1));
         
-        xlabel('Number of Antenna Elements ({N_T})');
-        ylabel('Power in dB');
+        xlabel('Total Number of Active Antenna Elements ({X_T})');
+        ylabel('Transmit Power in dB');
 
         
     otherwise

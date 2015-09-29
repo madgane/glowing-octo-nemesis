@@ -3,7 +3,7 @@ function [SimParams,SimStructs] = getMultiBandSDPA(SimParams,SimStructs)
 
 initMultiCastVariables;
 
-cObj = 1e4;
+cObj = 5e3;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
@@ -24,8 +24,8 @@ end
 binVar_P = cell(nBases,1);
 SimParams.Debug.groupRank = [];
 
-gX = ones(nUsers,nBands);
-bX = ones(nUsers,nBands);
+gX = SimParams.Debug.tempResource{3,1}{1,1};
+bX = SimParams.Debug.tempResource{4,1}{1,1};
 
 for iBase = 1:nBases
     binVar_P{iBase,1} = ones(nTxAntenna,1);
@@ -87,15 +87,14 @@ while iterateSCA
             for iBand = 1:nBands
                 xVector = [xVector, X{iBase,iBand}(iAntenna,:)];
             end
-            gConstraints = [gConstraints, rcone(xVector.',xTilde{iBase,1}(iAntenna,1),0.5 * binVar{iBase,1}(iAntenna,1) * binVar_P{iBase,1}(iAntenna,1)^4)];
+            gConstraints = [gConstraints, rcone(xVector.',0.5 * xTilde{iBase,1}(iAntenna,1),(binVar{iBase,1}(iAntenna,1) * binVar_P{iBase,1}(iAntenna,1)^0))];
         end
         gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled, 0 <= binVar{iBase,1} <= 1];
         
     end
        
-%     objective = (-sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) - entropy(binVar_P{iBase,1})) * cObj;
-    
-    objective = 0;
+%     objective = 0;
+    objective = (-sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) + entropy(binVar_P{iBase,1})) * cObj;
     for iBand = 1:nBands
         for iBase = 1:nBases
             for iGroup = 1:nGroupsPerCell(iBase,1)
@@ -128,8 +127,8 @@ while iterateSCA
         iterateSCA = 0;
     end
     
-    bX = double(b);
-    gX = double(Gamma);    
+    bX = value(b);
+    gX = value(Gamma);
 
     txPower = 0;
     for iBand = 1:nBands

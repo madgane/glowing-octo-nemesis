@@ -91,6 +91,15 @@ while iterateSCA
         gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
         gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled];
     end
+    
+    
+    for iGroup = 1:nGroupsPerCell(iBase,1)
+        for iBand = 1:nBands
+            if iGroup ~= iBand
+                gConstraints = [gConstraints, X{iBase,iBand}(:,iGroup)' * X{iBase,iBand}(:,iGroup) <= 0];
+            end
+        end
+    end
 
 %     gConstraints = [gConstraints, entropy(binVariable{iBase,1}) - sum((1 + log(binVariable{iBase,1})) .* (binVar{iBase,1} - binVariable{iBase,1})) <= 0]; 
     

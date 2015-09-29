@@ -139,8 +139,7 @@ while iterateSCA
         case 'Dual'
             if (double(feasVariable) < 0)
                 break;
-            end
-            
+            end            
             fprintf('Feasible Variable - %f \n',double(feasVariable));
             
         case 'MP'
@@ -175,6 +174,7 @@ for iBase = 1:nBases
     end
 end
 
+SimParams.Debug.tempResource{3,1}{1,1} = value(Gamma);
 SimParams.Debug.tempResource{4,1}{1,1} = bX;
 
 end

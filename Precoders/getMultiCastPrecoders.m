@@ -112,8 +112,7 @@ switch selectionMethod
         
         display('Initialization point found !');
         
-        switch designType
-            
+        switch designType            
             case 'A'
                 [SimParams,SimStructs] = getSingleBandSCAA_A(SimParams,SimStructs);
             case 'B'
@@ -127,12 +126,17 @@ switch selectionMethod
         
     case 'MB-SDP'
         
+        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,searchType);
+        display('Initialization point found !');
         [SimParams,SimStructs] = getMultiBandSDP(SimParams,SimStructs);
         [SimParams,SimStructs] = getMultiBandSDP_SB(SimParams,SimStructs,xRandIterations);
         
     case 'MB-SDPA'
         
+        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'FC');
+        display('Initialization point found !');
         [SimParams,SimStructs] = getMultiBandSDPA(SimParams,SimStructs);
+        display('Antenna subset selected !');
         [SimParams,SimStructs] = getMultiBandSDP_SB(SimParams,SimStructs,xRandIterations);
 
         
@@ -171,7 +175,6 @@ switch selectionMethod
         
     case 'MB-SCAA'
         
-        searchType = 'Dual';
         switch searchType
             case 'FC'
                 [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,searchType);
