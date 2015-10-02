@@ -6,6 +6,7 @@ rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 bX = SimParams.Debug.tempResource{4,1}{1,1};
 
+fcCount = 0;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
@@ -87,6 +88,16 @@ while iterateSCA
         end
     end
     
+    if (logical(sum(strcmpi(ObjType,{'FC','Dual'}))) && (SimParams.nTxAntennaEnabled <= SimParams.nGroupArray + 1))
+        for iGroup = 1:nGroupsPerCell(iBase,1)
+            for iBand = 1:nBands
+                if iBand ~= mod(iGroup - 1,nBands) + 1
+                    gConstraints = [gConstraints, X{iBase,iBand}(:,iGroup)' * X{iBase,iBand}(:,iGroup) <= 0];
+                end
+            end
+        end
+    end
+    
     switch ObjType
         case 'FC'
             objective = [];
@@ -104,7 +115,7 @@ while iterateSCA
                     objective = objective + (X{iBase,iBand}(:)' * X{iBase,iBand}(:));
                 end
             end
-            objective = feasVariable + objective * epsilonT;
+            objective = feasVariable + objective * objWeight;
     end
     
     options = sdpsettings('verbose',0,'solver','Mosek');
@@ -138,18 +149,24 @@ while iterateSCA
     switch ObjType
         case 'Dual'
             if (double(feasVariable) < 0)
-                break;
-            end            
+                fcCount = fcCount + 1;
+                if fcCount > 0
+                    break;
+                end
+            end  
+            
             fprintf('Feasible Variable - %f \n',double(feasVariable));
             
         case 'MP'
-            objective = double(objective);
+            objective = value(objective);
             if (abs(objective - minPower) / abs(minPower)) < epsilonT
                 iterateSCA = 0;
             else
                 minPower = objective;
             end
-            display(double(objective));
+            
+            fprintf('Total Power Required - %4.4f \n',value(objective));
+            
         case 'FC'
             if solverOut.problem == 0
                 break;

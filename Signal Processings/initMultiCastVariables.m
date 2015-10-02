@@ -1,6 +1,9 @@
 
 maxObj = 1e5;
-epsilonT = 1e-5;
+epsilonT = 1e-4;
+enableBreak = 0;
+objWeight = 1e-2;
+
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;
 nBands = SimParams.nBands;

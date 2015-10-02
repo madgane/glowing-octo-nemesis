@@ -44,9 +44,9 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'MB-SCAA_C';
+SimParams.DesignType = 'MB-SCAA_B';
 
-SimParams.nExchangesOTA = 50;
+SimParams.nExchangesOTA = 250;
 SimParams.exchangeResetInterval = 1;
 SimParams.nExchangesOBH = 1;
 
@@ -167,7 +167,7 @@ for iAntennaArray = 1:length(SimParams.nTxAntennaEnabledArray)
         end
     end
     
-    cState = sprintf('Solved for - [%d] - Active Transmit Antenna Elements ',SimParams.nTxAntennaEnabled);disp(cState);
+    cState = sprintf('Solved for - [%d] - Active Transmit Antenna Elements \n',SimParams.nTxAntennaEnabled);disp(cState);
     
     gXParams{iAntennaArray,1} = SimParams;
     gXStructs{iAntennaArray,1} = SimStructs;

@@ -6,7 +6,7 @@ rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 bX = SimParams.Debug.tempResource{4,1}{1,1};
 
-qExponent = 3;
+qExponent = 5;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
@@ -121,7 +121,9 @@ while iterateSCA
     
     objective = double(objective);
     if (abs(objective - minPower) / abs(minPower)) < epsilonT
-        iterateSCA = 0;
+        if enableBreak
+            iterateSCA = 0;
+        end
     else
         minPower = objective;
     end
@@ -134,7 +136,11 @@ while iterateSCA
     
     fprintf('Enabled Antennas - \t');
     fprintf('%2.3f \t',value(binVar{iBase,1}));
-    fprintf('\nUsing [%2.2f] Active Transmit Elements, Total power required is - %f \n',nEnabledAntenna,objective);    
+    fprintf('\nUsing [%2.2f] Active Transmit Elements, Objective is - %f \n',nEnabledAntenna,objective);    
+    
+    if sum(abs(value(binVar{iBase,1})) < epsilonT) == (SimParams.nTxAntenna - SimParams.nTxAntennaEnabled)
+        enableBreak = 1;
+    end
     
 end
 
