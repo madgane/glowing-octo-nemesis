@@ -88,7 +88,7 @@ while iterateSCA
         end
     end
     
-    if (logical(sum(strcmpi(ObjType,{'FC','Dual'}))) && (SimParams.nTxAntennaEnabled <= SimParams.nGroupArray + 1))
+    if (logical(sum(strcmpi(ObjType,{'FC','Dual'}))) && (SimParams.nTxAntennaEnabled <= singleBandCheck))
         for iGroup = 1:nGroupsPerCell(iBase,1)
             for iBand = 1:nBands
                 if iBand ~= mod(iGroup - 1,nBands) + 1
@@ -118,7 +118,7 @@ while iterateSCA
             objective = feasVariable + objective * objWeight;
     end
     
-    options = sdpsettings('verbose',0,'solver','Mosek');
+    options = sdpsettings('verbose',0,'solver','Gurobi');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
@@ -191,7 +191,7 @@ for iBase = 1:nBases
     end
 end
 
-SimParams.Debug.tempResource{3,1}{1,1} = value(Gamma);
 SimParams.Debug.tempResource{4,1}{1,1} = bX;
+SimParams.Debug.tempResource{5,1}{1,1} = value(Gamma);
 
 end

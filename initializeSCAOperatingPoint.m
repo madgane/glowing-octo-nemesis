@@ -8,7 +8,7 @@ if (SimParams.iAntennaArray ~= 1)
     enableSearch = 0;
 end
 
-if (SimParams.nTxAntennaEnabled == (SimParams.nGroupArray + 2))
+if (SimParams.nTxAntennaEnabled == (singleBandCheck + 1))
     enableSearch = 1;
 end
 

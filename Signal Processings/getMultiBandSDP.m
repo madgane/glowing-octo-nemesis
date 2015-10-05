@@ -22,8 +22,8 @@ end
 
 SimParams.Debug.groupRank = [];
 
-gX = SimParams.Debug.tempResource{3,1}{1,1};
 bX = SimParams.Debug.tempResource{4,1}{1,1};
+gX = SimParams.Debug.tempResource{5,1}{1,1};
 
 while iterateSCA
     

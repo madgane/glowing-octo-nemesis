@@ -44,7 +44,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'MB-SCAA_B';
+SimParams.DesignType = 'MB-SCAA_A';
 
 SimParams.nExchangesOTA = 250;
 SimParams.exchangeResetInterval = 1;

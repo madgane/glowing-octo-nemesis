@@ -69,7 +69,8 @@ switch selectionMethod
         
     case 'MB-SDPA'
         
-        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'FC');
+%         [SimParams,SimStructs] = initializeSCAOperatingPoint(SimParams,SimStructs);
+        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'Dual');
         display('Initialization point found !');
         [SimParams,SimStructs] = getMultiBandSDPA(SimParams,SimStructs);
         display('Antenna subset selected !');

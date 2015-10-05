@@ -2,12 +2,12 @@
 processID = feature('GetPid');
 display(processID);
 
-if isunix
+if strcmpi(SimParams.cvxDisabled,'false')
     cvx_quiet('true');
-    cvx_solver('SDPT3');
     cvx_expert('true');
-else
-%     cvx_quiet('true');
-%     cvx_solver('Mosek');
-%     cvx_expert('true');
+    if isunix
+        cvx_solver('SDPT3');
+    else
+        cvx_solver('Mosek');
+    end
 end

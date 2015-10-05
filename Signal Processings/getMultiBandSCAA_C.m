@@ -10,7 +10,7 @@ iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
 
-cObj = 5e2;
+cObj = 5e4;
 binVariable = cell(nBases,1);
 for iBase = 1:nBases
     binVariable{iBase,1} = ones(SimParams.nTxAntenna,1);    
