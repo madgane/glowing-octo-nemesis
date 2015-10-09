@@ -44,7 +44,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'MB-SCAA_A';
+SimParams.DesignType = 'SB-SDPA';
 
 SimParams.nExchangesOTA = 250;
 SimParams.exchangeResetInterval = 1;
@@ -60,7 +60,7 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 1e100;
 
-SimParams.nBands = 2;
+SimParams.nBands = 1;
 SimParams.nBases = 1;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -78,8 +78,8 @@ SimParams.PL_Profile = [5 -inf 5 -inf 5 -inf 1e-20 0; -inf 5 -inf 5 -inf 5 0 1e-
 if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
     SimParams.usersPerGroup = 5;
-    SimParams.nAntennaArray = 8;
-    SimParams.nTxAntennaEnabledArray = [1:SimParams.nAntennaArray];
+    SimParams.nAntennaArray = 12;
+    SimParams.nTxAntennaEnabledArray = [5:SimParams.nAntennaArray];
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));

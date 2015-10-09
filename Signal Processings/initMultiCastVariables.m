@@ -1,9 +1,10 @@
 
-maxObj = 1e5;
-epsilonT = 1e-4;
+maxObj = 1e4;
+epsilonT = 1e-5;
 enableBreak = 0;
-objWeight = 1e-2;
-singleBandCheck = SimParams.nGroupArray;
+objWeight = 1e-4;
+singleBandCheck = 0;
+lowEpsilon = 1e-10;
 
 cH = SimStructs.linkChan;
 nBases = SimParams.nBases;

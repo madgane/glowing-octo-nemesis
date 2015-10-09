@@ -55,6 +55,11 @@ switch selectionMethod
                 [SimParams,SimStructs] = getSingleBandSCAA_B(SimParams,SimStructs);
             case 'C'
                 [SimParams,SimStructs] = getSingleBandSCAA_C(SimParams,SimStructs);
+            case 'D'
+                [SimParams,SimStructs] = getSingleBandSCAA_D(SimParams,SimStructs);
+            case 'E'
+                [SimParams,SimStructs] = getSingleBandSCAA_E(SimParams,SimStructs);
+
         end
         
         display('Antenna subset selected !');
@@ -96,12 +101,14 @@ switch selectionMethod
                 [SimParams,SimStructs] = getMultiBandSCAA_C(SimParams,SimStructs);
             case 'D'
                 [SimParams,SimStructs] = getMultiBandSCAA_D(SimParams,SimStructs);
+            case 'E'
+                [SimParams,SimStructs] = getMultiBandSCAA_E(SimParams,SimStructs);
         end
 
         display('Antenna subset selected !');
         [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
 
-    case 'MB-SCAS'
+    case {'MB-SCAS','SB-SCAS'}
         
         if (SimParams.iAntennaArray == 1)
 
@@ -137,7 +144,7 @@ switch selectionMethod
             
         end
         
-    case 'MB-SCAE'
+    case {'SB-SCAE','MB-SCAE'}
         
         [SimParams,SimStructs] = getMultiBandSCAE(SimParams,SimStructs);
        

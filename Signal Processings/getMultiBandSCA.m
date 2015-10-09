@@ -118,7 +118,7 @@ while iterateSCA
             objective = feasVariable + objective * objWeight;
     end
     
-    options = sdpsettings('verbose',0,'solver','Gurobi');
+    options = sdpsettings('verbose',0,'solver','Mosek');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
@@ -139,11 +139,7 @@ while iterateSCA
         bX = full(double(Beta));
     else
         display(solverOut);
-        if sum(strcmpi({'FC','Dual'},ObjType))
-            rX = rand(size(rX));iX = rand(size(iX));
-        else
-            continue;
-        end
+        rX = randn(size(rX));iX = randn(size(iX));
     end
     
     switch ObjType
@@ -181,6 +177,12 @@ while iterateSCA
         iterateSCA = 0;
     end
    
+end
+
+if strcmpi(ObjType,'Dual')
+    if value(feasVariable) > 0
+        SimParams.Debug.SCA_initFailureFlag = 1;
+    end
 end
 
 for iBase = 1:nBases

@@ -101,7 +101,7 @@ while iterateSCA
                     end
                 end
             end
-            invVariable{iBase,1} = 1./(value(aPowVar{iBase,1}) + epsilonT);
+            invVariable{iBase,1} = 1./(value(aPowVar{iBase,1}) + lowEpsilon);
         end
         bX = full(double(Beta));
         
@@ -111,7 +111,7 @@ while iterateSCA
     end
     
     objective = double(objective);
-    if (abs(objective - minPower) / abs(minPower)) < epsilonT
+    if abs(objective - minPower) < epsilonT
         iterateSCA = 0;
     else
         minPower = objective;

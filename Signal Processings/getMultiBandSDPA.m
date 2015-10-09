@@ -100,7 +100,7 @@ while iterateSCA
         end
     end
     
-    objective = sum((1./binVar_P{iBase,1}) .* (binVar{iBase,1} - binVar_P{iBase,1})) + objWeight * objective;
+    objective = objective * objWeight - maxObj * (sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) - entropy(binVar_P{iBase,1}));
     
     options = sdpsettings('verbose',0,'solver','Mosek');
     solverOut = optimize(gConstraints,objective,options);
@@ -142,7 +142,7 @@ while iterateSCA
         minPower = txPower;
     end
 
-    binVar_P{iBase,1} = abs(value(binVar{iBase,1})) + epsilonT;
+    binVar_P{iBase,1} = abs(value(binVar{iBase,1})) + lowEpsilon;
     fprintf('Total Transmit Elements - %2.2f \n',sum(binVar_P{iBase,1}));
     fprintf('%2.2f \t',binVar_P{iBase,1});fprintf('\n');
     fprintf('Transmit Power Required for Tx - %2.2f \n',txPower);

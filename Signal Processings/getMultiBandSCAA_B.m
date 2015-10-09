@@ -6,7 +6,7 @@ rX = SimParams.Debug.tempResource{2,1}{1,1};
 iX = SimParams.Debug.tempResource{3,1}{1,1};
 bX = SimParams.Debug.tempResource{4,1}{1,1};
 
-qExponent = 5;
+qExponent = 4;
 iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;

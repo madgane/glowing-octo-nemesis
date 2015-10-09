@@ -112,9 +112,11 @@ if enableSearch
         
     end
     
-    SimParams.Debug.Retain = SimParams.Debug.tempResource;
+    SimParams.Debug.SCA.Retain = SimParams.Debug.tempResource;
+    SimParams.Debug.SCA.RetainX = SimStructs.baseStruct{1,1}.PG;
+    
 else
-    SimParams.Debug.tempResource = SimParams.Debug.Retain;    
+    SimParams.Debug.tempResource = SimParams.Debug.SCA.Retain;
 end
 
 display('Initialization point found !');

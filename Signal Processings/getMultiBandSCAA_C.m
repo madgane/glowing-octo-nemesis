@@ -10,10 +10,9 @@ iterateSCA = 1;
 iIterateSCA = 0;
 minPower = 1e20;
 
-cObj = 5e4;
-binVariable = cell(nBases,1);
+binVar_P = cell(nBases,1);
 for iBase = 1:nBases
-    binVariable{iBase,1} = ones(SimParams.nTxAntenna,1);    
+    binVar_P{iBase,1} = ones(SimParams.nTxAntenna,1);    
 end
 
 if SimParams.nTxAntennaEnabled == SimParams.nAntennaArray
@@ -94,9 +93,9 @@ while iterateSCA
         objective = objective + sum(aPowVar{iBase,1});
     end
     
-    objective = objective - cObj * (sum((1 + log(binVariable{iBase,1})) .* (binVar{iBase,1} - binVariable{iBase,1})) - entropy(binVariable{iBase,1}));
+    objective = objective * objWeight - (sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) - entropy(binVar_P{iBase,1}));
     
-    options = sdpsettings('verbose',0,'solver','Mosek');
+    options = sdpsettings('verbose',0,'solver','Gurobi');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
@@ -115,7 +114,7 @@ while iterateSCA
                 end
             end
             
-            binVariable{iBase,1} = abs(value(binVar{iBase,1}));
+            binVar_P{iBase,1} = abs(value(binVar{iBase,1})) + lowEpsilon;
             nEnabledAntenna = sum(value(binVar{iBase,1}));
             
         end
