@@ -165,6 +165,33 @@ switch SimParams.plotMode
         
         xlabel('Total Number of Active Antenna Elements ({X_T})');
         ylabel('Transmit Power in dB');
+        
+    case 'MCPolar'
+        
+        for iAntennaArray = 1:length(xParams)
+            
+            SimParams = xParams{iAntennaArray,1};
+            SimStructs = xStructs{iAntennaArray,1};
+            
+            iBand = 1;
+            xAngle = 0:pi/100:2*pi;
+            xAG = zeros(length(xAngle),2);
+            displayQueues(SimParams,SimStructs);
+            for iAngle = 1:length(xAngle)
+                xFFT = 0;
+                for iBase = 1:SimParams.nBases
+                    for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
+                        gPattern = exp(-sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:(SimParams.nTxAntenna - 1)));
+%                         xFFT = xFFT + gPattern * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup);
+                        xFFT = xFFT + fft(SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup))
+                    end
+                end
+                xAG(iAngle,:) = [xAngle(1,iAngle), db(abs(xFFT),'power')];
+            end
+            
+            polar(xAG(:,1),xAG(:,2));
+            
+        end
 
         
     otherwise
