@@ -1,6 +1,7 @@
 
 function [SimParams,SimStructs] = getSingleBandSDPA(SimParams,SimStructs,nIterations)
 
+eThreshold = 1e-4;
 initMultiCastVariables;
 
 weightedDualInf = 0;
@@ -59,11 +60,6 @@ while weightedDualInf
                 gConstraints = [gConstraints, tempSum >= 0];
             end
             gConstraints = [gConstraints, X{iBase,iBand}(:,:,iGroup) >= 0];
-        end
-    end
-    
-    for iBase = 1:nBases
-        for iGroup = 1:nGroupsPerCell(iBase,1)
             gConstraints = [gConstraints, Xtilde{iBase,iBand} >= abs(X{iBase,iBand}(:,:,iGroup))];
         end
     end
@@ -93,7 +89,7 @@ while weightedDualInf
         for iBase = 1:nBases
             for iBand = 1:nBands
                 nEnabledAntenna(iBase,iBand) = sum(diag(double(Xtilde{iBase,iBand})) > epsilonT);
-                U{iBase,iBand} = 1./(double(Xtilde{iBase,iBand}) + 1e-3);
+                U{iBase,iBand} = 1./(double(Xtilde{iBase,iBand}) + epsilonT);
             end
         end
     end
@@ -116,6 +112,7 @@ if SimParams.iAntennaArray == 1
     SimParams.Debug.SDPDebug.X = X;
     SimParams.Debug.SDPDebug.Xtilde = Xtilde;
     SimParams.Debug.SDPDebug.U = U;
+    SimParams.Debug.SDPDebug.lastDual = 1e-4;
 else
     nEnabledAntenna = SimParams.Debug.SDPDebug.nEnabledAntenna;
     X = SimParams.Debug.SDPDebug.X;
@@ -123,15 +120,28 @@ else
     U = SimParams.Debug.SDPDebug.U;
 end
 
-bisectionBasedDualSearch = 0;
 fprintf('Minumum number of active antenna elements required - %d \n',nEnabledAntenna);
 
-for iBase = 1:nBases
-    for iBand = 1:nBands
-        if nEnabledAntenna(iBase,iBand) ~= SimParams.nTxAntennaEnabled
-            bisectionBasedDualSearch = 1;
+iBand = 1;
+switch nEnabledAntenna(iBase,iBand)
+    case SimParams.nTxAntennaEnabled
+        bisectionBasedDualSearch = 0;
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                enabledAntenna{iBase,iBand} = find(diag(double(Xtilde{iBase,iBand})) > eThreshold);
+            end
         end
-    end
+
+    case SimParams.nAntennaArray
+        bisectionBasedDualSearch = 0;
+        for iBase = 1:nBases
+            for iBand = 1:nBands
+                enabledAntenna{iBase,iBand} = linspace(1,SimParams.nAntennaArray,SimParams.nAntennaArray);
+            end
+        end
+
+    otherwise
+        bisectionBasedDualSearch = 1;
 end
 
 if ~bisectionBasedDualSearch
@@ -145,14 +155,14 @@ if bisectionBasedDualSearch
     
     dualLambdaMin = 0;
     dualLambdaMax = maxObj;
-    
+    dualLambda = SimParams.Debug.SDPDebug.lastDual;
+        
     while bisectionSearch
         
         gConstraints = [];
         X = cell(nBases,nBands);
         Xtilde = cell(nBases,nBands);
-        dualLambda = (dualLambdaMax + dualLambdaMin) / 2;
-        
+                
         for iBase = 1:nBases
             Xtilde{iBase,iBand} = sdpvar(SimParams.nTxAntenna,SimParams.nTxAntenna,'full');
             X{iBase,iBand} = sdpvar(SimParams.nTxAntenna,SimParams.nTxAntenna,nGroupsPerCell(iBase,1),'hermitian','complex');
@@ -177,11 +187,6 @@ if bisectionBasedDualSearch
                     gConstraints = [gConstraints, tempSum >= 0];
                 end
                 gConstraints = [gConstraints, X{iBase,iBand}(:,:,iGroup) >= 0];
-            end
-        end
-        
-        for iBase = 1:nBases
-            for iGroup = 1:nGroupsPerCell(iBase,1)
                 gConstraints = [gConstraints, Xtilde{iBase,iBand} >= abs(X{iBase,iBand}(:,:,iGroup))];
             end
         end
@@ -203,7 +208,7 @@ if bisectionBasedDualSearch
         SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
         
         if ((solverOut.problem == 0) || (solverOut.problem == 3) || (solverOut.problem == 4))
-            nEnabledAntenna = sum(diag(value(Xtilde{1,1})) > epsilonT);
+            nEnabledAntenna = sum(diag(value(Xtilde{1,1})) > eThreshold);
             if nEnabledAntenna < SimParams.nTxAntennaEnabled
                 dualLambdaMax = dualLambda;
             else
@@ -222,13 +227,18 @@ if bisectionBasedDualSearch
             bisectionSearch = 0;
             reducedSDPMultiCasting = 1;
         end
+        
+        dualLambda = (dualLambdaMax + dualLambdaMin) / 2;
     end
-end
+    
+    for iBase = 1:nBases
+        for iBand = 1:nBands
+            enabledAntenna{iBase,iBand} = find(diag(double(Xtilde{iBase,iBand})) > eThreshold);
+        end
+    end
+    
+    SimParams.Debug.SDPDebug.lastDual = dualLambda;
 
-for iBase = 1:nBases
-    for iBand = 1:nBands
-        enabledAntenna{iBase,iBand} = find(diag(double(Xtilde{iBase,iBand})) > epsilonT);
-    end
 end
 
 if reducedSDPMultiCasting

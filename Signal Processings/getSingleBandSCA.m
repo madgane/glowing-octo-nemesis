@@ -128,8 +128,8 @@ while iterateSCA
                 fcCount = fcCount + 1;
                 rX = rand(size(rX));iX = rand(size(iX));
                 fprintf('Feasible Variable - %f and Failed \n',double(feasVariable));
-                if fcCount > 5
-                    iterateSCA = 0
+                if fcCount >= 2
+                    iterateSCA = 0;
                 end
             else
                 minPower = objective;

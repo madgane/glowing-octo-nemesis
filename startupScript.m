@@ -13,7 +13,7 @@ if strfind(saveContents,'true')
     updatePath;
 end
 
-SimParams.outFile = 'JournalData-1';
+SimParams.outFile = 'Journal-2';
 SimParams.saveChannelInfo = 'false';
 SimParams.channelSaveFolder = 'Results';
 
@@ -69,7 +69,7 @@ SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = 5;
+SimParams.maxArrival = 1;
 SimParams.groupArrivalFreq = 1;
 SimParams.arrivalDist = 'Constant';
 SimParams.FixedPacketArrivals = [6];
@@ -79,7 +79,7 @@ if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
     SimParams.usersPerGroup = 5;
     SimParams.nAntennaArray = 12;
-    SimParams.nTxAntennaEnabledArray = [5:SimParams.nAntennaArray];
+    SimParams.nTxAntennaEnabledArray = [2:SimParams.nAntennaArray];
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));
@@ -172,31 +172,37 @@ for iAntennaArray = 1:length(SimParams.nTxAntennaEnabledArray)
     gXParams{iAntennaArray,1} = SimParams;
     gXStructs{iAntennaArray,1} = SimStructs;
     
+    if isunix
+        saveContents = 'true';
+    end
+    
+    if strcmp(saveContents,'true')
+        
+        cOutFile = sprintf('%s/%s.mat',SimParams.channelSaveFolder,SimParams.outFile);
+        
+        xVal = fix(clock);
+        SimParams.Log.date = date;
+        SimParams.Log.clock = sprintf('%d:%d:%d',xVal(1,4),xVal(1,5),xVal(1,6));
+        
+        cd Results;
+        if exist(cOutFile,'file')
+            load(cOutFile);
+            globalCount = globalCount + 1;
+        else
+            globalCount = 1;
+            SimParamsCell = cell(1,1);
+            SimStructsCell = cell(1,1);
+        end
+        
+        SimParamsCell{globalCount,1} = gXParams;
+        SimStructsCell{globalCount,1} = gXStructs;
+        save(cOutFile,'globalCount','SimParamsCell','SimStructsCell');
+        cd ../
+        
+    end
+    
 end
 
 SimResults.avgTxPower = SimParams.txPower / SimParams.nDrops;
 displayOutputs(gXParams,gXStructs);
-
-if strcmp(saveContents,'true')
-    
-    xVal = fix(clock);
-    SimParams.Log.date = date;
-    SimParams.Log.clock = sprintf('%d:%d:%d',xVal(1,4),xVal(1,5),xVal(1,6));
-    
-    cd Results;
-    if exist(sprintf('%s.mat',SimParams.outFile),'file')
-        load(SimParams.outFile);
-        globalCount = globalCount + 1;
-    else
-        globalCount = 1;
-        SimParamsCell = cell(1,1);
-        SimStructsCell = cell(1,1);
-    end
-    
-    SimParamsCell{globalCount,1} = SimParams;
-    SimStructsCell{globalCount,1} = SimStructs;
-    save(SimParams.outFile,'globalCount','SimParamsCell','SimStructsCell');
-    cd ../
-    
-end
 
