@@ -168,31 +168,35 @@ switch SimParams.plotMode
         
     case 'MCPolar'
         
+        baseBF_Power = zeros(1,length(xParams));                
         for iAntennaArray = 1:length(xParams)
             
             SimParams = xParams{iAntennaArray,1};
             SimStructs = xStructs{iAntennaArray,1};
             
             iBand = 1;
-            xAngle = 0:pi/100:2*pi;
+            xAngle = linspace(0,2*pi,512);
             xAG = zeros(length(xAngle),2);
             displayQueues(SimParams,SimStructs);
             for iAngle = 1:length(xAngle)
                 xFFT = 0;
                 for iBase = 1:SimParams.nBases
                     for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
-                        gPattern = exp(-sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:(SimParams.nTxAntenna - 1)));
-%                         xFFT = xFFT + gPattern * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup);
-                        xFFT = xFFT + fft(SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup))
+                        gTheta = exp(-sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:SimParams.nTxAntenna-1));
+                        xFFT = xFFT + gTheta * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup);
                     end
                 end
-                xAG(iAngle,:) = [xAngle(1,iAngle), db(abs(xFFT),'power')];
-            end
+                xAG(iAngle,:) = [xAngle(1,iAngle), (abs(xFFT))];
+            end            
             
-            polar(xAG(:,1),xAG(:,2));
+            baseBF_Power(iAntennaArray,1) = db(real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}')),'power');
+            polar(xAG(:,1),xAG(:,2));hold all;
             
         end
-
+        
+        fprintf('\nTotal transmit power required for current transmission - \n');
+        fprintf('%3.4f\t',baseBF_Power);
+        fprintf('\n');
         
     otherwise
         

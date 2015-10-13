@@ -19,7 +19,7 @@ SimParams.channelSaveFolder = 'Results';
 
 SimParams.maxDebugCells = 5;
 SimParams.version = version;
-SimParams.plotMode = 'MCPolar';
+SimParams.plotMode = 'DispMCInfo';
 
 SimParams.sysMode = 'false';
 SimParams.cvxDisabled = 'true';
@@ -32,7 +32,7 @@ SimParams.DebugMode = 'false';
 SimParams.precoderWithIdealChn = 'false';
 SimParams.totalPwrDistOverSC = 'true';
 
-SimParams.ChannelModel = 'ULA';
+SimParams.ChannelModel = 'IID';
 SimParams.pathLossModel = 'CellEdge';
 SimParams.DopplerType = 'Constant_140';
 
@@ -44,7 +44,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'SB-SCAA_B';
+SimParams.DesignType = 'SB-SCAA_C';
 
 SimParams.nExchangesOTA = 250;
 SimParams.exchangeResetInterval = 1;
@@ -77,7 +77,7 @@ if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
     SimParams.usersPerGroup = 16;
     SimParams.nAntennaArray = 8;
-    SimParams.nTxAntennaEnabledArray = [1:SimParams.nAntennaArray];
+    SimParams.nTxAntennaEnabledArray = [4:SimParams.nAntennaArray];
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));
