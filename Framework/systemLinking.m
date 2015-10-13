@@ -56,7 +56,7 @@ if SimParams.multiCasting
             groupUserIndices = cUsers(sIndex:eIndex);
             SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1} = groupUserIndices;
             for iUser = 1:length(groupUserIndices)
-                SimParams.userPhaseLocations_ULA(groupUserIndices(iUser,1),1) = -pi * sin(gPhaseShift(1,iGroup) + (iUser - 1) * (pi / 180) * 2);
+                SimParams.userPhaseLocations_ULA(groupUserIndices(iUser,1),1) = pi * sin(gPhaseShift(1,iGroup) + iUser * (pi / 90));
                 SimStructs.userStruct{groupUserIndices(iUser,1)}.groupIndex = iGroup;
             end
         end

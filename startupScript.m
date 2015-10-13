@@ -44,7 +44,7 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'SB-SDPA';
+SimParams.DesignType = 'SB-SCAA_A';
 
 SimParams.nExchangesOTA = 250;
 SimParams.exchangeResetInterval = 1;
@@ -66,7 +66,7 @@ SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 1;
 SimParams.ffrProfile_dB = zeros(1,SimParams.nBands);
 
-SimParams.maxArrival = 2;
+SimParams.maxArrival = 1.5850;
 SimParams.arrivalDist = 'SteadyFlow';
 
 SimParams.groupArrivalFreq = 1;
