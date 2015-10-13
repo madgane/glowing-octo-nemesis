@@ -182,7 +182,7 @@ switch SimParams.plotMode
                 xFFT = 0;
                 for iBase = 1:SimParams.nBases
                     for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
-                        gTheta = exp(-sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:SimParams.nTxAntenna-1));
+                        gTheta = exp(-sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:SimParams.nTxAntenna-1)) / sqrt(SimParams.nTxAntenna);
                         xFFT = xFFT + gTheta * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup);
                     end
                 end

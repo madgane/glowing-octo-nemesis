@@ -99,7 +99,7 @@ for iBase = 1:nBases
             tY{iBase,iBand,iGroup} = P;
             SimParams.Debug.SDP_vars.groupRank{iBase,1}(1,iGroup) = length(D);
             SimParams.Debug.groupRank = [SimParams.Debug.groupRank, length(D)];
-            randSelection{iBase,iBand,iGroup} = complex(rand(length(D),nIterations),rand(length(D),nIterations)) / sqrt(2);
+            randSelection{iBase,iBand,iGroup} = complex(randn(length(D),nIterations),randn(length(D),nIterations)) / sqrt(2);
         end
     end
 end
