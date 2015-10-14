@@ -175,22 +175,22 @@ switch SimParams.plotMode
             SimStructs = xStructs{iAntennaArray,1};
             
             iBand = 1;
-            xAngle = linspace(0,2*pi,512);
+            xAngle = linspace(0,2*pi,1025);
             xAG = zeros(length(xAngle),2);
             displayQueues(SimParams,SimStructs);
             for iAngle = 1:length(xAngle)
                 xFFT = 0;
                 for iBase = 1:SimParams.nBases
                     for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
-                        gTheta = exp(sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:SimParams.nTxAntenna-1)) / sqrt(SimParams.nTxAntenna);
-                        xFFT = xFFT + gTheta * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup);
+                        gTheta = exp(sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:SimParams.nTxAntenna-1)) / sqrt(SimParams.nAntennaArray);
+                        xFFT = xFFT + abs(gTheta * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup))^2;
                     end
                 end
-                xAG(iAngle,:) = [xAngle(1,iAngle), abs(xFFT)];
+                xAG(iAngle,:) = [xAngle(1,iAngle), xFFT];
             end            
             
             baseBF_Power(iAntennaArray,1) = db(real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}')),'power');
-            polar(xAG(:,1),xAG(:,2).^2);hold all;
+            polar(xAG(:,1),xAG(:,2));hold all;
             
         end
         

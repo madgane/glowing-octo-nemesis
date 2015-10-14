@@ -1,7 +1,7 @@
 
 function [SimParams,SimStructs] = getSingleBandSDPA(SimParams,SimStructs,nIterations)
 
-eThreshold = 1e-2;
+eThreshold = 1e-4;
 initMultiCastVariables;
 
 weightedDualInf = 0;

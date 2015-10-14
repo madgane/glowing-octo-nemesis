@@ -48,8 +48,8 @@ for iBand = 1:SimParams.nBands
                 case 'ULA'
                     
                     SimParams.elapsedFBDuration(iUser,1) = 0;
-                    phaseShift = exp(sqrt(-1) * SimParams.userPhaseLocations_ULA(iUser,1) * (0:SimParams.nTxAntenna - 1));
-                    SimStructs.actualChannel{iBase,iBand}(:,:,iUser) = phaseShift(1:SimParams.nTxAntenna) * PL / sqrt(SimParams.nTxAntenna);
+                    phaseShift = exp(sqrt(-1) * SimParams.userPhaseLocations_ULA(iUser,1) * (0:(SimParams.nTxAntenna - 1)));
+                    SimStructs.actualChannel{iBase,iBand}(:,:,iUser) = phaseShift(1:SimParams.nTxAntenna) * PL / sqrt(SimParams.nAntennaArray);
                     SimStructs.linkChan{iBase,iBand}(:,:,iUser) = sqrt(1 - SimParams.estError) * SimStructs.actualChannel{iBase,iBand}(:,:,iUser) + estError;
                     
                 case 'Jakes'
