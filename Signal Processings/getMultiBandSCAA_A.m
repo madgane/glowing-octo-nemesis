@@ -1,5 +1,9 @@
 
-function [SimParams,SimStructs] = getMultiBandSCAA_A(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiBandSCAA_A(SimParams,SimStructs,ObjType)
+
+if nargin == 2
+    ObjType = '';
+end
 
 initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
@@ -24,9 +28,13 @@ while iterateSCA
     for iBase = 1:nBases
         binVar{iBase,1} = binvar(SimParams.nTxAntenna,1,'full');
         aPowVar{iBase,1} = sdpvar(SimParams.nTxAntenna,1,'full');
-        for iBand = 1:nBands            
+        for iBand = 1:nBands
             X{iBase,iBand} = sdpvar(SimParams.nTxAntenna,nGroupsPerCell(iBase,1),'full','complex');
         end
+    end
+    
+    if strcmpi(ObjType,'MaxMin')
+        fairnessVariable = sdpvar(1,1);
     end
     
     Beta = sdpvar(nUsers,nBands,'full');
@@ -64,14 +72,36 @@ while iterateSCA
             end
         end
     end
-
+    
     cGamma = Gamma + 1;
-    for iUser = 1:nUsers
-        if nBands > 1
-            gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
-        else
-            gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - sum(cGamma(iUser,:)) == 0];
+    if strcmpi(ObjType,'MaxMin')
+        
+        for iUser = 1:nUsers
+            if nBands > 1
+                gConstraints = [gConstraints, (1 + fairnessVariable) - geomean(cGamma(iUser,:)) <= 0];
+            else
+                gConstraints = [gConstraints, (1 + fairnessVariable) - sum(cGamma(iUser,:)) <= 0];
+            end
         end
+        
+        for iBase = 1:nBases
+            xVector = [];
+            for iBand = 1:nBands
+                xVector = [xVector ; X{iBase,iBand}(:)];
+            end
+            gConstraints = [gConstraints, xVector' * xVector <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
+        end
+        
+    else
+        
+        for iUser = 1:nUsers
+            if nBands > 1
+                gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
+            else
+                gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - sum(cGamma(iUser,:)) == 0];
+            end
+        end
+        
     end
     
     for iBase = 1:nBases
@@ -91,8 +121,12 @@ while iterateSCA
     for iBase = 1:nBases
         tVec = [tVec ; aPowVar{iBase,1}];
     end
-        
-    objective = sum(tVec);
+    
+    if strcmpi(ObjType,'MaxMin')
+        objective = -fairnessVariable;
+    else
+        objective = sum(tVec);
+    end
     options = sdpsettings('verbose',0,'solver','Gurobi');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);

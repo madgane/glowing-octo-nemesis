@@ -1,5 +1,9 @@
 
-function [SimParams,SimStructs] = getMultiBandSCAA_C(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiBandSCAA_C(SimParams,SimStructs,ObjType)
+
+if nargin == 2
+    ObjType = '';
+end
 
 initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
@@ -37,6 +41,10 @@ while iterateSCA
     Beta = sdpvar(nUsers,nBands,'full');
     Gamma = sdpvar(nUsers,nBands,'full');
     
+    if strcmpi(ObjType,'MaxMin')
+        fairnessVariable = sdpvar(1,1);
+    end
+    
     for iBase = 1:nBases
         for iGroup = 1:nGroupsPerCell(iBase,1)
             groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
@@ -71,10 +79,19 @@ while iterateSCA
     end
     
     cGamma = Gamma + 1;
-    for iUser = 1:nUsers
-        gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
+    if strcmpi(ObjType,'MaxMin')
+        for iUser = 1:nUsers
+            gConstraints = [gConstraints, (1 + fairnessVariable) - geomean(cGamma(iUser,:)) <= 0];
+        end
+        for iBase = 1:nBases
+            gConstraints = [gConstraints, sum(aPowVar{iBase,1}) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
+        end
+    else
+        for iUser = 1:nUsers
+            gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
+        end
     end
-
+    
     for iBase = 1:nBases
         for iAntenna = 1:SimParams.nTxAntenna
             tVec = [];
@@ -93,9 +110,13 @@ while iterateSCA
         objective = objective + sum(aPowVar{iBase,1});
     end
     
+    if strcmpi(ObjType,'MaxMin')
+        objective = -fairnessVariable;
+    end
+    
     objective = objective * objWeight - (sum((1 + log(binVar_P{iBase,1})) .* (binVar{iBase,1} - binVar_P{iBase,1})) - entropy(binVar_P{iBase,1}));
     
-    options = sdpsettings('verbose',0,'solver','Gurobi');
+    options = sdpsettings('verbose',0,'solver','Mosek');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     

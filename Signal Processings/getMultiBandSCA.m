@@ -40,6 +40,8 @@ while iterateSCA
     switch ObjType
         case 'Dual'
             feasVariable = sdpvar(1,1);
+        case 'MaxMin'
+            fairnessVariable = sdpvar(1,1);
     end
     
     for iBase = 1:nBases
@@ -76,14 +78,15 @@ while iterateSCA
                 cGamma = Gamma(cUser,:) + 1;
 
                 switch ObjType
-                    case 'MP'                        
+                    case 'MP'
                         gConstraints = [gConstraints , gReqSINRPerUser(cUser,1) - geomean(cGamma(:)) <= 0];
                     case 'Dual'
                         gConstraints = [gConstraints , gReqSINRPerUser(cUser,1) - geomean(cGamma(:)) <= feasVariable];
                     case 'FC'
                         gConstraints = [gConstraints , gReqSINRPerUser(cUser,1) - geomean(cGamma(:)) <= 0];
+                    case 'MaxMin'
+                        gConstraints = [gConstraints , (fairnessVariable + 1) - geomean(cGamma(:)) <= 0];
                 end
-
             end
         end
     end
@@ -95,6 +98,16 @@ while iterateSCA
                     gConstraints = [gConstraints, X{iBase,iBand}(:,iGroup)' * X{iBase,iBand}(:,iGroup) <= 0];
                 end
             end
+        end
+    end
+    
+    if logical(sum(strcmpi(ObjType,'MaxMin')))
+        for iBase = 1:nBases
+            xVector = [];
+            for iBand = 1:nBands
+                xVector = [xVector ; X{iBase,iBand}(:)];
+            end
+            gConstraints = [gConstraints, xVector' * xVector <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
         end
     end
     
@@ -116,6 +129,8 @@ while iterateSCA
                 end
             end
             objective = feasVariable + objective * objWeight;
+        case 'MaxMin'
+            objective = -fairnessVariable;
     end
     
     options = sdpsettings('verbose',0,'solver','Mosek');
@@ -153,12 +168,16 @@ while iterateSCA
             
             fprintf('Feasible Variable - %f \n',double(feasVariable));
             
-        case 'MP'
+        case {'MP','MaxMin'}
             objective = value(objective);
             if (abs(objective - minPower) / abs(minPower)) < epsilonT
                 iterateSCA = 0;
             else
                 minPower = objective;
+            end
+            
+            if strcmpi(ObjType,'MaxMin')
+                SimParams.Debug.minUserRate = value(fairnessVariable);
             end
             
             fprintf('Total Power Required - %4.4f \n',value(objective));
@@ -169,6 +188,7 @@ while iterateSCA
             else
                 yalmiperror(solverOut.problem);
             end
+            
     end
     
     if iIterateSCA < iterateSCAMax

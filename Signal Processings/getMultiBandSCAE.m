@@ -1,7 +1,12 @@
 
-function [SimParams,SimStructs] = getMultiBandSCAE(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiBandSCAE(SimParams,SimStructs,ObjType)
 
-exMinPower = Inf;
+if nargin == 2
+    ObjType = '';
+    exMinPower = Inf;
+else
+    exMinPower = -Inf;
+end
 initMultiCastVariables;
 
 rEX = SimParams.Debug.tempResource{2,1}{1,1};
@@ -103,18 +108,33 @@ else
 
         txPower = 0;
         if (SimParams.Debug.SCA_initFailureFlag == 0)         
-            [xParams,xStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
+            if strcmpi(ObjType,'MaxMin')
+                
+                [xParams,xStructs] = getMultiBandSCA(SimParams,SimStructs,'MaxMin');
+                
+                if (xParams.Debug.minUserRate > exMinPower)
+                    gStructs = xStructs;
+                    gParams = xParams;
+                    exMinPower = txPower;
+                end
 
-            for iBase = 1:nBases
-                M = cell2mat(xStructs.baseStruct{iBase,1}.PG);
-                txPower = txPower + norm(M(:))^2;
+            else
+                
+                [xParams,xStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
+                
+                for iBase = 1:nBases
+                    M = cell2mat(xStructs.baseStruct{iBase,1}.PG);
+                    txPower = txPower + norm(M(:))^2;
+                end
+                
+                if (txPower < exMinPower)
+                    gStructs = xStructs;
+                    gParams = xParams;
+                    exMinPower = txPower;
+                end
+
             end
             
-            if (txPower < exMinPower)
-                gStructs = xStructs;
-                gParams = xParams;
-                exMinPower = txPower;
-            end
         end
         
     end

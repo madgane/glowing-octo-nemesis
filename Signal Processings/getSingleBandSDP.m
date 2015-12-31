@@ -19,17 +19,43 @@ SimParams.Debug.groupRank = [];
 
 gConstraints = [];
 X = cell(nBases,nBands);
+X1 = cell(nBases,nBands);
 for iBand = 1:nBands
     for iBase = 1:nBases
         X{iBase,iBand} = sdpvar(nTxAntenna,nTxAntenna,nGroupsPerCell(iBase,1),'hermitian','complex');
+        X1{iBase,iBand} = sdpvar(nTxAntenna,nTxAntenna,nGroupsPerCell(iBase,1),'hermitian','complex');
     end
 end
+
+% for iBand = 1:nBands
+%     for iBase = 1:nBases
+%         for iGroup = 1:nGroupsPerCell(iBase,1)
+%             groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
+%             for iUser = 1:length(groupUsers)
+%                 cUser = groupUsers(iUser,1);
+%                 tempSum = -SimParams.N * reqSINRPerUser(cUser,1);
+%                 for jBase = 1:nBases
+%                     for jGroup = 1:nGroupsPerCell(jBase,1)
+%                         Hsdp = cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser)' * cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser);
+%                         if and((iBase == jBase),(iGroup == jGroup))
+%                             tempSum = tempSum + trace(Hsdp * X{jBase,iBand}(:,:,jGroup));
+%                         else
+%                             tempSum = tempSum - reqSINRPerUser(cUser,1) * trace(Hsdp * X{jBase,iBand}(:,:,jGroup));
+%                         end
+%                     end
+%                 end
+%                 gConstraints = [gConstraints, tempSum >= 0];
+%             end
+%             gConstraints = [gConstraints, X{iBase,iBand}(:,:,iGroup) >= 0];
+%         end
+%     end
+% end
 
 for iBand = 1:nBands
     for iBase = 1:nBases
         for iGroup = 1:nGroupsPerCell(iBase,1)
             groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
-            for iUser = 1:length(groupUsers)
+            for iUser = 1:2:length(groupUsers)
                 cUser = groupUsers(iUser,1);
                 tempSum = -SimParams.N * reqSINRPerUser(cUser,1);
                 for jBase = 1:nBases
@@ -43,10 +69,35 @@ for iBand = 1:nBands
                     end
                 end
                 gConstraints = [gConstraints, tempSum >= 0];
+                gConstraints = [gConstraints, trace(Hsdp * X1{jBase,iBand}(:,:,jGroup)) == 0];
             end
             gConstraints = [gConstraints, X{iBase,iBand}(:,:,iGroup) >= 0];
         end
     end
+    
+    for iBase = 1:nBases
+        for iGroup = 1:nGroupsPerCell(iBase,1)
+            groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
+            for iUser = 2:2:length(groupUsers)
+                cUser = groupUsers(iUser,1);
+                tempSum = -SimParams.N * reqSINRPerUser(cUser,1);
+                for jBase = 1:nBases
+                    for jGroup = 1:nGroupsPerCell(jBase,1)
+                        Hsdp = cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser)' * cH{jBase,iBand}(:,enabledAntenna{jBase,iBand},cUser);
+                        if and((iBase == jBase),(iGroup == jGroup))
+                            tempSum = tempSum + trace(Hsdp * X1{jBase,iBand}(:,:,jGroup));
+                        else
+                            tempSum = tempSum - reqSINRPerUser(cUser,1) * trace(Hsdp * X1{jBase,iBand}(:,:,jGroup));
+                        end
+                    end
+                end
+                gConstraints = [gConstraints, tempSum >= 0];
+                gConstraints = [gConstraints, trace(Hsdp * X{jBase,iBand}(:,:,jGroup)) == 0];
+            end
+            gConstraints = [gConstraints, X1{iBase,iBand}(:,:,iGroup) >= 0];
+        end
+    end
+
 end
 
 objective = 0;
@@ -61,6 +112,8 @@ end
 options = sdpsettings('verbose',0,'solver','DSDP');
 solverOut = optimize(gConstraints,objective,options);
 SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
+
+display(svd(value(X{1})));
 
 if solverOut.problem ~= 0
     display(yalmiperror(solverOut.problem));

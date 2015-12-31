@@ -87,6 +87,11 @@ switch selectionMethod
         [SimParams,SimStructs] = initializeSCAOperatingPoint(SimParams,SimStructs);
         [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
         
+    case 'MB-SCA-MaxMin'
+        
+        [SimParams,SimStructs] = initializeSCAOperatingPoint(SimParams,SimStructs);
+        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MaxMin');
+        
     case 'MB-SCAA'
         
         [SimParams,SimStructs] = initializeSCAOperatingPoint(SimParams,SimStructs);
@@ -107,6 +112,28 @@ switch selectionMethod
 
         display('Antenna subset selected !');
         [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MP');
+        
+    case 'MB-SCAA-MaxMin'
+
+        probObjective = 'MaxMin';
+        [SimParams,SimStructs] = initializeSCAOperatingPoint(SimParams,SimStructs);
+                
+        switch designType
+            
+            case 'A'
+                [SimParams,SimStructs] = getMultiBandSCAA_A(SimParams,SimStructs,probObjective);
+            case 'B'
+                [SimParams,SimStructs] = getMultiBandSCAA_B(SimParams,SimStructs,probObjective);
+            case 'C'
+                [SimParams,SimStructs] = getMultiBandSCAA_C(SimParams,SimStructs,probObjective);
+            case 'D'
+                [SimParams,SimStructs] = getMultiBandSCAA_D(SimParams,SimStructs,probObjective);
+            case 'E'
+                [SimParams,SimStructs] = getMultiBandSCAA_E(SimParams,SimStructs,probObjective);
+        end
+
+        display('Antenna subset selected !');
+        [SimParams,SimStructs] = getMultiBandSCA(SimParams,SimStructs,'MaxMin');
 
     case {'MB-SCAS','SB-SCAS'}
         
@@ -147,6 +174,10 @@ switch selectionMethod
     case {'SB-SCAE','MB-SCAE'}
         
         [SimParams,SimStructs] = getMultiBandSCAE(SimParams,SimStructs);
+        
+    case 'MB-SCAE-MaxMin'
+        
+        [SimParams,SimStructs] = getMultiBandSCAE(SimParams,SimStructs,'MaxMin');
        
     otherwise
         display('Unknown Precoding Method !');

@@ -1,5 +1,9 @@
 
-function [SimParams,SimStructs] = getMultiBandSCAA_B(SimParams,SimStructs)
+function [SimParams,SimStructs] = getMultiBandSCAA_B(SimParams,SimStructs,ObjType)
+
+if nargin == 2
+    ObjType = '';
+end
 
 initMultiCastVariables;
 rX = SimParams.Debug.tempResource{2,1}{1,1};
@@ -36,6 +40,10 @@ while iterateSCA
     Beta = sdpvar(nUsers,nBands,'full');
     Gamma = sdpvar(nUsers,nBands,'full');
     
+    if strcmpi(ObjType,'MaxMin')
+        fairnessVariable = sdpvar(1,1);
+    end
+    
     for iBase = 1:nBases
         for iGroup = 1:nGroupsPerCell(iBase,1)
             groupUsers = SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1};
@@ -69,11 +77,20 @@ while iterateSCA
         end
     end
     
-    cGamma = Gamma + 1;
-    for iUser = 1:nUsers
-        gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
+    cGamma = Gamma + 1;    
+    if strcmpi(ObjType,'MaxMin')        
+        for iUser = 1:nUsers
+            gConstraints = [gConstraints, 1 + fairnessVariable - geomean(cGamma(iUser,:)) <= 0];
+        end        
+        for iBase = 1:nBases
+            gConstraints = [gConstraints, sum(aPowVar{iBase,1}) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
+        end        
+    else        
+        for iUser = 1:nUsers
+            gConstraints = [gConstraints, gReqSINRPerUser(iUser,1) - geomean(cGamma(iUser,:)) <= 0];
+        end        
     end
-
+    
     for iBase = 1:nBases
         tempRHS = binVar_P{iBase,1}.^(qExponent - 1) .* binVar{iBase,1};
         for iAntenna = 1:SimParams.nTxAntenna
@@ -84,13 +101,17 @@ while iterateSCA
         
         gConstraints = [gConstraints, 0 <= binVar{iBase,1} <= 1];
         gConstraints = [gConstraints, sum(binVar{iBase,1}) == SimParams.nTxAntennaEnabled];
-
+        
     end
     
     objective = 0;
     for iBase = 1:nBases
         objective = objective + sum(aPowVar{iBase,1});
     end
+    
+    if strcmpi(ObjType,'MaxMin')
+        objective = -fairnessVariable;
+    end    
     
     options = sdpsettings('verbose',0,'solver','Mosek');
     solverOut = optimize(gConstraints,objective,options);
@@ -110,7 +131,7 @@ while iterateSCA
                     end
                 end
             end
-            binVar_P{iBase,1} = value(binVar{iBase,1});          
+            binVar_P{iBase,1} = value(binVar{iBase,1});
             nEnabledAntenna = sum(value(binVar{iBase,1}));
         end
         bX = full(double(Beta));
@@ -136,7 +157,7 @@ while iterateSCA
     
     fprintf('Enabled Antennas - \t');
     fprintf('%2.3f \t',value(binVar{iBase,1}));
-    fprintf('\nUsing [%2.2f] Active Transmit Elements, Objective is - %f \n',nEnabledAntenna,objective);    
+    fprintf('\nUsing [%2.2f] Active Transmit Elements, Objective is - %f \n',nEnabledAntenna,objective);
     
     if sum(abs(value(binVar{iBase,1})) < epsilonT) == (SimParams.nTxAntenna - SimParams.nTxAntennaEnabled)
         enableBreak = 1;

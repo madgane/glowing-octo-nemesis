@@ -39,7 +39,7 @@ else
     
 end
 
-if SimParams.multiCasting
+if strcmpi(SimParams.multiCasting,'true')
     SimParams.userPhaseLocations_ULA = zeros(SimParams.nUsers,1);
     
     for iBase = 1:SimParams.nBases

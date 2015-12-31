@@ -198,6 +198,30 @@ switch SimParams.plotMode
         fprintf('%3.4f\t',baseBF_Power);
         fprintf('\n');
         
+    case 'DispMCFInfo'
+        
+        minGrtRate = zeros(1,length(xParams));
+        
+        for iAntennaArray = 1:length(xParams)
+                   
+            SimParams = xParams{iAntennaArray,1};
+            SimStructs = xStructs{iAntennaArray,1};
+            displayQueues(SimParams,SimStructs);
+            
+            userTxPkts = zeros(SimParams.nUsers,1);
+            for iUser = 1:SimParams.nUsers
+                userTxPkts(iUser,1) = sum(squeeze(SimParams.Debug.resAllocation(SimParams.nDrops,:,iUser,end)),2);
+            end
+            
+            minGrtRate(1,iAntennaArray) = min(userTxPkts);
+        end
+        
+        plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',minGrtRate,'N',1));
+        
+        xlabel('Total Number of Active Antenna Elements ({X_T})');
+        ylabel('Minimum rate achieved in nats');
+
+        
     otherwise
         
         display('Simulation Completed without any display !');
