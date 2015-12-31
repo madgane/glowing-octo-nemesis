@@ -36,7 +36,7 @@ for iFile = 1:length(listOfFiles)
     configParams.lineType = figLineType{1,flwIndex};
 
     if listOfFiles(iFile).isdir
-        if (sum(strcmpi(listOfFiles(iFile).name,{'.','..','MSE-C','MSE-L'})) == 0)
+        if (sum(strcmpi(listOfFiles(iFile).name,{'.','..'})) == 0)
             cFolder = sprintf('%s/%s',folderName,listOfFiles(iFile).name);
             [configParams] = displayQueueStatusGlobal(cFolder,configParams,switchCase);
         end

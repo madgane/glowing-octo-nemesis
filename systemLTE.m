@@ -53,7 +53,7 @@ SimParams.nSymbolsBIT = 100;
 SimParams.nBands = 1;
 SimParams.nTiers = 2;
 SimParams.nSectors = 3;
-SimParams.perCiteUsers = 6;
+SimParams.perCiteUsers = 100;
 
 SimParams.nTxAntenna = 4;
 SimParams.nRxAntenna = 2;

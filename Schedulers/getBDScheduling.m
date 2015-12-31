@@ -84,6 +84,43 @@ for iBase = 1:SimParams.nBases
                                 
                 for iUser = 1:kUsers
                     cUser = uIndices(iUser,1);
+                    [U,~,~] = svd(eH(:,:,cUser));
+                    if SimParams.queueWt
+                        M = U' * eH(:,:,cUser) * SimStructs.userStruct{cUser,1}.weighingFactor;
+                    else
+                        M = U' * eH(:,:,cUser) * sign(SimStructs.userStruct{cUser,1}.weighingFactor);
+                    end
+                    for iRank = 1:SimParams.maxRank
+                        iIndex = iIndex + 1;
+                        augE = [augE M(iRank,:).'];
+                        xLocs(iIndex,:) = [cUser iRank];
+                    end
+                end
+                
+                [~,~,sortA] = qr(augE,0);
+                for iRank = 1:min(SimParams.muxRank,kUsers * SimParams.maxRank)
+                    schedUsers(iRank,1) = xLocs(sortA(1,iRank),1);
+                    schedStreams(iRank,1) = xLocs(sortA(1,iRank),2);
+                end
+                
+                SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1} = schedUsers;
+                SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = schedStreams;
+                
+            case 'GDFT'
+                
+                iIndex = 0;
+                xLocs = zeros(kUsers * SimParams.maxRank,2);
+                augE = [];
+                
+                xConfig = [];
+                G = dftmtx(SimParams.nTxAntenna)';
+                for iUser = 1:kUsers
+                    cUser = uIndices(iUser,1);
+                    G * eH(:,:,cUser).'
+                end
+                
+                for iUser = 1:kUsers
+                    cUser = uIndices(iUser,1);
                     [U,~,~] = svd(eH(:,:,iUser));
                     if SimParams.queueWt
                         M = U' * eH(:,:,iUser) * SimStructs.userStruct{cUser,1}.weighingFactor;
@@ -105,6 +142,7 @@ for iBase = 1:SimParams.nBases
                 
                 SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1} = schedUsers;
                 SimStructs.baseStruct{iBase,1}.assignedStreams{iBand,1} = schedStreams;
+
                 
                 
             case 'SPSS'

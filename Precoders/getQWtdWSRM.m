@@ -147,6 +147,8 @@ switch selectionMethod
 
             if strfind(cvx_status,'Solved')
                 
+                norm(p_o(:) - p(:))^2 + norm(q_o(:) - q(:))^2                
+                
                 M = full(M);b_o = full(b);  
                 p_o = full(p);q_o = full(q);
                 if min(abs(cvx_optval - cvx_hist)) <= epsilonT

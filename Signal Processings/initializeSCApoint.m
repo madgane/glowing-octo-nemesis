@@ -62,14 +62,6 @@ if ~ischar(bsIndex)
         case 'Last'
             for iBand = 1:nBands
                 M0(:,:,:,iBand) = SimParams.Debug.globalExchangeInfo.P{bsIndex,iBand};
-                for iUser = 1:kUsers
-                    cUser = linkedUsers(iUser,1);
-                    for jBase = 1:SimParams.nBases
-                        if jBase ~= bsIndex
-                            addNoise(:,cUser,iBand) = addNoise(:,cUser,iBand) + SimParams.Debug.globalExchangeInfo.gI{jBase,1}(:,cUser,iBand).^2;
-                        end
-                    end
-                end
             end
     end
     

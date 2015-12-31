@@ -10,12 +10,12 @@ preConfiguration;
 xParams = cell(1,1);
 xStructs = cell(1,1);
 
-xConfig.workBook = 'MSE-B';
+xConfig.workBook = 'ICC-B';
 xConfig.fileName = 'Utilities/systemConfig.xlsx';
 [xConfig.num, xConfig.txt, xConfig.raw] = xlsread(xConfig.fileName,xConfig.workBook);
 xConfig = parseXLFile(xConfig);
 
-xConfig.defaultFolderName = sprintf('Results/12Jun2015/%s',xConfig.workBook);
+xConfig.defaultFolderName = sprintf('Results/26Oct2015A/%s',xConfig.workBook);
 xConfig.defaultFileName = 'GlobalData';
 
 if ~exist(xConfig.defaultFolderName,'dir')
@@ -45,8 +45,8 @@ for xCount = 1:length(xConfig.xStruct)
     xParams{xCount,1}.totalPwrDistOverSC = 'true';
     
     xParams{xCount,1}.ChannelModel = 'Jakes';
-    xParams{xCount,1}.pathLossModel = 'Perturbed_6';
-    xParams{xCount,1}.DopplerType = 'Uniform_140';
+    xParams{xCount,1}.pathLossModel = 'Perturbed_3';
+    xParams{xCount,1}.DopplerType = 'Uniform_10';
         
     xParams{xCount,1}.queueWt = 0;
     xParams{xCount,1}.mdpFactor = 0;
@@ -82,7 +82,7 @@ for xCount = 1:length(xConfig.xStruct)
     xParams{xCount,1}.nRxAntenna = xConfig.xStruct{xCount,1}.nRxAntenna;
     xParams{xCount,1}.ffrProfile_dB = zeros(1,xParams{xCount,1}.nBands);
     
-    xParams{xCount,1}.maxArrival = linspace(1,10,10);
+    xParams{xCount,1}.maxArrival = linspace(1,8,8);
     xParams{xCount,1}.groupArrivalFreq = 10;
     xParams{xCount,1}.arrivalDist = 'Constant';
     xParams{xCount,1}.FixedPacketArrivals = [6];

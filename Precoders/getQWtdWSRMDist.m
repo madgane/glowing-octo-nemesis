@@ -2,7 +2,7 @@
 function [SimParams,SimStructs] = getQWtdWSRMDist(SimParams,SimStructs)
 
 proLogue;
-alpha = 10;
+alpha = 50;
 sumDeviationH = -50;
 
 mIterationsSG = SimParams.nExchangesOBH;
@@ -273,16 +273,15 @@ switch selectionMethod
         end
         
         while scaContinue
-            
-            
+                        
             yIteration = 0;
-            masterContinue = 1;
-            
+            masterContinue = 1;            
             xIteration = xIteration + 1;
             if xIteration >= mIterationsSCA
                 scaContinue = 0;
             end
             
+            alpha = alpha * 0.9;
             stepSize = alpha;
             while masterContinue
                 
@@ -418,6 +417,11 @@ switch selectionMethod
                     if strfind(cvx_status,'Solved')
                         cellM{iBase,1} = M;
                         cellBH{iBase,1} = b;
+                        for jBase = 1:nBases
+                            if jBase ~= iBase
+                                x(:,cellNeighbourIndices{iBase,1},jBase,:) = 0;
+                            end
+                        end
                         cellX{iBase,1} = x;
                     else
                         display('Not solved !');
@@ -426,35 +430,15 @@ switch selectionMethod
                 end
                 
                 [SimParams,SimStructs] = updateIteratePerformance(SimParams,SimStructs,cellM,W);
-                
-                for iBand = 1:nBands
-                    for iBase = 1:nBases
-                        for iUser = 1:usersPerCell(iBase,1)
-                            cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for jBase = 1:nBases
-                                if jBase ~= iBase
-                                    cellXGlobal(:,cUser,jBase,iBand) = (cellX{iBase,1}(:,cUser,jBase,iBand) + cellX{jBase,1}(:,cUser,jBase,iBand)) / 2;
-                                end
-                            end
-                        end
-                    end
+
+                cellXGlobal = cellX{1,1};
+                for iBase = 2:nBases
+                    cellXGlobal = cellXGlobal + cellX{iBase,1};
                 end
+                cellXGlobal = cellXGlobal / 2;
                 
-                for iBand = 1:nBands
-                    for iBase = 1:nBases
-                        for iUser = 1:usersPerCell(iBase,1)
-                            cUser = cellUserIndices{iBase,1}(iUser,1);
-                            for jBase = 1:nBases
-                                if jBase ~= iBase
-                                    currentDual{iBase,1}(:,cUser,jBase,iBand) = currentDual{iBase,1}(:,cUser,jBase,iBand) + stepSize * (cellX{iBase,1}(:,cUser,jBase,iBand) - cellXGlobal(:,cUser,jBase,iBand));
-                                end
-                            end
-                        end
-                        for iUser = 1:length(cellNeighbourIndices{iBase,1})
-                            cUser = cellNeighbourIndices{iBase,1}(iUser,1);
-                            currentDual{iBase,1}(:,cUser,iBase,iBand) = currentDual{iBase,1}(:,cUser,iBase,iBand) + stepSize * (cellX{iBase,1}(:,cUser,iBase,iBand) - cellXGlobal(:,cUser,iBase,iBand));
-                        end
-                    end
+                for iBase = 1:nBases
+                    currentDual{iBase,1} = currentDual{iBase,1} + stepSize * (cellX{iBase,1} - cellXGlobal);
                 end
                 
                 if strcmp(SimParams.DebugMode,'true')

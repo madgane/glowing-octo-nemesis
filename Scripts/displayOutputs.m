@@ -101,7 +101,7 @@ switch SimParams.plotMode
         
         profile on;
         if ~isfield(SimParams,'distDecompSteps')
-            SimParams.distDecompSteps = 1;%SimParams.nExchangesOBH;
+            SimParams.distDecompSteps = SimParams.nExchangesOBH;
         end
         
         displaySystemDetails;

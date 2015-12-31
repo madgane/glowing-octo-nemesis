@@ -10,7 +10,7 @@ for iFile = 1:length(listOfFiles)
         stringT = sprintf('%s/%s',folderName,listOfFiles(iFile).name);
         load(stringT);
         if ~isempty(strfind(listOfFiles(iFile).name,'-'))
-            if ~isempty(find(SimParams.nExchangesOTA == [3,5,10,50]))
+            if ~isempty(find(SimParams.nExchangesOTA == [3,5,50]))
                 display(SimParams.LegendName);
                 SimParams.Log.Clock
                 xSystemConfig{iIndex,1} = SimParams;
@@ -80,6 +80,7 @@ for iParam = 1:length(cParams)
     fmIndex = combType(iParam,1);
     flwIndex = combType(iParam,2);
     
+    figColor = {rand(1,3)};    
     figure(1);hold on;box on;grid on;
     xlabel('avg. arrival pkts per user');
     ylabel('avg. transmitted pkts for all users');

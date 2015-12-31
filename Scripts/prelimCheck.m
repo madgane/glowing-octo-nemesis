@@ -19,8 +19,8 @@ end
 
 display('Added Path Variables !');
 
-if ~sum(strcmpi(SimParams.plotMode,{'NoDisplay','ND'}))
-    rmpath('./Debug/');
-else
-    addpath('./Debug/');
-end
+% if ~sum(strcmpi(SimParams.plotMode,{'NoDisplay','ND'}))
+%     rmpath('./Debug/');
+% else
+%     addpath('./Debug/');
+% end
