@@ -13,7 +13,7 @@ if strfind(saveContents,'true')
     updatePath;
 end
 
-SimParams.outFile = 'Journal-2';
+SimParams.outFile = 'Journal-2M';
 SimParams.saveChannelInfo = 'false';
 SimParams.channelSaveFolder = 'Results';
 
@@ -57,7 +57,7 @@ SimParams.estError = 0.00;
 SimParams.fbFraction = 0.00;
 SimParams.nSymbolsBIT = 1e100;
 
-SimParams.nBands = 2;
+SimParams.nBands = 3;
 SimParams.nBases = 1;
 SimParams.nDrops = 1;
 SimParams.snrIndex = [10];
@@ -77,7 +77,7 @@ if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
     SimParams.usersPerGroup = 10;
     SimParams.nAntennaArray = 8;
-    SimParams.nTxAntennaEnabledArray = [2:2];
+    SimParams.nTxAntennaEnabledArray = [1:2];%SimParams.nAntennaArray];
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));
@@ -182,7 +182,6 @@ for iAntennaArray = 1:length(SimParams.nTxAntennaEnabledArray)
         SimParams.Log.date = date;
         SimParams.Log.clock = sprintf('%d:%d:%d',xVal(1,4),xVal(1,5),xVal(1,6));
         
-        cd Results;
         if exist(cOutFile,'file')
             load(cOutFile);
             globalCount = globalCount + 1;
@@ -195,7 +194,6 @@ for iAntennaArray = 1:length(SimParams.nTxAntennaEnabledArray)
         SimParamsCell{globalCount,1} = gXParams;
         SimStructsCell{globalCount,1} = gXStructs;
         save(cOutFile,'globalCount','SimParamsCell','SimStructsCell');
-        cd ../
         
     end
     

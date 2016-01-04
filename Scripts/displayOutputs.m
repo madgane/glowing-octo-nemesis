@@ -218,8 +218,8 @@ switch SimParams.plotMode
         
         plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',minGrtRate,'N',1));
         
-        xlabel('Total Number of Active Antenna Elements ({X_T})');
-        ylabel('Minimum rate achieved in nats');
+        xlabel('Total Number of Active Antenna Elements (N_{RF})');
+        ylabel('Minimum user rate achieved in bits');
 
         
     otherwise

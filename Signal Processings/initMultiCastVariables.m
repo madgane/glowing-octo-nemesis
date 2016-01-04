@@ -3,7 +3,7 @@ maxObj = 1e4;
 epsilonT = 1e-5;
 enableBreak = 0;
 objWeight = 1e-4;
-singleBandCheck = 0;
+singleBandCheck = 2;
 lowEpsilon = 1e-10;
 
 cH = SimStructs.linkChan;
