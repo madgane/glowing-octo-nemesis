@@ -115,7 +115,7 @@ else
                 if (xParams.Debug.minUserRate > exMinPower)
                     gStructs = xStructs;
                     gParams = xParams;
-                    exMinPower = txPower;
+                    exMinPower = xParams.Debug.minUserRate;
                 end
 
             else

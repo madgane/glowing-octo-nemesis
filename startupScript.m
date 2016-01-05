@@ -77,7 +77,7 @@ if strcmp(SimParams.multiCasting,'true')
     SimParams.nGroupArray = 2;
     SimParams.usersPerGroup = 10;
     SimParams.nAntennaArray = 8;
-    SimParams.nTxAntennaEnabledArray = [1:2];%SimParams.nAntennaArray];
+    SimParams.nTxAntennaEnabledArray = [1:SimParams.nAntennaArray];
     
     SimParams.mcGroups = cell(SimParams.nBases,1);
     SimParams.totalTXpower_G = zeros(length(SimParams.maxArrival),length(SimParams.nTxAntennaEnabledArray));

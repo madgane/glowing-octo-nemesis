@@ -94,7 +94,7 @@ while iterateSCA
     if (logical(sum(strcmpi(ObjType,{'FC','Dual'}))) && (SimParams.nTxAntennaEnabled <= singleBandCheck))
         for iGroup = 1:nGroupsPerCell(iBase,1)
             for iBand = 1:nBands
-                if iBand ~= mod(iGroup - 1,nBands) + 1
+                if iBand == mod(iGroup - 1,nBands) + 1
                     gConstraints = [gConstraints, X{iBase,iBand}(:,iGroup)' * X{iBase,iBand}(:,iGroup) <= 0];
                 end
             end

@@ -127,7 +127,7 @@ while iterateSCA
     else
         objective = sum(tVec);
     end
-    options = sdpsettings('verbose',0,'solver','Gurobi');
+    options = sdpsettings('verbose',0,'solver','Mosek');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
@@ -166,6 +166,7 @@ while iterateSCA
         iterateSCA = 0;
     end
     
+    iterateSCA = 0;
     fprintf('Enabled Antennas - \t');
     fprintf('%d \t',value(binVar{iBase,1}));
     fprintf('\nUsing [%2.2f] Active Transmit Elements, Total power required is - %f \n',nEnabledAntenna,objective);

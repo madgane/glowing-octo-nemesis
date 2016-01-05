@@ -83,7 +83,7 @@ while iterateSCA
     cGamma = Gamma + 1;
     if strcmpi(ObjType,'MaxMin')
         for iUser = 1:nUsers
-            gConstraints = [gConstraints, (1 + fairnessVariable).^(1 / nBands) - geomean(cGamma(iUser,:)) <= 0];
+            gConstraints = [gConstraints, (1 + fairnessVariable) - geomean(cGamma(iUser,:)) <= 0];
         end
         for iBase = 1:nBases
             gConstraints = [gConstraints, sum(aPowVar{iBase,1}) <= sum(SimStructs.baseStruct{iBase,1}.sPower(1,:))];
