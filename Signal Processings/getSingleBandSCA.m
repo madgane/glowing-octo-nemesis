@@ -114,6 +114,10 @@ while iterateSCA
         rX = randn(size(rX));iX = randn(size(iX));
     end
     
+    if strcmpi(ObjType,'MP')
+        SimParams.Debug.tempResource{1,1} = [SimParams.Debug.tempResource{1,1}, value(objective)];
+    end
+
     switch ObjType
         case 'Dual'
             if (double(feasVariable) < 0)

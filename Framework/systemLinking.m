@@ -44,7 +44,7 @@ if strcmpi(SimParams.multiCasting,'true')
     
     for iBase = 1:SimParams.nBases
         sIndex = 1;
-        gPhaseShift = [0 60] * pi / 180;
+        gPhaseShift = [0 120 270] * pi / 180;
         linkedUsers = SimStructs.baseStruct{iBase,1}.linkedUsers;
         cUsers = linkedUsers(randperm(length(linkedUsers)));
         SimStructs.baseStruct{iBase,1}.mcGroup = cell(length(SimParams.mcGroups{iBase,1}),1);
@@ -56,7 +56,7 @@ if strcmpi(SimParams.multiCasting,'true')
             groupUserIndices = cUsers(sIndex:eIndex);
             SimStructs.baseStruct{iBase,1}.mcGroup{iGroup,1} = groupUserIndices;
             for iUser = 1:length(groupUserIndices)
-                SimParams.userPhaseLocations_ULA(groupUserIndices(iUser,1),1) = pi * sin(gPhaseShift(1,iGroup) + (iUser - 1) * (pi / 90));
+                SimParams.userPhaseLocations_ULA(groupUserIndices(iUser,1),1) = pi * sin(gPhaseShift(1,iGroup) + (iUser - 1) * (2 * pi / 180));
                 SimStructs.userStruct{groupUserIndices(iUser,1)}.groupIndex = iGroup;
             end
         end

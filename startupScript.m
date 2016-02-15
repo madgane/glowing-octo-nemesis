@@ -44,9 +44,9 @@ SimParams.robustNoise = 0;
 SimParams.weighingEqual = 'true';
 SimParams.SchedType = 'SkipScheduling';
 SimParams.PrecodingMethod = 'Best_MultiCastBF_Method';
-SimParams.DesignType = 'MB-SCAE-MaxMin';
+SimParams.DesignType = 'MB-SCAA-MaxMin_A';
 
-SimParams.nExchangesOTA = 10;
+SimParams.nExchangesOTA = 25;
 SimParams.exchangeResetInterval = 1;
 SimParams.nExchangesOBH = 1;
 
@@ -59,7 +59,7 @@ SimParams.nSymbolsBIT = 1e100;
 
 SimParams.nBands = 3;
 SimParams.nBases = 1;
-SimParams.nDrops = 1;
+SimParams.nDrops = 100;
 SimParams.snrIndex = [10];
 
 SimParams.nTxAntenna = 4;

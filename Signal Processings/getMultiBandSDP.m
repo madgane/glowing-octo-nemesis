@@ -81,7 +81,7 @@ while iterateSCA
         end
     end
     
-    options = sdpsettings('verbose',0,'solver','Sedumi');
+    options = sdpsettings('verbose',0,'solver','DSDP');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
@@ -120,6 +120,8 @@ while iterateSCA
         minPower = txPower;
     end
 
+    SimParams.Debug.tempResource{1,1} = [SimParams.Debug.tempResource{1,1}, value(objective)];
+    
     fprintf('Transmit Power Required for Tx - %2.2f \n',txPower);
     
 end

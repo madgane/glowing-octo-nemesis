@@ -90,6 +90,8 @@ for iBase = 1:nBases
     end
 end
 
+SimParams.Debug.tempResource{1,1} = [SimParams.Debug.tempResource{1,1}, value(objective)];
+
 tY = cell(nBases,nBands,SimParams.nGroupArray);
 SimParams.Debug.SDP_vars.groupRank = cell(nBases,1);
 randSelection = cell(nBases,nBands,SimParams.nGroupArray);
@@ -106,7 +108,7 @@ for iBase = 1:nBases
             tY{iBase,iBand,iGroup} = P;
             SimParams.Debug.SDP_vars.groupRank{iBase,1}(1,iGroup) = length(D);
             SimParams.Debug.groupRank = [SimParams.Debug.groupRank, length(D)];
-            randSelection{iBase,iBand,iGroup} = complex(rand(length(D),nIterations),rand(length(D),nIterations)) / sqrt(2);
+            randSelection{iBase,iBand,iGroup} = [D,sqrt(D),ones(length(D)), sqrt(diag(D)) * complex(rand(length(D),nIterations),rand(length(D),nIterations)) / sqrt(2), complex(rand(length(D),nIterations),rand(length(D),nIterations)) / sqrt(2), sqrt(diag(D)) * complex(randn(length(D),nIterations),randn(length(D),nIterations)) / sqrt(2), complex(randn(length(D),nIterations),randn(length(D),nIterations)) / sqrt(2)];
         end
     end
 end
@@ -118,6 +120,7 @@ for iBase = 1:nBases
     end
 end
 
+nIterations = nIterations * 4 + 3;
 for iIterate = 1:nIterations
 
     for iBase = 1:nBases
@@ -163,7 +166,7 @@ for iIterate = 1:nIterations
         objective = objective + sum(grpPwr{iBase,1}(:));
     end
     
-    options = sdpsettings('verbose',0,'solver','linprog');
+    options = sdpsettings('verbose',0,'solver','mosek');
     solverOut = optimize(gConstraints,objective,options);
     SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray) = solverOut.solvertime + SimParams.solverTiming(SimParams.iPkt,SimParams.iAntennaArray);
     
@@ -194,5 +197,6 @@ for iIterate = 1:nIterations
     
 end
 
+SimParams.Debug.tempResource{1,2} = ones(1,length(SimParams.Debug.tempResource{1,1})) * maxPower;
 
 end

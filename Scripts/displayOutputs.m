@@ -22,22 +22,22 @@ switch SimParams.plotMode
         
         figStruct.N = 2;figStruct.P = 'plot';
         figStruct.X = SimParams.snrIndex;figStruct.Y = JainIndex_capacity;
-
-%         plotFigure(figStruct);
-%         xlabel('SNR in dB');ylabel('Rate Deviation across Users in bits/sec/Hz');
+        
+        %         plotFigure(figStruct);
+        %         xlabel('SNR in dB');ylabel('Rate Deviation across Users in bits/sec/Hz');
         
         JainMean = mean(SimParams.fairness,2).^2;JainVar = var(SimParams.fairness,0,2);
         JainIndex_utility = JainMean ./ (JainMean + JainVar);
         
         figStruct.N = 2;figStruct.P = 'plot';
         figStruct.X = SimParams.snrIndex;figStruct.Y = JainIndex_utility;
-
-%         plotFigure(figStruct);
-%         xlabel('SNR in dB');ylabel('Network Utility Deviation across Users');
+        
+        %         plotFigure(figStruct);
+        %         xlabel('SNR in dB');ylabel('Network Utility Deviation across Users');
         
         
     case 'QA'
-
+        
         figStruct.N = 1;figStruct.P = 'plot';
         figStruct.X = 1:SimParams.nDrops;figStruct.Y = sum(squeeze(SimParams.QueueInfo.queueBackLogsOverTime(end,:,end,:)),1);
         
@@ -53,7 +53,7 @@ switch SimParams.plotMode
     case 'STA'
         
         nT = 1e3;nPRB = 50;nREinPRB = 120;nTot = nT * nPRB * nREinPRB * 1e-6;
-
+        
         figStruct.N = 1;figStruct.P = 'cdfplot';
         figStruct.Y = SimParams.Thrpt(1,:,1) * nTot;
         
@@ -103,7 +103,7 @@ switch SimParams.plotMode
         
         plotFigure(struct('Y',totalThroughput(1:SimParams.distDecompSteps:end),'N',2));
         xlabel('SCA Update Points');
-        ylabel('Sum rate in bits / channel use');   
+        ylabel('Sum rate in bits / channel use');
         
         profile off;
         
@@ -115,14 +115,14 @@ switch SimParams.plotMode
                 fprintf(1,'eNodeB - %d, Band - %d, Scheduled Users - %s \n',iBase,iBand,mat2str(SimStructs.baseStruct{iBase,1}.assignedUsers{iBand,1}));
             end
         end
-
+        
     case 'DispMCInfo'
         
         baseSDP_Power = zeros(1,length(xParams));
-        baseBF_Power = zeros(1,length(xParams));        
+        baseBF_Power = zeros(1,length(xParams));
         
         for iAntennaArray = 1:length(xParams)
-                   
+            
             SimParams = xParams{iAntennaArray,1};
             SimStructs = xStructs{iAntennaArray,1};
             
@@ -168,34 +168,40 @@ switch SimParams.plotMode
         
     case 'MCPolar'
         
-        baseBF_Power = zeros(1,length(xParams));                
+        baseBF_Power = zeros(1,length(xParams));
         for iAntennaArray = 1:length(xParams)
             
             SimParams = xParams{iAntennaArray,1};
             SimStructs = xStructs{iAntennaArray,1};
-            
-            iBand = 1;
+
             xAngle = linspace(0,2*pi,1025);
             xAG = zeros(length(xAngle),2);
             displayQueues(SimParams,SimStructs);
-            for iAngle = 1:length(xAngle)
-                xFFT = 0;
-                for iBase = 1:SimParams.nBases
-                    for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
-                        gTheta = exp(sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:SimParams.nTxAntenna-1)) / sqrt(SimParams.nAntennaArray);
-                        xFFT = xFFT + abs(gTheta * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup))^2;
-                    end
-                end
-                xAG(iAngle,:) = [xAngle(1,iAngle), xFFT];
-            end            
             
-            baseBF_Power(iAntennaArray,1) = db(real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}')),'power');
+            for iBand = 1:SimParams.nBands                
+                for iAngle = 1:length(xAngle)
+                    xFFT = 0;
+                    for iBase = 1:SimParams.nBases
+                        for iGroup = 1:length(SimStructs.baseStruct{iBase,1}.mcGroup)
+                            gTheta = exp(sqrt(-1) * pi * sin(xAngle(1,iAngle)) * (0:SimParams.nTxAntenna-1)) / sqrt(SimParams.nAntennaArray);
+                            xFFT = xFFT + abs(gTheta * SimStructs.baseStruct{iBase,1}.PG{iBand,1}(:,iGroup))^2;
+                        end
+                    end
+                    xAG(iAngle,1) = xAngle(1,iAngle);
+                    xAG(iAngle,2) = xAG(iAngle,2) + xFFT;
+                end
+                
+                
+                baseBF_Power(iAntennaArray,1) = real(trace(SimStructs.baseStruct{iBase,1}.PG{iBand,1} * SimStructs.baseStruct{iBase,1}.PG{iBand,1}')) + baseBF_Power(iAntennaArray,1);
+            end
+            
+            figure(2);
             polar(xAG(:,1),xAG(:,2));hold all;
             
         end
         
         fprintf('\nTotal transmit power required for current transmission - \n');
-        fprintf('%3.4f\t',baseBF_Power);
+        fprintf('%3.4f\t',db(baseBF_Power,'power'));
         fprintf('\n');
         
     case 'DispMCFInfo'
@@ -203,24 +209,42 @@ switch SimParams.plotMode
         minGrtRate = zeros(1,length(xParams));
         
         for iAntennaArray = 1:length(xParams)
-                   
+            
             SimParams = xParams{iAntennaArray,1};
             SimStructs = xStructs{iAntennaArray,1};
             displayQueues(SimParams,SimStructs);
             
             userTxPkts = zeros(SimParams.nUsers,1);
-            for iUser = 1:SimParams.nUsers
-                userTxPkts(iUser,1) = sum(squeeze(SimParams.Debug.resAllocation(SimParams.nDrops,:,iUser,end)),2);
+            for iDrop = 1:SimParams.nDrops
+                for iUser = 1:SimParams.nUsers
+                    userTxPkts(iUser,1) = sum(squeeze(SimParams.Debug.resAllocation(iDrop,:,iUser,end)),2) + userTxPkts(iUser,1);
+                end
             end
             
-            minGrtRate(1,iAntennaArray) = min(userTxPkts);
+            minGrtRate(1,iAntennaArray) = min(userTxPkts / SimParams.nDrops);
         end
         
         plotFigure(struct('X',SimParams.nTxAntennaEnabledArray,'Y',minGrtRate,'N',1));
         
         xlabel('Total Number of Active Antenna Elements (N_{RF})');
         ylabel('Minimum user rate achieved in bits');
-
+        
+        
+    case 'MCConv'
+        
+        for iAntennaArray = 1:length(xParams)
+            
+            SimParams = xParams{iAntennaArray,1};
+            SimStructs = xStructs{iAntennaArray,1};
+            displayQueues(SimParams,SimStructs);
+            
+            plotFigure(struct('Y',db(SimParams.Debug.tempResource{1,1}(1:end),'power'),'N',iAntennaArray));
+            if strcmpi(SimParams.DesignType,'MB-SDP')
+                plotFigure(struct('Y',db(SimParams.Debug.tempResource{1,2}(1:end),'power'),'N',iAntennaArray));
+            end
+           
+        end
+            
         
     otherwise
         

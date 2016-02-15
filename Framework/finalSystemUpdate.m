@@ -11,7 +11,7 @@ for iUser = 1:SimParams.nUsers
     SimParams.QueueInfo.packetServiceOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficHistory.pktService;
     SimParams.QueueInfo.packetArrivalsOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficHistory.pktArrival;
     SimParams.QueueInfo.queueBacklogsOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficStats.backlogsOverTime;
-    SimParams.QueueInfo.queueResiduesOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficStats.residuesOverTime;        
+    SimParams.QueueInfo.queueResiduesOverTime(iSNR,iUser,iPkt,:) = SimStructs.userStruct{iUser,1}.trafficStats.residuesOverTime;
 end
 
 SimParams.totalTXpower_G(SimParams.iPkt,SimParams.iAntennaArray) = SimParams.totalTXpower_G(SimParams.iPkt,SimParams.iAntennaArray) / SimParams.nDrops;
